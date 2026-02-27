@@ -1,0 +1,27 @@
+gateway:
+  service:
+    type: NodePort
+  replicaCount: 1
+
+ingress:
+  enabled: true
+  hosts:
+    - host: tracking.dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+auth:
+  replicaCount: 1
+
+ingestion:
+  replicaCount: 1
+
+processing:
+  replicaCount: 1
+
+storage:
+  replicaCount: 1
+
+broadcaster:
+  replicaCount: 1

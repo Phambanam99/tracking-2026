@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: service-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      routes:
+        - id: auth-route
+          uri: http://service-auth:8081
+          predicates:
+            - Path=/api/v1/auth/**
+        - id: ingest-route
+          uri: http://service-ingestion:8082
+          predicates:
+            - Path=/api/v1/ingest/**
+        - id: ws-live-route
+          uri: ws://service-broadcaster:8083
+          predicates:
+            - Path=/ws/live/**
+
+tracking:
+  gateway:
+    cors:
+      allowed-origins:
+        - http://localhost:5173
+    security:
+      fail-closed: true

@@ -1,0 +1,10 @@
+[versions]
+kotlin = "2.0.21"
+spring-boot = "3.4.2"
+spring-cloud = "2024.0.1"
+serialization = "1.7.3"
+kotest = "5.9.1"
+
+[libraries]
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }

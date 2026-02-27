@@ -1,0 +1,69 @@
+name: infra-validate
+
+on:
+  pull_request:
+    paths:
+      - infrastructure/**
+      - observability/**
+      - docs/infrastructure.md
+      - .github/workflows/infra-validate.yml
+  push:
+    branches: ["main", "master"]
+    paths:
+      - infrastructure/**
+      - observability/**
+      - docs/infrastructure.md
+      - .github/workflows/infra-validate.yml
+
+jobs:
+  validate-compose-and-prometheus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate core compose
+        run: docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env.example config >/dev/null
+
+      - name: Validate observability compose
+        run: docker compose -f infrastructure/docker-compose-observability.yml --env-file infrastructure/.env.example config >/dev/null
+
+      - name: Validate Prometheus config
+        shell: bash
+        run: |
+          PROMETHEUS_SHA256="7a6b6d5ea003e8d59def294392c64e28338da627bf760cf268e788d6a8832a23"
+          curl -fsSL https://github.com/prometheus/prometheus/releases/download/v2.55.0/prometheus-2.55.0.linux-amd64.tar.gz -o /tmp/prometheus.tar.gz
+          echo "${PROMETHEUS_SHA256}  /tmp/prometheus.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/prometheus.tar.gz -C /tmp
+          /tmp/prometheus-2.55.0.linux-amd64/promtool check config <(
+            sed "s|/etc/prometheus/alert-rules.yml|$PWD/observability/prometheus/alert-rules.yml|" infrastructure/prometheus/prometheus.yml
+          )
+          /tmp/prometheus-2.55.0.linux-amd64/promtool check rules observability/prometheus/alert-rules.yml
+
+      - name: Validate topic script shell syntax
+        run: bash -n infrastructure/kafka/create-topics.sh
+
+  validate-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: Helm lint (dev/stg/prod)
+        run: |
+          helm lint infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/dev/values.yaml
+          helm lint infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/stg/values.yaml
+          helm lint infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/prod/values.yaml
+
+      - name: Helm template render (dev)
+        run: |
+          helm template tracking-dev infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/dev/values.yaml >/dev/null

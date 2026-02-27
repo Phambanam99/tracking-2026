@@ -1,0 +1,5 @@
+auth:
+  internal-api-key: test-internal-key
+  token-hash-pepper: test-pepper-value-1234567890
+  bootstrap-admin:
+    enabled: false

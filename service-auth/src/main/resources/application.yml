@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: service-auth
+
+auth:
+  internal-api-key: ${AUTH_INTERNAL_API_KEY}
+  token-hash-pepper: ${AUTH_TOKEN_HASH_PEPPER}
+  jwt:
+    max-retained-keys: ${AUTH_JWT_MAX_RETAINED_KEYS:5}
+  bootstrap-admin:
+    enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}
+    username: ${AUTH_BOOTSTRAP_ADMIN_USERNAME:}
+    email: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:}

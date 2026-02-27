@@ -1,0 +1,15 @@
+{
+  "title": "Tracking Ingestion Latency",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Ingestion p95 latency",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{uri=\"/api/v1/ingest\"}[5m])) by (le))"
+        }
+      ]
+    }
+  ]
+}

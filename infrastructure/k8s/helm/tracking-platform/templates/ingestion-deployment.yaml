@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tracking-platform.componentName" (dict "root" . "component" "ingestion") }}
+  labels:
+    {{- include "tracking-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingestion
+spec:
+  replicas: {{ .Values.ingestion.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tracking-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ingestion
+  template:
+    metadata:
+      labels:
+        {{- include "tracking-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ingestion
+      {{- if .Values.ingestion.metrics.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: {{ .Values.ingestion.containerPort | quote }}
+      {{- end }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.global.podSecurityContext | nindent 8 }}
+      containers:
+        - name: ingestion
+          image: "{{ .Values.ingestion.image.repository }}:{{ .Values.ingestion.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ingestion.containerPort }}
+          {{- if or .Values.config.create .Values.config.existingConfigMap .Values.secrets.create .Values.secrets.existingSecret }}
+          envFrom:
+            {{- if or .Values.config.create .Values.config.existingConfigMap }}
+            - configMapRef:
+                name: {{ include "tracking-platform.configMapName" . }}
+            {{- end }}
+            {{- if or .Values.secrets.create .Values.secrets.existingSecret }}
+            - secretRef:
+                name: {{ include "tracking-platform.secretName" . }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.ingestion.env }}
+          env:
+            {{- range $key, $value := . }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          resources:
+            {{- toYaml .Values.ingestion.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tracking-platform.componentName" (dict "root" . "component" "ingestion") }}
+  labels:
+    {{- include "tracking-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ingestion
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "tracking-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ingestion
+  ports:
+    - name: http
+      port: {{ .Values.ingestion.service.port }}
+      targetPort: http

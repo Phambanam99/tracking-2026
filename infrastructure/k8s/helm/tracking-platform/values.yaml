@@ -1,0 +1,122 @@
+fullnameOverride: ""
+
+global:
+  imagePullPolicy: IfNotPresent
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    fsGroup: 10001
+
+config:
+  create: true
+  existingConfigMap: ""
+  data:
+    MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+    MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+    LOGGING_LEVEL_ROOT: "INFO"
+
+secrets:
+  create: false
+  existingSecret: ""
+  stringData: {}
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: tracking.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+networkPolicy:
+  enabled: true
+  gatewayIngressCidrs:
+    - 0.0.0.0/0
+
+gateway:
+  replicaCount: 2
+  image:
+    repository: tracking/service-gateway
+    tag: latest
+  containerPort: 8080
+  service:
+    type: LoadBalancer
+    port: 80
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}
+
+auth:
+  replicaCount: 2
+  image:
+    repository: tracking/service-auth
+    tag: latest
+  containerPort: 8081
+  service:
+    port: 8081
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}
+
+ingestion:
+  replicaCount: 2
+  image:
+    repository: tracking/service-ingestion
+    tag: latest
+  containerPort: 8082
+  service:
+    port: 8082
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}
+
+broadcaster:
+  replicaCount: 2
+  image:
+    repository: tracking/service-broadcaster
+    tag: latest
+  containerPort: 8083
+  service:
+    port: 8083
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}
+
+processing:
+  replicaCount: 2
+  image:
+    repository: tracking/service-processing
+    tag: latest
+  containerPort: 8084
+  service:
+    port: 8084
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}
+
+storage:
+  replicaCount: 2
+  image:
+    repository: tracking/service-storage
+    tag: latest
+  containerPort: 8085
+  service:
+    port: 8085
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+  resources: {}

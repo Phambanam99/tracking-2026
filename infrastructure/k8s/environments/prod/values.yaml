@@ -1,0 +1,27 @@
+gateway:
+  service:
+    type: LoadBalancer
+  replicaCount: 3
+
+ingress:
+  enabled: true
+  hosts:
+    - host: tracking.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+auth:
+  replicaCount: 3
+
+ingestion:
+  replicaCount: 4
+
+processing:
+  replicaCount: 4
+
+storage:
+  replicaCount: 3
+
+broadcaster:
+  replicaCount: 4

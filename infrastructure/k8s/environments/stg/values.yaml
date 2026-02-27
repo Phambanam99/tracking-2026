@@ -1,0 +1,27 @@
+gateway:
+  service:
+    type: LoadBalancer
+  replicaCount: 2
+
+ingress:
+  enabled: true
+  hosts:
+    - host: tracking.stg.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+auth:
+  replicaCount: 2
+
+ingestion:
+  replicaCount: 2
+
+processing:
+  replicaCount: 2
+
+storage:
+  replicaCount: 2
+
+broadcaster:
+  replicaCount: 2

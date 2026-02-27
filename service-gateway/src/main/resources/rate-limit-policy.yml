@@ -1,0 +1,13 @@
+policies:
+  - routeId: auth-route
+    keyResolver: ip
+    replenishRate: 5
+    burstCapacity: 10
+  - routeId: ingest-route
+    keyResolver: api-key
+    replenishRate: 100000
+    burstCapacity: 120000
+  - routeId: ws-live-route
+    keyResolver: user-id
+    replenishRate: 20
+    burstCapacity: 40

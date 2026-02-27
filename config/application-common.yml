@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: tracking
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+
+tracking:
+  kafka:
+    bootstrap-servers: localhost:9092
+    topics:
+      raw: raw-adsb
+      live: live-adsb
+      historical: historical-adsb
+      invalidDlq: invalid-adsb-dlq
+      authRevocation: auth-revocation
+  security:
+    jwt:
+      issuer: tracking-auth
+      access-token-ttl-seconds: 900
+      refresh-token-ttl-seconds: 1209600
+  dedup:
+    ttl-seconds: 2
+  validation:
+    max-speed-kmh: 1200.0

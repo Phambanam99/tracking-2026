@@ -1,0 +1,85 @@
+name: tracking-observability
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: tracking-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/ready >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tracking-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: tracking-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../observability/grafana:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tracking-net
+
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: tracking-zipkin
+    restart: unless-stopped
+    ports:
+      - "${ZIPKIN_PORT:-9411}:9411"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9411/health >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tracking-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.1
+    container_name: tracking-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yml"]
+    depends_on:
+      zipkin:
+        condition: service_healthy
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ../observability/otel/collector-config.yml:/etc/otelcol/config.yml:ro
+    networks:
+      - tracking-net
+
+networks:
+  tracking-net:
+    name: tracking-net
+
+volumes:
+  prometheus-data:
+  grafana-data:
