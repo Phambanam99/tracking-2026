@@ -1,0 +1,23 @@
+ID	Phase	Flow	Status	Expected	Actual	Evidence
+F01	P0	Infra healthcheck containers	PASS	4/4 healthy	4/4 healthy	docker ps
+F02	P3	Route /api/v1/auth/** -> auth	PASS	200 + JWKS keys>=1	200, keys=1	/api/v1/auth/.well-known/jwks.json
+F03	P3	Gateway JWT guard (no token)	PASS	401	401	/api/v1/auth/api-keys
+F04	P2	Login via gateway	PASS	200 + access/refresh tokens	200	/api/v1/auth/login
+F05	P2	Create API key (admin)	PASS	200 + id + apiKey	200, id=1	/api/v1/auth/api-keys
+F06	P3	Gateway CORS preflight	PASS	200/204 + ACAO header	200, ACAO=http://localhost:5173	OPTIONS /api/v1/auth/login
+F07	P3	Rate limit /auth/login	PASS	>=1 request returns 429 (burst test)	429_count=30	parallel 40 req -> 10x401,30x429
+F08	P3	Ingest requires x-api-key	PASS	401	401	/api/v1/ingest/adsb
+F09	P4	Ingest single -> raw topic + trace header	PASS	202 + raw message key/header present	202	x-request-id:req-chain-1772182745203273720,traceparent:00-c04143dba84a99298c240f833d2ae121-43ce098e9c37786c-01|CHAINL745|{"icao":"CHAINL745","lat":10.123,"lon":106.321,"altitude":null,"speed":null,"heading":null,"eventTime":1772182745000,"sourceId":"radar-chain"}
+F10	P4	Batch ingest <=1000	PASS	202 accepted=2	202 accepted=2	/api/v1/ingest/adsb/batch
+F11	P4	Batch >1000 rejected	PASS	413	413	/api/v1/ingest/adsb/batch
+F12	P4	Validation fail-fast missing icao	PASS	400	400	/api/v1/ingest/adsb
+F13	P3	Gateway request-size limiter	FAIL	413	500	/api/v1/ingest/adsb oversized
+F14	P3	WS path requires JWT	PASS	401 without token	401	/ws/live/ping
+F15	P3	Route /ws/live/** -> broadcaster upstream	PASS	not 401/403 with valid JWT	101	ws handshake via gateway
+F16	P5	Processing route current event -> live topic	PASS	live contains isHistorical=false	found	CHAINL745|{"icao":"CHAINL745","lat":10.123,"lon":106.321,"altitude":null,"speed":null,"heading":null,"eventTime":1772182745000,"sourceId":"radar-chain","isHistorical":false,"metadata":null}
+F17	P5	Processing route older event -> historical topic	PASS	202 + historical contains isHistorical=true	202	CHAINL745|{"icao":"CHAINL745","lat":10.124,"lon":106.322,"altitude":null,"speed":null,"heading":null,"eventTime":1772182145000,"sourceId":"radar-chain","isHistorical":true,"metadata":null}
+F18	P5	Kinematic invalid -> DLQ	PASS	202 + DLQ reason=KINEMATIC_INVALID	202	{"reason":"KINEMATIC_INVALID","flight":{"icao":"CHAINL745","lat":55.0,"lon":-3.0,"altitude":null,"speed":null,"heading":null,"eventTime":1772182746000,"sourceId":"radar-chain"},"previousFlight":{"icao":"CHAINL745","lat":10.123,"lon":106.321,"altitude":null,"speed":null,"heading":null,"eventTime":1772182745000,"sourceId":"radar-chain"},"computedSpeedKmh":3.7010102394385494E7}
+F19	P5	Dedup TTL filters duplicate event	PASS	2x202 input but only 1 live output	count=1 codes=202/202	icao=DEDUP991
+F20	P5	Strict key/icao mismatch -> DLQ	PASS	DLQ reason KEY_ICAO_MISMATCH	found	{"reason":"KEY_ICAO_MISMATCH","flight":{"icao":"CHAINM835","lat":14.0,"lon":110.0,"altitude":null,"speed":null,"heading":null,"eventTime":1772182835000,"sourceId":"radar-chain"},"previousFlight":null,"computedSpeedKmh":null}
+F21	P3/P4	Revocation propagate to gateway/ingestion	PASS	revoke 204 and blocked <=5s	revoke=204 blocked=401 in 0s	apiKeyId=1
+F13B	P3	Gateway request-size default limit	PASS	413 for payload >1MB	413	/api/v1/ingest/adsb with 1.3MB body

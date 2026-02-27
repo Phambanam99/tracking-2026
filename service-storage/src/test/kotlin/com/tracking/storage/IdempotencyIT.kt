@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test
 
 public class IdempotencyIT {
     @Test
-    public fun `should cap retry delay to max value`() {
-        val policy = StorageRetryPolicy(baseDelayMillis = 100, maxDelayMillis = 500)
+    public fun `should cap retry delay to final configured value`() {
+        val policy = StorageRetryPolicy(retryDelaysMillis = listOf(0L, 200L, 500L))
 
         assertEquals(500, policy.nextDelayMillis(10))
     }

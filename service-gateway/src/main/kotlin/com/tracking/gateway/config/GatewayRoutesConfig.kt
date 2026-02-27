@@ -1,6 +1,7 @@
 package com.tracking.gateway.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.http.server.PathContainer
 import org.springframework.stereotype.Component
 import org.springframework.web.util.pattern.PathPattern
 import org.springframework.web.util.pattern.PathPatternParser
@@ -42,6 +43,6 @@ public class GatewayRoutesConfig(
 
     private fun matches(path: String, pattern: String): Boolean {
         val pathPattern: PathPattern = parser.parse(pattern)
-        return pathPattern.matches(parser.parsePath(path))
+        return pathPattern.matches(PathContainer.parsePath(path))
     }
 }

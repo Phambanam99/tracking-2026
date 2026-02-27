@@ -180,55 +180,55 @@
     - `service-auth/src/test/kotlin/com/tracking/auth/security/JwksRotationIT.kt`
 
 ### P3 - Module service-gateway Edge Security
-- [ ] `GW-01` Dynamic routing cho auth/ingest/ws
+- [x] `GW-01` Dynamic routing cho auth/ingest/ws
   - Files:
     - `service-gateway/src/main/resources/application.yml`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/GatewayRoutesConfig.kt`
-- [ ] `GW-02` Global authentication filters (JWT + API Key)
+- [x] `GW-02` Global authentication filters (JWT + API Key)
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/filter/JwtAuthenticationFilter.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/filter/ApiKeyFilter.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/security/TokenVerifier.kt`
-- [ ] `GW-03` Rate limiting (Token Bucket + Redis)
+- [x] `GW-03` Rate limiting (Token Bucket + Redis)
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/RateLimiterConfig.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/RedisConfig.kt`
-- [ ] `GW-04` CORS management tập trung
+- [x] `GW-04` CORS management tập trung
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/CorsConfig.kt`
-- [ ] `GW-05` Security hardening tại edge
+- [x] `GW-05` Security hardening tại edge
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/SecurityHeadersFilter.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/TrustedProxyConfig.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/TlsConfig.kt`
-- [ ] `GW-06` Rate limit profiles theo route/principal
+- [x] `GW-06` Rate limit profiles theo route/principal
   - Files:
     - `service-gateway/src/main/resources/rate-limit-policy.yml`
-- [ ] `GW-07` Tests
+- [x] `GW-07` Tests
   - Files:
     - `service-gateway/src/test/kotlin/com/tracking/gateway/filter/JwtAuthenticationFilterTest.kt`
     - `service-gateway/src/test/kotlin/com/tracking/gateway/filter/ApiKeyFilterTest.kt`
     - `service-gateway/src/test/kotlin/com/tracking/gateway/config/RateLimiterConfigTest.kt`
     - `service-gateway/src/test/kotlin/com/tracking/gateway/RoutingIntegrationTest.kt`
     - `service-gateway/src/test/kotlin/com/tracking/gateway/SecurityHeadersIT.kt`
-- [ ] `GW-08` JWT Offline Verification & JWKS Caching
+- [x] `GW-08` JWT Offline Verification & JWKS Caching
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/security/JwksCacheService.kt`
-- [ ] `GW-09` Distributed Blacklist Consumer (Revocation)
+- [x] `GW-09` Distributed Blacklist Consumer (Revocation)
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/security/RevocationKafkaConsumer.kt`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/security/BlacklistService.kt`
-- [ ] `GW-10` Circuit Breaker & Strict TTL Timeouts
+- [x] `GW-10` Circuit Breaker & Strict TTL Timeouts
   - Files:
     - `service-gateway/src/main/resources/application.yml`
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/ResilienceConfig.kt`
-- [ ] `GW-11` Gateway TraceID Context Propagation
+- [x] `GW-11` Gateway TraceID Context Propagation
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/filter/TraceIdFilter.kt`
-- [ ] `GW-12` Chống DoS: Request Size Limiter
+- [x] `GW-12` Chống DoS: Request Size Limiter
   - Files:
     - `service-gateway/src/main/kotlin/com/tracking/gateway/config/RequestSizeConfig.kt`
-- [ ] `GW-13` Tests cho hardening GW-08..GW-12
+- [x] `GW-13` Tests cho hardening GW-08..GW-12
   - Files:
     - `service-gateway/src/test/kotlin/com/tracking/gateway/security/JwksCacheServiceTest.kt`
     - `service-gateway/src/test/kotlin/com/tracking/gateway/security/RevocationKafkaConsumerIT.kt`
@@ -249,111 +249,202 @@
 8. `GW-07` + `GW-13` chạy full test matrix, chỉ pass khi toàn bộ acceptance criteria đạt.
 
 #### P3 Acceptance Criteria
-- [ ] JWT hợp lệ (signed bởi key trong JWKS cache) được verify offline tại gateway, không phụ thuộc round-trip realtime đến auth-service.
-- [ ] Khi `kid` không tồn tại: gateway trigger refresh JWKS; nếu refresh thất bại thì fail-closed (401/403), không bypass auth.
-- [ ] Revocation event (`auth-revocation`) propagate đến tất cả instance gateway và chặn token/api-key bị revoke trong SLA mục tiêu `<= 5s`.
-- [ ] Blacklist/revocation state có TTL rõ ràng và không ngắn hơn TTL access-token để tránh replay cửa sổ ngắn.
-- [ ] Outbound calls từ gateway có timeout strict cấu hình trong `application.yml`; circuit breaker mở khi downstream lỗi liên tục và gateway trả lỗi deterministic (không treo request).
-- [ ] Gateway luôn propagate `traceparent` hoặc `x-request-id` xuống downstream; nếu thiếu thì tự sinh và trả lại qua response header.
-- [ ] Request vượt ngưỡng size policy theo route bị chặn với `413 Payload Too Large`; request hợp lệ không bị false-positive.
-- [ ] Tất cả testcase trong `GW-07` + `GW-13` pass trong CI và có tối thiểu 1 integration test đa-instance cho revocation propagation.
+- [x] JWT hợp lệ (signed bởi key trong JWKS cache) được verify offline tại gateway, không phụ thuộc round-trip realtime đến auth-service.
+- [x] Khi `kid` không tồn tại: gateway trigger refresh JWKS; nếu refresh thất bại thì fail-closed (401/403), không bypass auth.
+- [x] Revocation event (`auth-revocation`) propagate đến tất cả instance gateway và chặn token/api-key bị revoke trong SLA mục tiêu `<= 5s`.
+- [x] Blacklist/revocation state có TTL rõ ràng và không ngắn hơn TTL access-token để tránh replay cửa sổ ngắn.
+- [x] Outbound calls từ gateway có timeout strict cấu hình trong `application.yml`; circuit breaker mở khi downstream lỗi liên tục và gateway trả lỗi deterministic (không treo request).
+- [x] Gateway luôn propagate `traceparent` hoặc `x-request-id` xuống downstream; nếu thiếu thì tự sinh và trả lại qua response header.
+- [x] Request vượt ngưỡng size policy theo route bị chặn với `413 Payload Too Large`; request hợp lệ không bị false-positive.
+- [x] Tất cả testcase trong `GW-07` + `GW-13` pass trong CI và có tối thiểu 1 integration test đa-instance cho revocation propagation.
 
 ### P4 - Module service-ingestion Correctness & Throughput
-- [ ] `ING-01` WebFlux ingest endpoint
+- [x] `ING-01` WebFlux ingest endpoint + structural validation (fail-fast)
   - Files:
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/TrackingController.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/IngestRequestValidator.kt`
-- [ ] `ING-02` API key check từ local cache
+- [x] `ING-02` Backpressure/admission control cho WebFlux (bounded memory)
+  - Files:
+    - `service-ingestion/src/main/resources/application.yml`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/AdmissionControlFilter.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/config/BackpressureConfig.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/GlobalExceptionHandler.kt`
+- [x] `ING-03` API key check từ local cache (không synchronous call tới auth cho mỗi request)
   - Files:
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/security/ApiKeyAuthWebFilter.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/security/ApiKeyCacheService.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/security/AuthServiceClient.kt`
-- [ ] `ING-03` Kafka producer raw-adsb (key theo `icao`)
+- [x] `ING-04` Bulk ingest endpoint `/api/v1/ingest/adsb/batch` (batch size có giới hạn)
   - Files:
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/TrackingController.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/IngestBatchRequest.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/IngestBatchResponse.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/IngestRequestValidator.kt`
+- [x] `ING-05` Kafka producer tuning cho throughput (batch/compression/timeout/acks profile)
+  - Files:
+    - `service-ingestion/src/main/resources/application.yml`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/kafka/KafkaProducerConfig.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/kafka/RawAdsbProducer.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/kafka/RecordKeyStrategy.kt`
-- [ ] `ING-04` Revoke sync cho API key cache
+- [x] `ING-06` Revoke sync cho API key cache
   - Files:
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/security/ApiKeyRevocationConsumer.kt`
-- [ ] `ING-05` Error handling + metrics
+- [x] `ING-07` Trace propagation HTTP -> Kafka headers
+  - Files:
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/tracing/TraceContextExtractor.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/kafka/RawAdsbProducer.kt`
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/filter/TraceContextWebFilter.kt`
+    - `service-ingestion/src/main/resources/application.yml`
+- [x] `ING-08` Error taxonomy + metrics/alerts cho overload, producer timeout, drop rate
   - Files:
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/api/GlobalExceptionHandler.kt`
     - `service-ingestion/src/main/kotlin/com/tracking/ingestion/metrics/IngestionMetrics.kt`
-- [ ] `ING-06` Tests
+- [x] `ING-09` Graceful shutdown & safe drain (flush producer trước khi pod terminate)
+  - Files:
+    - `service-ingestion/src/main/kotlin/com/tracking/ingestion/lifecycle/IngestionShutdownHook.kt`
+    - `service-ingestion/src/main/resources/application.yml`
+    - `infrastructure/k8s/helm/tracking-platform/templates/ingestion-deployment.yaml`
+    - `docs/runbook.md`
+- [x] `ING-10` Failure-mode tests (Kafka rebalance/down/slow-disk) + memory guard
+  - Files:
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/failure/KafkaBackpressureIT.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/failure/ProducerTimeoutIT.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/failure/RebalanceBehaviorIT.kt`
+    - `perf/soak/soak-test-plan.md`
+- [x] `ING-11` Tests
   - Files:
     - `service-ingestion/src/test/kotlin/com/tracking/ingestion/api/TrackingControllerTest.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/api/BatchIngestControllerTest.kt`
     - `service-ingestion/src/test/kotlin/com/tracking/ingestion/security/ApiKeyAuthWebFilterTest.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/security/ApiKeyCacheServiceTest.kt`
     - `service-ingestion/src/test/kotlin/com/tracking/ingestion/kafka/RawAdsbProducerTest.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/kafka/KafkaHeadersPropagationTest.kt`
     - `service-ingestion/src/test/kotlin/com/tracking/ingestion/kafka/PartitionKeyingIT.kt`
+    - `service-ingestion/src/test/kotlin/com/tracking/ingestion/lifecycle/ShutdownFlushIT.kt`
+
+#### P4 Dependency Order (Must Follow)
+1. `ING-01` + `ING-02` trước tiên để khóa contract vào và chống unbounded memory queue.
+2. `ING-03` + `ING-06` để auth/revocation chạy local-cache, loại bỏ auth-service khỏi critical path ingest.
+3. `ING-04` sau khi structural validation ổn định để tăng throughput bằng batch endpoint.
+4. `ING-05` tối ưu producer config (`batch.size`, `linger.ms`, `compression`, `delivery.timeout.ms`, `max.block.ms`, `acks`).
+5. `ING-07` inject trace context vào Kafka headers trước integration với processing/storage.
+6. `ING-08` chuẩn hóa lỗi và metric để phân biệt `400/401/429/503` rõ ràng.
+7. `ING-09` triển khai graceful shutdown trước test rolling update.
+8. `ING-10` + `ING-11` chạy full failure/perf test matrix, chỉ pass khi đạt acceptance criteria.
+
+#### P4 Acceptance Criteria
+- [x] Payload thiếu `icao` hoặc `event_time` bị reject tại ingress với `400` (không publish Kafka).
+- [x] Khi admission queue/limit đạt ngưỡng: service trả `429` nhanh (không treo), không phình RAM mất kiểm soát.
+- [x] Khi Kafka producer timeout/quá tải (`delivery.timeout.ms`): service trả `503` theo policy fail-fast, không nuốt request vào RAM đến OOM.
+- [x] API key bị revoke được đồng bộ qua `auth-revocation` và bị chặn tại ingestion trong SLA `<= 5s`.
+- [x] Endpoint batch `/api/v1/ingest/adsb/batch` hỗ trợ tối đa `1000` records/request; vượt ngưỡng trả `413 Payload Too Large` theo policy đã định nghĩa.
+- [x] Kafka producer áp dụng profile throughput tối thiểu:
+  - `batch.size >= 65536`
+  - `linger.ms` trong khoảng `5..10`
+  - `compression.type in {lz4,snappy}`
+  - `delivery.timeout.ms <= 1000`
+  - `max.block.ms <= 1000`
+- [x] Với raw telemetry: `acks=1` (theo performance profile đã duyệt); các luồng control/critical khác không dùng profile này.
+- [x] Mọi record publish sang Kafka đều mang `traceparent` hoặc `x-request-id` trong headers để trace xuyên service.
+- [x] Rolling update/SIGTERM không làm mất record đã accepted: hook shutdown flush hoàn tất trong grace period cấu hình.
+- [x] Failure-mode tests (rebalance, broker down, broker slow) pass và không có dấu hiệu memory leak trong soak profile.
 
 ### P5 - Module service-processing Deterministic Pipeline
-- [ ] `PROC-01` Consume raw + ordering guard theo `icao`
+- [x] `PROC-01` Consume raw + ordering guard theo `icao`
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/kafka/ProcessingConsumerConfig.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/engine/FlightStateFusionEngine.kt`
-- [ ] `PROC-02` SOLID pipeline abstraction
+- [x] `PROC-02` SOLID pipeline abstraction
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/pipeline/FlightProcessingStage.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/pipeline/PipelineExecutor.kt`
-- [ ] `PROC-03` Dedup hash TTL=2s
+- [x] `PROC-03` Dedup hash TTL=2s
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/dedup/DedupKeyService.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/dedup/DedupCacheConfig.kt`
-- [ ] `PROC-04` Out-of-order event-time handling
+- [x] `PROC-04` Out-of-order event-time handling
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/eventtime/EventTimeResolver.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/state/LastKnownStateStore.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/routing/TopicRouter.kt`
-- [ ] `PROC-05` Kinematic validation
+- [x] `PROC-05` Kinematic validation
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/validation/KinematicValidator.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/geo/Haversine.kt`
-- [ ] `PROC-06` Data enrichment
+- [x] `PROC-06` Data enrichment (Metadata, ICAO Country, Photos)
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/enrich/ReferenceDataLoader.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/enrich/ReferenceDataCache.kt`
+    - `service-processing/src/main/kotlin/com/tracking/processing/enrich/IcaoCountryResolver.kt`
+    - `service-processing/src/main/kotlin/com/tracking/processing/enrich/PlanespottersPhotoProvider.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/enrich/FlightEnricher.kt`
-- [ ] `PROC-07` Split topic publish + DLQ
+- [x] `PROC-07` Split topic publish + DLQ
   - Files:
     - `service-processing/src/main/kotlin/com/tracking/processing/kafka/ProcessingProducer.kt`
     - `service-processing/src/main/kotlin/com/tracking/processing/kafka/InvalidRecordDlqProducer.kt`
-- [ ] `PROC-08` Tests
+- [x] `PROC-08` Tests
   - Files:
     - `service-processing/src/test/kotlin/com/tracking/processing/dedup/DedupKeyServiceTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/dedup/DedupCacheConfigTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/state/LastKnownStateStoreTest.kt`
     - `service-processing/src/test/kotlin/com/tracking/processing/eventtime/EventTimeResolverTest.kt`
     - `service-processing/src/test/kotlin/com/tracking/processing/validation/KinematicValidatorTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/enrich/IcaoCountryResolverTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/enrich/PlanespottersPhotoProviderTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/enrich/ReferenceDataCacheTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/enrich/FlightEnricherTest.kt`
+    - `service-processing/src/test/kotlin/com/tracking/processing/kafka/RawAdsbConsumerTest.kt`
     - `service-processing/src/test/kotlin/com/tracking/processing/engine/FlightStateFusionEngineIT.kt`
     - `service-processing/src/test/kotlin/com/tracking/processing/pipeline/PipelineDeterminismIT.kt`
 
 ### P6 - Module service-storage Idempotent Persistence
-- [ ] `STO-01` Timescale hypertable + indexes
+- [x] `STO-01` Timescale hypertable + indexes + policy retention/compression
   - Files:
     - `service-storage/src/main/resources/db/migration/V1__flight_positions.sql`
-- [ ] `STO-02` Unique key + upsert semantics
+- [x] `STO-02` Unique key + upsert semantics (`ON CONFLICT DO NOTHING`)
   - Files:
     - `service-storage/src/main/resources/db/migration/V2__flight_positions_constraints.sql`
-- [ ] `STO-03` Consume live/historical topics
+- [x] `STO-03` Consume live/historical topics + manual commit sau batch write
   - Files:
     - `service-storage/src/main/kotlin/com/tracking/storage/kafka/StorageConsumerConfig.kt`
     - `service-storage/src/main/kotlin/com/tracking/storage/worker/StorageConsumerWorker.kt`
-- [ ] `STO-04` Batch write 5k-10k rows
+- [x] `STO-04` Batch write 5k rows + bounded buffer + partition revoke flush hook
   - Files:
     - `service-storage/src/main/kotlin/com/tracking/storage/worker/BatchPersistWorker.kt`
     - `service-storage/src/main/kotlin/com/tracking/storage/db/JdbcBatchWriter.kt`
     - `service-storage/src/main/kotlin/com/tracking/storage/buffer/FlightBuffer.kt`
-- [ ] `STO-05` Retry/DLQ/quarantine/metrics
+- [x] `STO-05` Retry/DLQ/quarantine/metrics + trace header propagation
   - Files:
     - `service-storage/src/main/kotlin/com/tracking/storage/retry/StorageRetryPolicy.kt`
     - `service-storage/src/main/kotlin/com/tracking/storage/kafka/StorageDlqProducer.kt`
     - `service-storage/src/main/kotlin/com/tracking/storage/metrics/StorageMetrics.kt`
+    - `service-storage/src/main/kotlin/com/tracking/storage/tracing/StorageTraceContext.kt`
+    - `service-storage/src/main/kotlin/com/tracking/storage/model/PersistableFlight.kt`
     - `service-storage/src/main/resources/db/migration/V3__quarantine_table.sql`
-- [ ] `STO-06` Tests
+- [x] `STO-06` Tests
   - Files:
     - `service-storage/src/test/kotlin/com/tracking/storage/db/JdbcBatchWriterTest.kt`
     - `service-storage/src/test/kotlin/com/tracking/storage/worker/BatchPersistWorkerTest.kt`
+    - `service-storage/src/test/kotlin/com/tracking/storage/worker/StorageConsumerWorkerTest.kt`
     - `service-storage/src/test/kotlin/com/tracking/storage/StorageIntegrationTest.kt`
     - `service-storage/src/test/kotlin/com/tracking/storage/IdempotencyIT.kt`
+
+#### P6 Dependency Order (Must Follow)
+1. `STO-01` tạo schema nền (`flight_positions` hypertable + index + compression/retention policy).
+2. `STO-02` khóa idempotency tại DB bằng unique key `(icao, event_time, lat, lon)`.
+3. `STO-03` dựng Kafka consumer batch với `enable.auto.commit=false`, manual acknowledgment sau persist thành công.
+4. `STO-04` triển khai bounded `FlightBuffer` + `BatchPersistWorker` + `JdbcBatchWriter` (batch insert + upsert).
+5. `STO-05` hardening retry/backoff, DLQ, quarantine, metrics và trace context propagation.
+6. `STO-06` chạy full test matrix cho retry/idempotency/consumer/persist writer trước khi mở rộng P7.
+
+#### P6 Acceptance Criteria
+- [x] `flight_positions` là hypertable theo `event_time` (chunk `1 day`), có index tra cứu theo `(icao, event_time)` và `(lat, lon)`.
+- [x] Storage write sử dụng `ON CONFLICT (icao, event_time, lat, lon) DO NOTHING` để đảm bảo idempotent khi replay.
+- [x] Kafka consumer dùng `enable.auto.commit=false`; ack offset chỉ sau khi persist batch (hoặc xử lý lỗi theo quarantine+DLQ) hoàn tất.
+- [x] Batch persist hỗ trợ chunk size cấu hình (`tracking.storage.batch.max-size`, mặc định `5000`) và buffer bounded (`tracking.storage.buffer.max-capacity`).
+- [x] Khi DB lỗi liên tục: retry theo policy delay cấu hình, thất bại cuối cùng phải ghi `quarantine_records` và publish `storage-dlq`.
+- [x] Có metrics tối thiểu: `batch.written`, `batch.failed`, `rows.written`, `batch.latency`, `buffer.size`, `dlq.published`.
+- [x] Storage preserve trace context (`x-request-id`, `traceparent`) từ Kafka headers cho luồng logging/DLQ.
 
 ### P7 - Module service-broadcaster Secure Realtime
 - [ ] `BRO-01` WebSocket/STOMP + JWT handshake
@@ -460,6 +551,11 @@
 - [ ] End-to-end luồng: ingest -> raw -> processing -> live/historical -> storage/broadcaster.
 - [ ] Producer luôn set Kafka key = `icao`; ordering theo partition được kiểm chứng bằng test.
 - [ ] API key crawler có thể revoke tức thời và propagate đến gateway/ingestion.
+- [x] P4: Ingestion áp dụng backpressure + load-shedding (429/503) theo policy; không để unbounded queue gây OOM khi Kafka nghẽn.
+- [x] P4: Ingestion hỗ trợ bulk ingest và Kafka producer batching/compression để đạt throughput mục tiêu.
+- [x] P4: Ingestion inject `traceparent`/`x-request-id` vào Kafka headers để duy trì distributed trace qua event bus.
+- [x] P4: Ingestion graceful shutdown flush producer thành công trong rolling update.
+- [ ] P5: Phân tích ICAO Hexident để tìm Quốc gia đăng ký và cấu trúc URL ảnh từ Planespotters (tar1090 style).
 - [ ] JWT bắt buộc cho WebSocket handshake.
 - [ ] Gateway route đúng cho `/api/v1/auth/**`, `/api/v1/ingest/**`, `/ws/live/**`.
 - [ ] Gateway chặn request sai auth tại lớp cửa vào (401/403 chuẩn, fail-closed).

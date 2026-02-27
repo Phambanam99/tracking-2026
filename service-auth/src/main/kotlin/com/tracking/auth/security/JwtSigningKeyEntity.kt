@@ -3,7 +3,6 @@ package com.tracking.auth.security
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
-import jakarta.persistence.Lob
 import jakarta.persistence.Table
 import java.time.Instant
 
@@ -14,12 +13,10 @@ public class JwtSigningKeyEntity {
     @Column(name = "kid", nullable = false, length = 100)
     public lateinit var kid: String
 
-    @Lob
-    @Column(name = "private_key_der_base64", nullable = false)
+    @Column(name = "private_key_der_base64", nullable = false, columnDefinition = "TEXT")
     public lateinit var privateKeyDerBase64: String
 
-    @Lob
-    @Column(name = "public_key_der_base64", nullable = false)
+    @Column(name = "public_key_der_base64", nullable = false, columnDefinition = "TEXT")
     public lateinit var publicKeyDerBase64: String
 
     @Column(name = "active", nullable = false)

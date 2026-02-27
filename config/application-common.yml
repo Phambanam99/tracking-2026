@@ -12,7 +12,7 @@ tracking:
       raw: raw-adsb
       live: live-adsb
       historical: historical-adsb
-      invalidDlq: invalid-adsb-dlq
+      invalidDlq: invalid-telemetry-dlq
       authRevocation: auth-revocation
   security:
     jwt:

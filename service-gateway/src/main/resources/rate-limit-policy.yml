@@ -1,13 +1,20 @@
-policies:
-  - routeId: auth-route
-    keyResolver: ip
-    replenishRate: 5
-    burstCapacity: 10
-  - routeId: ingest-route
-    keyResolver: api-key
-    replenishRate: 100000
-    burstCapacity: 120000
-  - routeId: ws-live-route
-    keyResolver: user-id
-    replenishRate: 20
-    burstCapacity: 40
+tracking:
+  gateway:
+    rate-limit:
+      policies:
+        - route-id: auth-login-route
+          key-resolver: ip
+          replenish-rate-per-second: 5
+          burst-capacity: 10
+        - route-id: auth-route
+          key-resolver: ip
+          replenish-rate-per-second: 200
+          burst-capacity: 400
+        - route-id: ingest-route
+          key-resolver: api-key
+          replenish-rate-per-second: 100000
+          burst-capacity: 120000
+        - route-id: ws-live-route
+          key-resolver: user-id
+          replenish-rate-per-second: 20
+          burst-capacity: 40

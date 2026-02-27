@@ -1,0 +1,17 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
+AUTH_API_KEY_VERIFY_URI: http://localhost:8081/internal/v1/api-keys/verify
+AUTH_JWKS_URI: http://localhost:8081/api/v1/auth/.well-known/jwks.json
+GATEWAY_ROUTE_AUTH_URI: http://localhost:8081
+GATEWAY_ROUTE_AUTH_LOGIN_URI: http://localhost:8081
+GATEWAY_ROUTE_INGEST_URI: http://localhost:8082
+GATEWAY_ROUTE_WS_URI: ws://localhost:8083

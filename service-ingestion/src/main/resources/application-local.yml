@@ -1,0 +1,11 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+
+tracking:
+  ingestion:
+    security:
+      auth-verify-uri: ${AUTH_API_KEY_VERIFY_URI:http://localhost:8081/internal/v1/api-keys/verify}

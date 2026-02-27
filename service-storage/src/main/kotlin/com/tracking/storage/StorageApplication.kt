@@ -6,4 +6,6 @@ import org.springframework.boot.runApplication
 @SpringBootApplication
 public class StorageApplication
 
-public fun main(args: Array<String>) = runApplication<StorageApplication>(*args)
+public fun main(args: Array<String>): Unit {
+    runApplication<StorageApplication>(*args)
+}

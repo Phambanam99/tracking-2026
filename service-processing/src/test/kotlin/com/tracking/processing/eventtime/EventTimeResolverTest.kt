@@ -19,4 +19,11 @@ public class EventTimeResolverTest {
 
         decision shouldBe EventTimeDecision.LIVE
     }
+
+    @Test
+    public fun `should mark equal timestamp event as live`() {
+        val decision = resolver.resolve(previousEventTime = 2000L, candidateEventTime = 2000L)
+
+        decision shouldBe EventTimeDecision.LIVE
+    }
 }

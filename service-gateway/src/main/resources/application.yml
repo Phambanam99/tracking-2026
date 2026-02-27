@@ -1,28 +1,148 @@
 spring:
   application:
     name: service-gateway
+  config:
+    import: classpath:rate-limit-policy.yml
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 750
+        response-timeout: 1500ms
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       routes:
+        - id: auth-login-route
+          uri: ${GATEWAY_ROUTE_AUTH_LOGIN_URI:${GATEWAY_ROUTE_AUTH_URI:http://service-auth:8081}}
+          predicates:
+            - Path=/api/v1/auth/login
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayIpKeyResolver}'
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+          metadata:
+            connect-timeout: 750
+            response-timeout: 1500
         - id: auth-route
-          uri: http://service-auth:8081
+          uri: ${GATEWAY_ROUTE_AUTH_URI:http://service-auth:8081}
           predicates:
             - Path=/api/v1/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayIpKeyResolver}'
+                redis-rate-limiter.replenishRate: 200
+                redis-rate-limiter.burstCapacity: 400
+          metadata:
+            connect-timeout: 750
+            response-timeout: 1500
         - id: ingest-route
-          uri: http://service-ingestion:8082
+          uri: ${GATEWAY_ROUTE_INGEST_URI:http://service-ingestion:8082}
           predicates:
             - Path=/api/v1/ingest/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayApiKeyKeyResolver}'
+                redis-rate-limiter.replenishRate: 100000
+                redis-rate-limiter.burstCapacity: 120000
+          metadata:
+            connect-timeout: 500
+            response-timeout: 1000
         - id: ws-live-route
-          uri: ws://service-broadcaster:8083
+          uri: ${GATEWAY_ROUTE_WS_URI:ws://service-broadcaster:8083}
           predicates:
             - Path=/ws/live/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayUserKeyResolver}'
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      auth-jwks:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+      auth-api-key:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 50
+        minimumNumberOfCalls: 20
+        permittedNumberOfCallsInHalfOpenState: 5
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
 
 tracking:
+  kafka:
+    topics:
+      authRevocation: auth-revocation
+    consumer:
+      auth-revocation-group: ${spring.application.name}-${random.uuid}
   gateway:
+    routes:
+      auth-path: /api/v1/auth/**
+      ingest-path: /api/v1/ingest/**
+      websocket-path: /ws/live/**
+      jwt-protected-paths:
+        - /api/v1/auth/**
+        - /ws/live/**
+      api-key-protected-paths:
+        - /api/v1/ingest/**
+      public-auth-paths:
+        - /api/v1/auth/login
+        - /api/v1/auth/register
+        - /api/v1/auth/refresh
+        - /api/v1/auth/refresh-token
+        - /api/v1/auth/.well-known/jwks.json
     cors:
       allowed-origins:
         - http://localhost:5173
+      exposed-headers:
+        - x-request-id
+        - traceparent
     security:
       fail-closed: true
+      jwt-issuer: ${AUTH_JWT_ISSUER:tracking-auth}
+      jwks-uri: ${AUTH_JWKS_URI:http://service-auth:8081/api/v1/auth/.well-known/jwks.json}
+      api-key-verify-uri: ${AUTH_API_KEY_VERIFY_URI:http://service-auth:8081/internal/v1/api-keys/verify}
+      internal-api-key: ${AUTH_INTERNAL_API_KEY:tracking-internal-key-2026}
+      api-key-cache-ttl-seconds: 60
+      access-token-ttl-seconds: ${AUTH_ACCESS_TOKEN_TTL_SECONDS:900}
+      revocation-user-ttl-seconds: ${GATEWAY_REVOCATION_USER_TTL_SECONDS:900}
+      revocation-api-key-ttl-seconds: ${GATEWAY_REVOCATION_API_KEY_TTL_SECONDS:900}
+      jwks-refresh-interval-seconds: ${GATEWAY_JWKS_REFRESH_INTERVAL_SECONDS:300}
+      trusted-proxy:
+        cidrs:
+          - 127.0.0.1/32
+          - 10.0.0.0/8
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+    tls:
+      enforce-https: ${GATEWAY_ENFORCE_HTTPS:false}
+    resilience:
+      connect-timeout-millis: 750
+      response-timeout-millis: 1500
+      read-timeout-millis: 1500
+      write-timeout-millis: 1500
+      jwks-call-timeout-millis: 1200
+      api-key-call-timeout-millis: 300
+      jwks-circuit-breaker-name: auth-jwks
+      api-key-circuit-breaker-name: auth-api-key
+    request-size:
+      default-max-bytes: 1048576
+      per-path:
+        "/api/v1/ingest/**": 262144
+        "/api/v1/auth/**": 65536

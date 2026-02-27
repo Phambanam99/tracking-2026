@@ -23,6 +23,7 @@ spec:
         prometheus.io/port: {{ .Values.ingestion.containerPort | quote }}
       {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.ingestion.terminationGracePeriodSeconds }}
       securityContext:
         {{- toYaml .Values.global.podSecurityContext | nindent 8 }}
       containers:

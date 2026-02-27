@@ -1,3 +1,5 @@
 package com.tracking.processing.pipeline
 
-public interface FlightProcessingStage
+public fun interface FlightProcessingStage<T> {
+    public fun process(input: T): T
+}

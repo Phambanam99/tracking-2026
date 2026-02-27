@@ -11,6 +11,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+springBoot {
+    mainClass.set("com.tracking.gateway.GatewayApplicationKt")
+}
+
 dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")

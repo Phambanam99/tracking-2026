@@ -2,11 +2,14 @@ package com.tracking.processing.routing
 
 import com.tracking.processing.eventtime.EventTimeDecision
 
-public class TopicRouter {
+public class TopicRouter(
+    private val liveTopic: String = LIVE_TOPIC,
+    private val historicalTopic: String = HISTORICAL_TOPIC,
+) {
     public fun route(decision: EventTimeDecision): String {
         return when (decision) {
-            EventTimeDecision.LIVE -> LIVE_TOPIC
-            EventTimeDecision.HISTORICAL -> HISTORICAL_TOPIC
+            EventTimeDecision.LIVE -> liveTopic
+            EventTimeDecision.HISTORICAL -> historicalTopic
         }
     }
 

@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: service-processing
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  kafka:
+    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+tracking:
+  kafka:
+    topics:
+      raw: raw-adsb
+      live: live-adsb
+      historical: historical-adsb
+      invalidDlq: invalid-telemetry-dlq
+  processing:
+    consumer:
+      group-id: service-processing-v1
+      strict-key-match: true
+      retry:
+        backoff-millis: 1000
+        max-attempts: 3
+    producer:
+      publish-timeout-millis: 1000
+    dedup:
+      ttl-seconds: 2
+      max-size: 1000000
+    state:
+      ttl-hours: 2
+      max-size: 200000
+    enrichment:
+      refresh-interval-seconds: 600
+      image-url-template: https://images.planespotters.net/{icao}.jpg
+      planespotters:
+        enabled: true
+        base-url: https://api.planespotters.net/pub/photos/hex
+        timeout-millis: 700
+        cache-ttl-minutes: 30
+        cache-max-size: 100000
+  validation:
+    max-speed-kmh: 1200.0

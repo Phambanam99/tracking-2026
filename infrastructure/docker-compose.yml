@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--protected-mode", "no"]
     volumes:
       - redis-data:/data
       - ./redis/init-redis.conf:/usr/local/etc/redis/redis.conf:ro

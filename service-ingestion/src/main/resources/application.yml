@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: service-ingestion
+  codec:
+    max-in-memory-size: 256KB
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      properties:
+        batch.size: 65536
+        linger.ms: 5
+        compression.type: lz4
+        delivery.timeout.ms: 1000
+        max.block.ms: 1000
+        request.timeout.ms: 800
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: ${tracking.kafka.consumer.auth-revocation-group:${spring.application.name}-${random.uuid}}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+tracking:
+  kafka:
+    topics:
+      raw: raw-adsb
+      authRevocation: auth-revocation
+    consumer:
+      auth-revocation-group: ${spring.application.name}-${random.uuid}
+  ingestion:
+    ingest-path: /api/v1/ingest/**
+    batch:
+      max-records: 1000
+    admission:
+      max-in-flight: 1024
+    kafka:
+      publish-timeout-millis: 1000
+      batch-publish-concurrency: 64
+    security:
+      enforce-api-key: true
+      api-key-header: x-api-key
+      source-id-header: X-Source-Id
+      auth-verify-uri: ${AUTH_API_KEY_VERIFY_URI:http://service-auth:8081/internal/v1/api-keys/verify}
+      internal-api-key: ${AUTH_INTERNAL_API_KEY:tracking-internal-key-2026}
+      verify-timeout-millis: 300
+      cache-ttl-seconds: 60
+      revocation-source-ttl-seconds: 900

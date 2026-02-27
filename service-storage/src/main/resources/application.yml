@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: service-storage
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/tracking}
+    username: ${SPRING_DATASOURCE_USERNAME:tracking}
+    password: ${SPRING_DATASOURCE_PASSWORD:tracking}
+  kafka:
+    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      enable-auto-commit: false
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: ${tracking.storage.batch.max-size:5000}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+tracking:
+  kafka:
+    topics:
+      live: live-adsb
+      historical: historical-adsb
+      storageDlq: storage-dlq
+  storage:
+    consumer:
+      group-id: service-storage-v1
+      poll-timeout-millis: 5000
+      retry:
+        backoff-millis: 1000
+        max-attempts: 3
+    batch:
+      max-size: 5000
+      flush-interval-millis: 5000
+    buffer:
+      max-capacity: 100000
+      pause-threshold: 90000
+      resume-threshold: 50000
+    retry:
+      delays-millis: 0,1000,3000
+    dlq:
+      publish-timeout-millis: 1000

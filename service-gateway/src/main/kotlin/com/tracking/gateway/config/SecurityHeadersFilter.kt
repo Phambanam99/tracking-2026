@@ -28,9 +28,15 @@ public class SecurityHeadersFilter : GlobalFilter, Ordered {
         return chain.filter(exchange).then(
             Mono.fromRunnable {
                 val headers = exchange.response.headers
-                defaultHeaders().forEach { (name, value) -> headers.setIfAbsent(name, value) }
+                defaultHeaders().forEach { (name, value) ->
+                    if (!headers.containsKey(name)) {
+                        headers.add(name, value)
+                    }
+                }
                 if (isSecureRequest(exchange.request)) {
-                    headers.setIfAbsent("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+                    if (!headers.containsKey("Strict-Transport-Security")) {
+                        headers.add("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+                    }
                 }
             },
         )

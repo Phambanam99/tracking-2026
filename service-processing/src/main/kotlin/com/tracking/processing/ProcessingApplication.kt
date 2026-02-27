@@ -6,4 +6,6 @@ import org.springframework.boot.runApplication
 @SpringBootApplication
 public class ProcessingApplication
 
-public fun main(args: Array<String>) = runApplication<ProcessingApplication>(*args)
+public fun main(args: Array<String>): Unit {
+    runApplication<ProcessingApplication>(*args)
+}

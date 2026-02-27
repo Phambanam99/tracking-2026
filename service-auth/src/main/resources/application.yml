@@ -3,9 +3,10 @@ spring:
     name: service-auth
 
 auth:
-  internal-api-key: ${AUTH_INTERNAL_API_KEY}
-  token-hash-pepper: ${AUTH_TOKEN_HASH_PEPPER}
+  internal-api-key: ${AUTH_INTERNAL_API_KEY:tracking-internal-key-2026}
+  token-hash-pepper: ${AUTH_TOKEN_HASH_PEPPER:tracking-pepper-2026-very-strong}
   jwt:
+    master-key: ${AUTH_JWT_MASTER_KEY:tracking-master-key-2026-32chars-long!}
     max-retained-keys: ${AUTH_JWT_MAX_RETAINED_KEYS:5}
   bootstrap-admin:
     enabled: ${AUTH_BOOTSTRAP_ADMIN_ENABLED:false}

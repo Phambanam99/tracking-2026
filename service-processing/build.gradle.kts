@@ -9,11 +9,20 @@ kotlin {
     jvmToolchain(17)
 }
 
+springBoot {
+    mainClass.set("com.tracking.processing.ProcessingApplicationKt")
+}
+
 dependencies {
     implementation(project(":common-dto"))
+    implementation(kotlin("reflect"))
 
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-json")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

@@ -9,12 +9,19 @@ kotlin {
     jvmToolchain(17)
 }
 
+springBoot {
+    mainClass.set("com.tracking.ingestion.IngestionApplicationKt")
+}
+
 dependencies {
     implementation(project(":common-dto"))
+    implementation(kotlin("reflect"))
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

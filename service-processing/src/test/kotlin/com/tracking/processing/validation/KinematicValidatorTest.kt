@@ -56,4 +56,29 @@ public class KinematicValidatorTest {
 
         result.isValid shouldBe false
     }
+
+    @Test
+    public fun `should reject movement when event time delta is zero`() {
+        val previous =
+            CanonicalFlight(
+                icao = "AAA111",
+                lat = 21.0285,
+                lon = 105.8542,
+                eventTime = 1_700_000_000_000,
+                sourceId = "crawler-1",
+            )
+        val current =
+            CanonicalFlight(
+                icao = "AAA111",
+                lat = 21.1285,
+                lon = 105.9542,
+                eventTime = 1_700_000_000_000,
+                sourceId = "crawler-1",
+            )
+
+        val result = validator.validate(previous, current)
+
+        result.isValid shouldBe false
+        result.computedSpeedKmh shouldBe Double.POSITIVE_INFINITY
+    }
 }

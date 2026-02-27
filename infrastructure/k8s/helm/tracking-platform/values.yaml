@@ -71,6 +71,7 @@ ingestion:
     repository: tracking/service-ingestion
     tag: latest
   containerPort: 8082
+  terminationGracePeriodSeconds: 30
   service:
     port: 8082
   metrics:
