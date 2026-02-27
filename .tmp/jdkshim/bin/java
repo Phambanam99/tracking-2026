@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec /mnt/c/Users/NamP7/.jdks/ms-21.0.9/bin/java.exe "$@"

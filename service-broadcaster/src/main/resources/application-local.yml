@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+  kafka:
+    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+
+tracking:
+  broadcaster:
+    security:
+      jwks-uri: ${AUTH_JWKS_URI:http://localhost:8081/api/v1/auth/.well-known/jwks.json}

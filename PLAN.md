@@ -449,32 +449,32 @@
 - [x] Storage preserve trace context (`x-request-id`, `traceparent`) từ Kafka headers cho luồng logging/DLQ.
 
 ### P7 - Module service-broadcaster Secure Realtime
-- [ ] `BRO-01` WebSocket/STOMP + JWT handshake
+- [x] `BRO-01` WebSocket/STOMP + JWT handshake
   - Files:
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt` — Đăng ký STOMP endpoint `/ws/live`, cấu hình SimpleBroker `/topic`, prefix `/app`, gắn JwtChannelInterceptor vào inbound channel
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt` — ChannelInterceptor verify JWT offline (JWKS cache) tại STOMP CONNECT command, reject nếu token thiếu/hết hạn/bị revoke
     - `service-broadcaster/src/main/resources/application.yml` — Cấu hình Kafka consumer, WebSocket, rate limit, stale session cleanup, metrics endpoint
-- [ ] `BRO-02` Viewport registry theo session + disconnect cleanup
+- [x] `BRO-02` Viewport registry theo session + disconnect cleanup
   - Files:
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt` — ConcurrentHashMap<sessionId, BoundingBox> quản lý viewport mỗi session, hỗ trợ register/unregister/query sessions chứa tọa độ
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt` — Nhận STOMP message `/app/viewport` từ client chứa BoundingBox, validate và cập nhật vào ViewportRegistry
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionDisconnectHandler.kt` — Lắng nghe SessionDisconnectEvent, tự động xóa session khỏi ViewportRegistry khi client mất kết nối (chống memory leak)
-- [ ] `BRO-03` Spatial filtering
+- [x] `BRO-03` Spatial filtering
   - Files:
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt` — Kiểm tra tọa độ (lat, lon) của flight có nằm trong BoundingBox viewport hay không, delegate sang BoundingBox.contains()
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt` — Iterate tất cả sessions từ ViewportRegistry, filter flight theo BoundingBoxMatcher, gọi SessionPushService push tới session khớp
-- [ ] `BRO-04` Consume live topic + push session đích (CHỈ live-adsb, KHÔNG historical)
+- [x] `BRO-04` Consume live topic + push session đích (CHỈ live-adsb, KHÔNG historical)
   - Files:
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt` — KafkaListener subscribe CHỈ topic `live-adsb`, deserialize EnrichedFlight, gọi SpatialPushEngine.pushToMatchingSessions()
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/BroadcasterConsumerConfig.kt` — Kafka ConsumerFactory + ContainerFactory + DefaultErrorHandler (FixedBackOff), tương tự pattern P5/P6
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt` — SimpMessagingTemplate.convertAndSendToUser() push JSON flight tới session đích qua `/topic/flights`, runCatching wrap để xử lý session đã disconnect
-- [ ] `BRO-05` WS hardening (quota/rate/cleanup/metrics/tracing)
+- [x] `BRO-05` WS hardening (quota/rate/cleanup/metrics/tracing)
   - Files:
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt` — Token bucket hoặc sliding window giới hạn viewport update tối đa N lần/phút/session, reject nếu vượt quota
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt` — @Scheduled quét ViewportRegistry mỗi 30s, xóa session không có activity quá `stale-timeout` (mặc định 5 phút)
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/metrics/BroadcasterMetrics.kt` — Micrometer counters/gauges: `ws.sessions.active`, `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`, `ws.push.latency`
     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/tracing/BroadcasterTraceContext.kt` — Đọc traceparent/x-request-id từ Kafka headers, set MDC cho logging, duy trì trace chain từ P4→P5→P7
-- [ ] `BRO-06` Tests
+- [x] `BRO-06` Tests
   - Files:
     - `service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt` — Test JWT valid → CONNECT pass, JWT expired/missing/revoked → CONNECT reject
     - `service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt` — Test register/unregister/concurrent access/query sessions containing coordinate
@@ -493,16 +493,16 @@
 6. `BRO-06` Full test matrix.
 
 #### P7 Acceptance Criteria
-- [ ] WebSocket endpoint `/ws/live` chỉ chấp nhận STOMP CONNECT khi JWT hợp lệ (verify offline qua JWKS cache, không gọi HTTP tới auth-service).
-- [ ] Client gửi viewport BoundingBox qua `/app/viewport`, server lưu vào ViewportRegistry theo sessionId.
-- [ ] Khi client disconnect, session tự xóa khỏi ViewportRegistry (SessionDisconnectEvent listener) — không memory leak.
-- [ ] Stale session > 5 phút không activity bị cleanup tự động bởi StaleSessionCleaner.
-- [ ] Rate limit viewport update tối đa 10 lần/phút/session; vượt quota trả lỗi cho client.
-- [ ] LiveFlightConsumer CHỈ subscribe topic `live-adsb` — historical data KHÔNG được push ra WebSocket.
-- [ ] SpatialPushEngine chỉ push flight có tọa độ nằm trong viewport BoundingBox của session đích.
-- [ ] SessionPushService xử lý graceful khi session đã disconnect (runCatching, không throw exception).
-- [ ] Có BroadcasterMetrics tối thiểu: `ws.sessions.active` (Gauge), `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`.
-- [ ] Trace context (traceparent, x-request-id) được extract từ Kafka headers vào MDC cho mọi log trong luồng push.
+- [x] WebSocket endpoint `/ws/live` chỉ chấp nhận STOMP CONNECT khi JWT hợp lệ (verify offline qua JWKS cache, không gọi HTTP tới auth-service).
+- [x] Client gửi viewport BoundingBox qua `/app/viewport`, server lưu vào ViewportRegistry theo sessionId.
+- [x] Khi client disconnect, session tự xóa khỏi ViewportRegistry (SessionDisconnectEvent listener) — không memory leak.
+- [x] Stale session > 5 phút không activity bị cleanup tự động bởi StaleSessionCleaner.
+- [x] Rate limit viewport update tối đa 10 lần/phút/session; vượt quota trả lỗi cho client.
+- [x] LiveFlightConsumer CHỈ subscribe topic `live-adsb` — historical data KHÔNG được push ra WebSocket.
+- [x] SpatialPushEngine chỉ push flight có tọa độ nằm trong viewport BoundingBox của session đích.
+- [x] SessionPushService xử lý graceful khi session đã disconnect (runCatching, không throw exception).
+- [x] Có BroadcasterMetrics tối thiểu: `ws.sessions.active` (Gauge), `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`.
+- [x] Trace context (traceparent, x-request-id) được extract từ Kafka headers vào MDC cho mọi log trong luồng push.
 
 ### P8 - Module frontend-ui Secure UX
 - [ ] `UI-01` React + Vite + Tailwind skeleton

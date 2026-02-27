@@ -1,0 +1,117 @@
+name: tracking-apps-e2e
+
+services:
+  service-auth:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-auth
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-auth/build/libs/service-auth-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8081"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tracking_e2e_p7
+      SPRING_DATASOURCE_USERNAME: tracking
+      SPRING_DATASOURCE_PASSWORD: tracking
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AUTH_INTERNAL_API_KEY: tracking-internal-key-2026
+      AUTH_BOOTSTRAP_ADMIN_ENABLED: "true"
+      AUTH_BOOTSTRAP_ADMIN_USERNAME: admin
+      AUTH_BOOTSTRAP_ADMIN_EMAIL: admin@tracking.local
+      AUTH_BOOTSTRAP_ADMIN_PASSWORD: Admin@12345678
+    ports:
+      - "18081:8081"
+    networks:
+      - tracking-net
+
+  service-ingestion:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-ingestion
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-ingestion/build/libs/service-ingestion-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8082"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AUTH_API_KEY_VERIFY_URI: http://service-auth:8081/internal/v1/api-keys/verify
+      AUTH_INTERNAL_API_KEY: tracking-internal-key-2026
+    ports:
+      - "18082:8082"
+    networks:
+      - tracking-net
+
+  service-processing:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-processing
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-processing/build/libs/service-processing-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8085"
+      TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACKING_PROCESSING_ENRICHMENT_PLANESPOTTERS_ENABLED: "false"
+    ports:
+      - "18085:8085"
+    networks:
+      - tracking-net
+
+  service-storage:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-storage
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-storage/build/libs/service-storage-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8084"
+      TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tracking_e2e_p7
+      SPRING_DATASOURCE_USERNAME: tracking
+      SPRING_DATASOURCE_PASSWORD: tracking
+    ports:
+      - "18084:8084"
+    networks:
+      - tracking-net
+
+  service-broadcaster:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-broadcaster
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-broadcaster/build/libs/service-broadcaster-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8083"
+      TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACKING_BROADCASTER_SECURITY_JWT_ISSUER: tracking-auth
+      AUTH_JWKS_URI: http://service-auth:8081/api/v1/auth/.well-known/jwks.json
+    ports:
+      - "18083:8083"
+    networks:
+      - tracking-net
+
+  service-gateway:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-gateway
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-gateway/build/libs/service-gateway-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+    environment:
+      SERVER_PORT: "8080"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      AUTH_INTERNAL_API_KEY: tracking-internal-key-2026
+      AUTH_JWKS_URI: http://service-auth:8081/api/v1/auth/.well-known/jwks.json
+      AUTH_API_KEY_VERIFY_URI: http://service-auth:8081/internal/v1/api-keys/verify
+      GATEWAY_ROUTE_AUTH_URI: http://service-auth:8081
+      GATEWAY_ROUTE_AUTH_LOGIN_URI: http://service-auth:8081
+      GATEWAY_ROUTE_INGEST_URI: http://service-ingestion:8082
+      GATEWAY_ROUTE_WS_URI: ws://service-broadcaster:8083
+    ports:
+      - "18080:8080"
+    networks:
+      - tracking-net
+
+networks:
+  tracking-net:
+    external: true
+    name: tracking-net

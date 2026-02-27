@@ -25,7 +25,7 @@ public class SecurityHeadersFilter : GlobalFilter, Ordered {
         exchange: org.springframework.web.server.ServerWebExchange,
         chain: org.springframework.cloud.gateway.filter.GatewayFilterChain,
     ): Mono<Void> {
-        return chain.filter(exchange).then(
+        exchange.response.beforeCommit {
             Mono.fromRunnable {
                 val headers = exchange.response.headers
                 defaultHeaders().forEach { (name, value) ->
@@ -38,8 +38,9 @@ public class SecurityHeadersFilter : GlobalFilter, Ordered {
                         headers.add("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
                     }
                 }
-            },
-        )
+            }
+        }
+        return chain.filter(exchange)
     }
 
     private fun isSecureRequest(request: ServerHttpRequest): Boolean {

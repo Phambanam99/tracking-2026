@@ -1,0 +1,1182 @@
+﻿git : warning: in the working copy of 
+'PLAN.md', LF will be replaced by CRLF 
+the next time Git touches it
+At line:1 char:1
++ git diff HEAD -- PLAN.md 
+service-broadcaster service-gateway 2>&1 
+| O ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecifie 
+   d: (warning: in the... Git touches it  
+  :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComma 
+   ndError
+ 
+warning: in the working copy of 
+'service-broadcaster/build.gradle.kts', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/BroadcasterApplication.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/kafka/LiveFlightConsumer.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/spatial/BoundingBoxMatcher.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/spatial/SpatialPushEngine.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/viewport/ViewportMessageHandler.
+kt', LF will be replaced by CRLF the next 
+time Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/viewport/ViewportRegistry.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/ws/JwtChannelInterceptor.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/ws/SessionPushService.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/ws/SessionRateLimiter.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/ws/StaleSessionCleaner.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/main/kotlin/com/tracking/br
+oadcaster/ws/WebSocketConfig.kt', LF will 
+be replaced by CRLF the next time Git 
+touches it
+warning: in the working copy of 'service-b
+roadcaster/src/test/kotlin/com/tracking/br
+oadcaster/BroadcasterWebSocketIT.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/test/kotlin/com/tracking/br
+oadcaster/spatial/SpatialPushEngineTest.kt
+', LF will be replaced by CRLF the next 
+time Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/test/kotlin/com/tracking/br
+oadcaster/viewport/ViewportRegistryTest.kt
+', LF will be replaced by CRLF the next 
+time Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/test/kotlin/com/tracking/br
+oadcaster/ws/JwtChannelInterceptorTest.kt'
+, LF will be replaced by CRLF the next 
+time Git touches it
+warning: in the working copy of 'service-b
+roadcaster/src/test/kotlin/com/tracking/br
+oadcaster/ws/SessionRateLimiterTest.kt', 
+LF will be replaced by CRLF the next time 
+Git touches it
+warning: in the working copy of 'service-g
+ateway/src/main/kotlin/com/tracking/gatewa
+y/config/SecurityHeadersFilter.kt', LF 
+will be replaced by CRLF the next time 
+Git touches it
+diff --git a/PLAN.md b/PLAN.md
+index a712b13..9ce1fac 100644
+--- a/PLAN.md
++++ b/PLAN.md
+@@ -449,32 +449,32 @@
+ - [x] Storage preserve trace context (`x-request-id`, `traceparent`) từ Kafka headers cho luồng logging/DLQ.
+ 
+ ### P7 - Module service-broadcaster Secure Realtime
+-- [ ] `BRO-01` WebSocket/STOMP + JWT handshake
++- [x] `BRO-01` WebSocket/STOMP + JWT handshake
+   - Files:
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt` — Đăng ký STOMP endpoint `/ws/live`, cấu hình SimpleBroker `/topic`, prefix `/app`, gắn JwtChannelInterceptor vào inbound channel
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt` — ChannelInterceptor verify JWT offline (JWKS cache) tại STOMP CONNECT command, reject nếu token thiếu/hết hạn/bị revoke
+     - `service-broadcaster/src/main/resources/application.yml` — Cấu hình Kafka consumer, WebSocket, rate limit, stale session cleanup, metrics endpoint
+-- [ ] `BRO-02` Viewport registry theo session + disconnect cleanup
++- [x] `BRO-02` Viewport registry theo session + disconnect cleanup
+   - Files:
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt` — ConcurrentHashMap<sessionId, BoundingBox> quản lý viewport mỗi session, hỗ trợ register/unregister/query sessions chứa tọa độ
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt` — Nhận STOMP message `/app/viewport` từ client chứa BoundingBox, validate và cập nhật vào ViewportRegistry
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionDisconnectHandler.kt` — Lắng nghe SessionDisconnectEvent, tự động xóa session khỏi ViewportRegistry khi client mất kết nối (chống memory leak)
+-- [ ] `BRO-03` Spatial filtering
++- [x] `BRO-03` Spatial filtering
+   - Files:
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt` — Kiểm tra tọa độ (lat, lon) của flight có nằm trong BoundingBox viewport hay không, delegate sang BoundingBox.contains()
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt` — Iterate tất cả sessions từ ViewportRegistry, filter flight theo BoundingBoxMatcher, gọi SessionPushService push tới session khớp
+-- [ ] `BRO-04` Consume live topic + push session đích (CHỈ live-adsb, KHÔNG historical)
++- [x] `BRO-04` Consume live topic + push session đích (CHỈ live-adsb, KHÔNG historical)
+   - Files:
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt` — KafkaListener subscribe CHỈ topic `live-adsb`, deserialize EnrichedFlight, gọi SpatialPushEngine.pushToMatchingSessions()
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/BroadcasterConsumerConfig.kt` — Kafka ConsumerFactory + ContainerFactory + DefaultErrorHandler (FixedBackOff), tương tự pattern P5/P6
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt` — SimpMessagingTemplate.convertAndSendToUser() push JSON flight tới session đích qua `/topic/flights`, runCatching wrap để xử lý session đã disconnect
+-- [ ] `BRO-05` WS hardening (quota/rate/cleanup/metrics/tracing)
++- [x] `BRO-05` WS hardening (quota/rate/cleanup/metrics/tracing)
+   - Files:
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt` — Token bucket hoặc sliding window giới hạn viewport update tối đa N lần/phút/session, reject nếu vượt quota
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt` — @Scheduled quét ViewportRegistry mỗi 30s, xóa session không có activity quá `stale-timeout` (mặc định 5 phút)
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/metrics/BroadcasterMetrics.kt` — Micrometer counters/gauges: `ws.sessions.active`, `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`, `ws.push.latency`
+     - `service-broadcaster/src/main/kotlin/com/tracking/broadcaster/tracing/BroadcasterTraceContext.kt` — Đọc traceparent/x-request-id từ Kafka headers, set MDC cho logging, duy trì trace chain từ P4→P5→P7
+-- [ ] `BRO-06` Tests
++- [x] `BRO-06` Tests
+   - Files:
+     - `service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt` — Test JWT valid → CONNECT pass, JWT expired/missing/revoked → CONNECT reject
+     - `service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt` — Test register/unregister/concurrent access/query sessions containing coordinate
+@@ -493,16 +493,16 @@
+ 6. `BRO-06` Full test matrix.
+ 
+ #### P7 Acceptance Criteria
+-- [ ] WebSocket endpoint `/ws/live` chỉ chấp nhận STOMP CONNECT khi JWT hợp lệ (verify offline qua JWKS cache, không gọi HTTP tới auth-service).
+-- [ ] Client gửi viewport BoundingBox qua `/app/viewport`, server lưu vào ViewportRegistry theo sessionId.
+-- [ ] Khi client disconnect, session tự xóa khỏi ViewportRegistry (SessionDisconnectEvent listener) — không memory leak.
+-- [ ] Stale session > 5 phút không activity bị cleanup tự động bởi StaleSessionCleaner.
+-- [ ] Rate limit viewport update tối đa 10 lần/phút/session; vượt quota trả lỗi cho client.
+-- [ ] LiveFlightConsumer CHỈ subscribe topic `live-adsb` — historical data KHÔNG được push ra WebSocket.
+-- [ ] SpatialPushEngine chỉ push flight có tọa độ nằm trong viewport BoundingBox của session đích.
+-- [ ] SessionPushService xử lý graceful khi session đã disconnect (runCatching, không throw exception).
+-- [ ] Có BroadcasterMetrics tối thiểu: `ws.sessions.active` (Gauge), `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`.
+-- [ ] Trace context (traceparent, x-request-id) được extract từ Kafka headers vào MDC cho mọi log trong luồng push.
++- [x] WebSocket endpoint `/ws/live` chỉ chấp nhận STOMP CONNECT khi JWT hợp lệ (verify offline qua JWKS cache, không gọi HTTP tới auth-service).
++- [x] Client gửi viewport BoundingBox qua `/app/viewport`, server lưu vào ViewportRegistry theo sessionId.
++- [x] Khi client disconnect, session tự xóa khỏi ViewportRegistry (SessionDisconnectEvent listener) — không memory leak.
++- [x] Stale session > 5 phút không activity bị cleanup tự động bởi StaleSessionCleaner.
++- [x] Rate limit viewport update tối đa 10 lần/phút/session; vượt quota trả lỗi cho client.
++- [x] LiveFlightConsumer CHỈ subscribe topic `live-adsb` — historical data KHÔNG được push ra WebSocket.
++- [x] SpatialPushEngine chỉ push flight có tọa độ nằm trong viewport BoundingBox của session đích.
++- [x] SessionPushService xử lý graceful khi session đã disconnect (runCatching, không throw exception).
++- [x] Có BroadcasterMetrics tối thiểu: `ws.sessions.active` (Gauge), `ws.messages.pushed`, `ws.sessions.rejected_jwt`, `ws.viewport.updates`, `ws.sessions.cleaned`.
++- [x] Trace context (traceparent, x-request-id) được extract từ Kafka headers vào MDC cho mọi log trong luồng push.
+ 
+ ### P8 - Module frontend-ui Secure UX
+ - [ ] `UI-01` React + Vite + Tailwind skeleton
+diff --git a/service-broadcaster/build.gradle.kts b/service-broadcaster/build.gradle.kts
+index 02c8729..1c97d85 100644
+--- a/service-broadcaster/build.gradle.kts
++++ b/service-broadcaster/build.gradle.kts
+@@ -11,10 +11,19 @@ kotlin {
+ 
+ dependencies {
+     implementation(project(":common-dto"))
++    implementation(kotlin("reflect"))
+ 
+     implementation("org.springframework.boot:spring-boot-starter-websocket")
+     implementation("org.springframework.boot:spring-boot-starter-web")
++    implementation("org.springframework.boot:spring-boot-starter-actuator")
++    implementation("org.springframework.boot:spring-boot-starter-validation")
++    implementation("org.springframework.security:spring-security-core")
+     implementation("org.springframework.kafka:spring-kafka")
++    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
++    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
++
++    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
++    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+ 
+     testImplementation("org.springframework.boot:spring-boot-starter-test")
+     testImplementation("org.springframework.kafka:spring-kafka-test")
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/BroadcasterApplication.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/BroadcasterApplication.kt
+index c71ec95..344cc4d 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/BroadcasterApplication.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/BroadcasterApplication.kt
+@@ -1,9 +1,13 @@
+ package com.tracking.broadcaster
+ 
+ import org.springframework.boot.autoconfigure.SpringBootApplication
++import org.springframework.boot.context.properties.ConfigurationPropertiesScan
+ import org.springframework.boot.runApplication
+ 
+ @SpringBootApplication
++@ConfigurationPropertiesScan
+ public class BroadcasterApplication
+ 
+-public fun main(args: Array<String>) = runApplication<BroadcasterApplication>(*args)
++public fun main(args: Array<String>): Unit {
++    runApplication<BroadcasterApplication>(*args)
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt
+index 08acdcb..c703593 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/kafka/LiveFlightConsumer.kt
+@@ -1,3 +1,42 @@
+ package com.tracking.broadcaster.kafka
+ 
+-public class LiveFlightConsumer
++import com.fasterxml.jackson.databind.ObjectMapper
++import com.tracking.broadcaster.spatial.SpatialPushEngine
++import com.tracking.broadcaster.tracing.BroadcasterTraceContextExtractor
++import com.tracking.broadcaster.tracing.BroadcasterTraceContextHolder
++import com.tracking.common.dto.EnrichedFlight
++import org.apache.kafka.clients.consumer.ConsumerRecord
++import org.slf4j.LoggerFactory
++import org.springframework.kafka.annotation.KafkaListener
++import org.springframework.stereotype.Component
++
++@Component
++public class LiveFlightConsumer(
++    private val objectMapper: ObjectMapper,
++    private val spatialPushEngine: SpatialPushEngine,
++) {
++    private val logger = LoggerFactory.getLogger(LiveFlightConsumer::class.java)
++
++    @KafkaListener(
++        topics = ["\${tracking.kafka.topics.live:live-adsb}"],
++        groupId = "\${tracking.broadcaster.consumer.group-id:\${spring.application.name}-v1}",
++        containerFactory = "broadcasterKafkaListenerContainerFactory",
++    )
++    public fun consume(record: ConsumerRecord<String, String>): Unit {
++        val traceContext = BroadcasterTraceContextExtractor.extract(record)
++        BroadcasterTraceContextHolder.withContext(traceContext) {
++            val flight = runCatching { objectMapper.readValue(record.value(), EnrichedFlight::class.java) }
++                .getOrElse { error ->
++                    logger.warn("Ignore malformed flight payload from live topic", error)
++                    return@withContext
++                }
++
++            if (flight.isHistorical) {
++                logger.debug("Ignore historical flight from live topic: icao={}", flight.icao)
++                return@withContext
++            }
++
++            spatialPushEngine.pushToMatchingSessions(flight)
++        }
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt
+index 3fc4a14..bfc3daf 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/BoundingBoxMatcher.kt
+@@ -2,7 +2,9 @@ package com.tracking.broadcaster.spatial
+ 
+ import com.tracking.common.dto.BoundingBox
+ import com.tracking.common.dto.EnrichedFlight
++import org.springframework.stereotype.Component
+ 
++@Component
+ public class BoundingBoxMatcher {
+     public fun contains(viewport: BoundingBox, flight: EnrichedFlight): Boolean {
+         return viewport.contains(flight.lat, flight.lon)
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt
+index 677fd16..1e64ab3 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngine.kt
+@@ -1,3 +1,24 @@
+ package com.tracking.broadcaster.spatial
+ 
+-public class SpatialPushEngine
++import com.tracking.broadcaster.viewport.ViewportRegistry
++import com.tracking.broadcaster.ws.SessionFlightPusher
++import com.tracking.common.dto.EnrichedFlight
++import org.springframework.stereotype.Component
++
++@Component
++public class SpatialPushEngine(
++    private val viewportRegistry: ViewportRegistry,
++    private val boundingBoxMatcher: BoundingBoxMatcher,
++    private val sessionFlightPusher: SessionFlightPusher,
++) {
++    public fun pushToMatchingSessions(flight: EnrichedFlight): Int {
++        var pushedCount = 0
++        val matchingSessions = viewportRegistry.sessionsContaining(flight.lat, flight.lon)
++        matchingSessions.forEach { session ->
++            if (boundingBoxMatcher.contains(session.viewport, flight) && sessionFlightPusher.push(session, flight)) {
++                pushedCount += 1
++            }
++        }
++        return pushedCount
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt
+index cc9361c..df1ff08 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportMessageHandler.kt
+@@ -1,3 +1,55 @@
+ package com.tracking.broadcaster.viewport
+ 
+-public class ViewportMessageHandler
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.ws.SessionRateLimiter
++import com.tracking.common.dto.BoundingBox
++import java.security.Principal
++import java.util.Optional
++import org.springframework.messaging.MessageDeliveryException
++import org.springframework.messaging.handler.annotation.Header
++import org.springframework.messaging.handler.annotation.MessageMapping
++import org.springframework.messaging.handler.annotation.Payload
++import org.springframework.stereotype.Controller
++
++@Controller
++public class ViewportMessageHandler(
++    private val viewportRegistry: ViewportRegistry,
++    private val sessionRateLimiter: SessionRateLimiter,
++    private val broadcasterMetrics: BroadcasterMetrics,
++) {
++    @MessageMapping("viewport")
++    public fun updateViewport(
++        @Payload viewport: BoundingBox,
++        @Header("simpSessionId") sessionId: String,
++        principal: Optional<Principal>,
++    ): Unit {
++        validateViewport(viewport)
++
++        if (!sessionRateLimiter.allow(sessionId)) {
++            throw MessageDeliveryException("Viewport update rate exceeded for session=$sessionId")
++        }
++
++        val principalName = principal
++            .map { value -> value.name }
++            .filter { value -> value.isNotBlank() }
++            .orElse(sessionId)
++        viewportRegistry.register(sessionId, principalName, viewport)
++        broadcasterMetrics.incrementViewportUpdates()
++    }
++
++    private fun validateViewport(viewport: BoundingBox): Unit {
++        require(viewport.north in LATITUDE_MIN..LATITUDE_MAX) { "north out of range" }
++        require(viewport.south in LATITUDE_MIN..LATITUDE_MAX) { "south out of range" }
++        require(viewport.east in LONGITUDE_MIN..LONGITUDE_MAX) { "east out of range" }
++        require(viewport.west in LONGITUDE_MIN..LONGITUDE_MAX) { "west out of range" }
++        require(viewport.north >= viewport.south) { "north must be >= south" }
++        require(viewport.east >= viewport.west) { "east must be >= west" }
++    }
++
++    private companion object {
++        private const val LATITUDE_MIN: Double = -90.0
++        private const val LATITUDE_MAX: Double = 90.0
++        private const val LONGITUDE_MIN: Double = -180.0
++        private const val LONGITUDE_MAX: Double = 180.0
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt
+index 010b9f8..c7db1be 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/viewport/ViewportRegistry.kt
+@@ -1,3 +1,86 @@
+ package com.tracking.broadcaster.viewport
+ 
+-public class ViewportRegistry
++import com.tracking.common.dto.BoundingBox
++import java.util.concurrent.ConcurrentHashMap
++
++public class ViewportRegistry(
++    private val nowProvider: () -> Long = { System.currentTimeMillis() },
++) {
++    private val sessions: MutableMap<String, SessionViewportState> = ConcurrentHashMap()
++
++    public fun register(sessionId: String, principalName: String, viewport: BoundingBox): Unit {
++        val normalizedSessionId = sessionId.trim()
++        val normalizedPrincipalName = principalName.trim()
++        if (normalizedSessionId.isEmpty()) {
++            return
++        }
++
++        sessions[normalizedSessionId] = SessionViewportState(
++            principalName = normalizedPrincipalName.ifBlank { normalizedSessionId },
++            viewport = viewport,
++            lastActivityEpochMillis = nowProvider(),
++        )
++    }
++
++    public fun unregister(sessionId: String): Boolean = sessions.remove(sessionId.trim()) != null
++
++    public fun clear(): Unit = sessions.clear()
++
++    public fun touch(sessionId: String): Unit {
++        val normalizedSessionId = sessionId.trim()
++        if (normalizedSessionId.isEmpty()) {
++            return
++        }
++
++        sessions.computeIfPresent(normalizedSessionId) { _, current ->
++            current.copy(lastActivityEpochMillis = nowProvider())
++        }
++    }
++
++    public fun sessionsContaining(lat: Double, lon: Double): List<ViewportSession> {
++        return sessions.entries
++            .asSequence()
++            .filter { (_, state) -> state.viewport.contains(lat, lon) }
++            .map { (sessionId, state) -> state.toSession(sessionId) }
++            .toList()
++    }
++
++    public fun removeStaleSessions(staleTimeoutMillis: Long): List<ViewportSession> {
++        if (staleTimeoutMillis <= 0) {
++            return emptyList()
++        }
++
++        val staleBeforeMillis = nowProvider() - staleTimeoutMillis
++        val removed: MutableList<ViewportSession> = mutableListOf()
++        sessions.entries.forEach { (sessionId, state) ->
++            if (state.lastActivityEpochMillis < staleBeforeMillis && sessions.remove(sessionId, state)) {
++                removed.add(state.toSession(sessionId))
++            }
++        }
++        return removed
++    }
++
++    public fun activeSessions(): Int = sessions.size
++
++    public fun isRegistered(sessionId: String): Boolean = sessions.containsKey(sessionId.trim())
++
++    private data class SessionViewportState(
++        val principalName: String,
++        val viewport: BoundingBox,
++        val lastActivityEpochMillis: Long,
++    ) {
++        fun toSession(sessionId: String): ViewportSession = ViewportSession(
++            sessionId = sessionId,
++            principalName = principalName,
++            viewport = viewport,
++            lastActivityEpochMillis = lastActivityEpochMillis,
++        )
++    }
++}
++
++public data class ViewportSession(
++    val sessionId: String,
++    val principalName: String,
++    val viewport: BoundingBox,
++    val lastActivityEpochMillis: Long,
++)
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt
+index 46b73e4..469ed4b 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptor.kt
+@@ -1,3 +1,70 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class JwtChannelInterceptor
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.security.BroadcasterBlacklistService
++import com.tracking.broadcaster.security.BroadcasterJwtTokenVerifier
++import org.springframework.messaging.Message
++import org.springframework.messaging.MessageChannel
++import org.springframework.messaging.MessageDeliveryException
++import org.springframework.messaging.simp.stomp.StompCommand
++import org.springframework.messaging.simp.stomp.StompHeaderAccessor
++import org.springframework.messaging.support.ChannelInterceptor
++import org.springframework.messaging.support.MessageBuilder
++import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
++import org.springframework.security.core.authority.SimpleGrantedAuthority
++import org.springframework.stereotype.Component
++
++@Component
++public class JwtChannelInterceptor(
++    private val jwtTokenVerifier: BroadcasterJwtTokenVerifier,
++    private val blacklistService: BroadcasterBlacklistService,
++    private val broadcasterMetrics: BroadcasterMetrics,
++) : ChannelInterceptor {
++    override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
++        val accessor = StompHeaderAccessor.wrap(message)
++        if (accessor.command != StompCommand.CONNECT) {
++            return message
++        }
++
++        val token = extractBearerToken(accessor) ?: rejectConnect("Missing Authorization Bearer token")
++        val principal = jwtTokenVerifier.verify(token) ?: rejectConnect("Invalid or expired JWT")
++
++        if (blacklistService.isUserRevoked(principal.subject) || blacklistService.isTokenRevoked(principal.tokenId)) {
++            rejectConnect("Revoked JWT principal")
++        }
++
++        val authentication = UsernamePasswordAuthenticationToken(
++            principal.subject,
++            null,
++            principal.roles.map { role -> SimpleGrantedAuthority(role) },
++        )
++        accessor.user = authentication
++        accessor.setLeaveMutable(true)
++        return MessageBuilder.createMessage(message.payload, accessor.messageHeaders)
++    }
++
++    private fun extractBearerToken(accessor: StompHeaderAccessor): String? {
++        val candidates = listOf("Authorization", "authorization")
++        val header = candidates
++            .asSequence()
++            .mapNotNull { key -> accessor.getFirstNativeHeader(key) }
++            .firstOrNull()
++            ?.trim()
++            .orEmpty()
++
++        if (header.isBlank() || !header.startsWith(BEARER_PREFIX, ignoreCase = true)) {
++            return null
++        }
++
++        return header.substring(BEARER_PREFIX.length).trim().takeIf { it.isNotBlank() }
++    }
++
++    private fun rejectConnect(message: String): Nothing {
++        broadcasterMetrics.incrementRejectedJwt()
++        throw MessageDeliveryException(message)
++    }
++
++    private companion object {
++        private const val BEARER_PREFIX: String = "Bearer "
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt
+index aae4b26..8d5ccb4 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionPushService.kt
+@@ -1,3 +1,43 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class SessionPushService
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.viewport.ViewportSession
++import com.tracking.common.dto.EnrichedFlight
++import com.tracking.common.dto.LiveFlightMessage
++import org.springframework.messaging.simp.SimpMessageHeaderAccessor
++import org.springframework.messaging.simp.SimpMessageType
++import org.springframework.messaging.simp.SimpMessagingTemplate
++import org.springframework.stereotype.Service
++
++@Service
++public class SessionPushService(
++    private val messagingTemplate: SimpMessagingTemplate,
++    private val broadcasterMetrics: BroadcasterMetrics,
++) : SessionFlightPusher {
++    override fun push(session: ViewportSession, flight: EnrichedFlight): Boolean {
++        val startedNanos = System.nanoTime()
++        val pushed = runCatching {
++            val headers = SimpMessageHeaderAccessor.create(SimpMessageType.MESSAGE)
++            headers.sessionId = session.sessionId
++            headers.setLeaveMutable(true)
++
++            messagingTemplate.convertAndSendToUser(
++                session.principalName,
++                DESTINATION_FLIGHTS,
++                LiveFlightMessage(sentAt = System.currentTimeMillis(), flight = flight),
++                headers.messageHeaders,
++            )
++            true
++        }.getOrDefault(false)
++
++        broadcasterMetrics.recordPushLatencyNanos(System.nanoTime() - startedNanos)
++        if (pushed) {
++            broadcasterMetrics.incrementMessagesPushed()
++        }
++        return pushed
++    }
++
++    private companion object {
++        private const val DESTINATION_FLIGHTS: String = "/topic/flights"
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt
+index e6707db..d996095 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/SessionRateLimiter.kt
+@@ -1,3 +1,44 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class SessionRateLimiter
++import java.util.concurrent.ConcurrentHashMap
++
++public class SessionRateLimiter(
++    private val maxRequestsPerWindow: Int,
++    private val windowMillis: Long,
++    private val nowProvider: () -> Long = { System.currentTimeMillis() },
++) {
++    private val sessionWindows: MutableMap<String, WindowState> = ConcurrentHashMap()
++
++    public fun allow(sessionId: String): Boolean {
++        if (maxRequestsPerWindow <= 0 || windowMillis <= 0 || sessionId.isBlank()) {
++            return false
++        }
++
++        val now = nowProvider()
++        var allowed = false
++        sessionWindows.compute(sessionId) { _, previous ->
++            val nextState = when {
++                previous == null -> WindowState(windowStartMillis = now, count = 1)
++                now - previous.windowStartMillis >= windowMillis -> WindowState(windowStartMillis = now, count = 1)
++                previous.count < maxRequestsPerWindow -> previous.copy(count = previous.count + 1)
++                else -> previous
++            }
++            allowed = previous == null ||
++                now - previous.windowStartMillis >= windowMillis ||
++                previous.count < maxRequestsPerWindow
++            nextState
++        }
++        return allowed
++    }
++
++    public fun clear(sessionId: String): Unit {
++        sessionWindows.remove(sessionId)
++    }
++
++    public fun trackedSessions(): Int = sessionWindows.size
++
++    private data class WindowState(
++        val windowStartMillis: Long,
++        val count: Int,
++    )
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt
+index b98e1d9..ddf6cf7 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/StaleSessionCleaner.kt
+@@ -1,3 +1,19 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class StaleSessionCleaner
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.viewport.ViewportRegistry
++import org.springframework.scheduling.annotation.Scheduled
++
++public class StaleSessionCleaner(
++    private val viewportRegistry: ViewportRegistry,
++    private val sessionRateLimiter: SessionRateLimiter,
++    private val broadcasterMetrics: BroadcasterMetrics,
++    private val staleTimeoutMillis: Long,
++) {
++    @Scheduled(fixedDelayString = "\${tracking.broadcaster.cleanup.interval-millis:30000}")
++    public fun clean(): Unit {
++        val removedSessions = viewportRegistry.removeStaleSessions(staleTimeoutMillis)
++        removedSessions.forEach { session -> sessionRateLimiter.clear(session.sessionId) }
++        broadcasterMetrics.incrementSessionsCleaned(removedSessions.size)
++    }
++}
+diff --git a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt
+index 0bedbbc..f6927ae 100644
+--- a/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt
++++ b/service-broadcaster/src/main/kotlin/com/tracking/broadcaster/ws/WebSocketConfig.kt
+@@ -1,3 +1,31 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class WebSocketConfig
++import com.tracking.broadcaster.config.BroadcasterProperties
++import org.springframework.context.annotation.Configuration
++import org.springframework.messaging.simp.config.ChannelRegistration
++import org.springframework.messaging.simp.config.MessageBrokerRegistry
++import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
++import org.springframework.web.socket.config.annotation.StompEndpointRegistry
++import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
++
++@Configuration
++@EnableWebSocketMessageBroker
++public class WebSocketConfig(
++    private val jwtChannelInterceptor: JwtChannelInterceptor,
++    private val broadcasterProperties: BroadcasterProperties,
++) : WebSocketMessageBrokerConfigurer {
++    override fun registerStompEndpoints(registry: StompEndpointRegistry): Unit {
++        registry.addEndpoint("/ws/live")
++            .setAllowedOriginPatterns(*broadcasterProperties.ws.allowedOriginPatterns.toTypedArray())
++    }
++
++    override fun configureMessageBroker(registry: MessageBrokerRegistry): Unit {
++        registry.enableSimpleBroker("/topic")
++        registry.setApplicationDestinationPrefixes("/app")
++        registry.setUserDestinationPrefix("/user")
++    }
++
++    override fun configureClientInboundChannel(registration: ChannelRegistration): Unit {
++        registration.interceptors(jwtChannelInterceptor)
++    }
++}
+diff --git a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/BroadcasterWebSocketIT.kt b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/BroadcasterWebSocketIT.kt
+index 5ecdb13..3a9357d 100644
+--- a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/BroadcasterWebSocketIT.kt
++++ b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/BroadcasterWebSocketIT.kt
+@@ -1,3 +1,117 @@
+ package com.tracking.broadcaster
+ 
+-public class BroadcasterWebSocketIT
++import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.security.BroadcasterBlacklistService
++import com.tracking.broadcaster.security.BroadcasterJwtTokenVerifier
++import com.tracking.broadcaster.security.BroadcasterSecurityProperties
++import com.tracking.broadcaster.security.JwksKeyProvider
++import com.tracking.broadcaster.spatial.BoundingBoxMatcher
++import com.tracking.broadcaster.spatial.SpatialPushEngine
++import com.tracking.broadcaster.viewport.ViewportMessageHandler
++import com.tracking.broadcaster.viewport.ViewportRegistry
++import com.tracking.broadcaster.viewport.ViewportSession
++import com.tracking.broadcaster.ws.JwtChannelInterceptor
++import com.tracking.broadcaster.ws.SessionFlightPusher
++import com.tracking.broadcaster.ws.SessionRateLimiter
++import com.tracking.common.dto.AircraftMetadata
++import com.tracking.common.dto.BoundingBox
++import com.tracking.common.dto.EnrichedFlight
++import io.jsonwebtoken.Jwts
++import io.kotest.matchers.collections.shouldHaveSize
++import io.kotest.matchers.shouldBe
++import io.micrometer.core.instrument.simple.SimpleMeterRegistry
++import java.security.KeyPair
++import java.security.KeyPairGenerator
++import java.time.Instant
++import java.util.Date
++import java.util.Optional
++import kotlin.test.Test
++import org.apache.kafka.clients.consumer.ConsumerRecord
++import org.springframework.messaging.Message
++import org.springframework.messaging.MessageChannel
++import org.springframework.messaging.simp.stomp.StompCommand
++import org.springframework.messaging.simp.stomp.StompHeaderAccessor
++
++public class BroadcasterWebSocketIT {
++    private val objectMapper = jacksonObjectMapper()
++    private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
++
++    @Test
++    public fun `should pass connect then viewport update and receive matching live flight`() {
++        val securityProperties = BroadcasterSecurityProperties().apply { jwtIssuer = "tracking-auth" }
++        val keyProvider = JwksKeyProvider { kid -> if (kid == "kid-1") keyPair.public else null }
++        val verifier = BroadcasterJwtTokenVerifier(keyProvider, objectMapper, securityProperties)
++        val blacklist = BroadcasterBlacklistService(securityProperties)
++        val registry = ViewportRegistry()
++        val metrics = BroadcasterMetrics(SimpleMeterRegistry(), registry)
++        val jwtInterceptor = JwtChannelInterceptor(verifier, blacklist, metrics)
++        val rateLimiter = SessionRateLimiter(maxRequestsPerWindow = 10, windowMillis = 60_000)
++        val viewportHandler = ViewportMessageHandler(registry, rateLimiter, metrics)
++
++        val pushed: MutableList<Pair<ViewportSession, EnrichedFlight>> = mutableListOf()
++        val spatialEngine = SpatialPushEngine(
++            viewportRegistry = registry,
++            boundingBoxMatcher = BoundingBoxMatcher(),
++            sessionFlightPusher = SessionFlightPusher { session, flight ->
++                pushed.add(session to flight)
++                true
++            },
++        )
++        val consumer = com.tracking.broadcaster.kafka.LiveFlightConsumer(objectMapper, spatialEngine)
++
++        val connectMessage = connectMessage(signedToken("alice"))
++        val connected = jwtInterceptor.preSend(connectMessage, NoopChannel) ?: error("CONNECT should pass")
++        val principal = StompHeaderAccessor.wrap(connected).user
++
++        viewportHandler.updateViewport(
++            viewport = BoundingBox(north = 22.0, south = 20.0, east = 106.0, west = 105.0),
++            sessionId = "session-1",
++            principal = Optional.ofNullable(principal),
++        )
++
++        consumer.consume(ConsumerRecord("live-adsb", 0, 0L, "ICAO123", objectMapper.writeValueAsString(flight(21.0, 105.5))))
++        consumer.consume(ConsumerRecord("live-adsb", 0, 1L, "ICAO123", objectMapper.writeValueAsString(flight(30.0, 110.0))))
++
++        pushed shouldHaveSize 1
++        pushed.first().first.sessionId shouldBe "session-1"
++        pushed.first().second.icao shouldBe "ICAO123"
++    }
++
++    private fun signedToken(subject: String): String {
++        return Jwts.builder()
++            .header()
++            .keyId("kid-1")
++            .and()
++            .issuer("tracking-auth")
++            .subject(subject)
++            .id("token-$subject")
++            .claim("roles", listOf("ROLE_USER"))
++            .expiration(Date.from(Instant.now().plusSeconds(120)))
++            .signWith(keyPair.private)
++            .compact()
++    }
++
++    private fun connectMessage(token: String): Message<ByteArray> {
++        val accessor = StompHeaderAccessor.create(StompCommand.CONNECT)
++        accessor.sessionId = "session-1"
++        accessor.setNativeHeader("Authorization", "Bearer $token")
++        return org.springframework.messaging.support.MessageBuilder.createMessage(ByteArray(0), accessor.messageHeaders)
++    }
++
++    private fun flight(lat: Double, lon: Double): EnrichedFlight =
++        EnrichedFlight(
++            icao = "ICAO123",
++            lat = lat,
++            lon = lon,
++            eventTime = 1_700_000_000_000,
++            sourceId = "radar-1",
++            metadata = AircraftMetadata(),
++        )
++
++    private object NoopChannel : MessageChannel {
++        override fun send(message: Message<*>): Boolean = true
++
++        override fun send(message: Message<*>, timeout: Long): Boolean = true
++    }
++}
+diff --git a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngineTest.kt b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngineTest.kt
+index b9fa724..774d792 100644
+--- a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngineTest.kt
++++ b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/spatial/SpatialPushEngineTest.kt
+@@ -3,25 +3,81 @@ package com.tracking.broadcaster.spatial
+ import com.tracking.common.dto.AircraftMetadata
+ import com.tracking.common.dto.BoundingBox
+ import com.tracking.common.dto.EnrichedFlight
++import com.tracking.broadcaster.viewport.ViewportRegistry
++import com.tracking.broadcaster.viewport.ViewportSession
++import com.tracking.broadcaster.ws.SessionFlightPusher
++import io.kotest.matchers.collections.shouldHaveSize
+ import io.kotest.matchers.shouldBe
+ import kotlin.test.Test
+ 
+ public class SpatialPushEngineTest {
+-    private val matcher: BoundingBoxMatcher = BoundingBoxMatcher()
++    @Test
++    public fun `should push flight inside matching viewport`() {
++        val registry = ViewportRegistry()
++        registry.register(
++            sessionId = "session-1",
++            principalName = "alice",
++            viewport = BoundingBox(north = 22.0, south = 20.0, east = 106.0, west = 105.0),
++        )
++        val recorder = RecordingPusher()
++        val engine = SpatialPushEngine(registry, BoundingBoxMatcher(), SessionFlightPusher { session, flight ->
++            recorder.pushes.add(session to flight)
++            true
++        })
++        val flight = flight(lat = 21.0, lon = 105.5)
++
++        val pushedCount = engine.pushToMatchingSessions(flight)
++
++        pushedCount shouldBe 1
++        recorder.pushes shouldHaveSize 1
++        recorder.pushes.first().first.sessionId shouldBe "session-1"
++    }
++
++    @Test
++    public fun `should skip flight outside viewport`() {
++        val registry = ViewportRegistry()
++        registry.register(
++            sessionId = "session-1",
++            principalName = "alice",
++            viewport = BoundingBox(north = 22.0, south = 20.0, east = 106.0, west = 105.0),
++        )
++        val recorder = RecordingPusher()
++        val engine = SpatialPushEngine(registry, BoundingBoxMatcher(), SessionFlightPusher { session, flight ->
++            recorder.pushes.add(session to flight)
++            true
++        })
++        val flight = flight(lat = 30.0, lon = 110.0)
++
++        val pushedCount = engine.pushToMatchingSessions(flight)
++
++        pushedCount shouldBe 0
++        recorder.pushes shouldHaveSize 0
++    }
+ 
+     @Test
+-    public fun `should include flight inside viewport`() {
+-        val viewport = BoundingBox(north = 22.0, south = 20.0, east = 106.0, west = 105.0)
+-        val flight =
+-            EnrichedFlight(
+-                icao = "ICAO123",
+-                lat = 21.0,
+-                lon = 105.5,
+-                eventTime = 1,
+-                sourceId = "source",
+-                metadata = AircraftMetadata(),
+-            )
+-
+-        matcher.contains(viewport, flight) shouldBe true
++    public fun `should return zero when no sessions registered`() {
++        val engine = SpatialPushEngine(
++            viewportRegistry = ViewportRegistry(),
++            boundingBoxMatcher = BoundingBoxMatcher(),
++            sessionFlightPusher = SessionFlightPusher { _, _ -> true },
++        )
++
++        val pushedCount = engine.pushToMatchingSessions(flight(lat = 21.0, lon = 105.5))
++
++        pushedCount shouldBe 0
++    }
++
++    private fun flight(lat: Double, lon: Double): EnrichedFlight =
++        EnrichedFlight(
++            icao = "ICAO123",
++            lat = lat,
++            lon = lon,
++            eventTime = 1,
++            sourceId = "source",
++            metadata = AircraftMetadata(),
++        )
++
++    private class RecordingPusher {
++        val pushes: MutableList<Pair<ViewportSession, EnrichedFlight>> = mutableListOf()
+     }
+ }
+diff --git a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt
+index 24f2d95..a920439 100644
+--- a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt
++++ b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/viewport/ViewportRegistryTest.kt
+@@ -1,3 +1,44 @@
+ package com.tracking.broadcaster.viewport
+ 
+-public class ViewportRegistryTest
++import com.tracking.common.dto.BoundingBox
++import io.kotest.matchers.booleans.shouldBeFalse
++import io.kotest.matchers.booleans.shouldBeTrue
++import io.kotest.matchers.collections.shouldContain
++import io.kotest.matchers.collections.shouldHaveSize
++import io.kotest.matchers.shouldBe
++import kotlin.concurrent.thread
++import kotlin.test.Test
++
++public class ViewportRegistryTest {
++    @Test
++    public fun `should register unregister and query sessions by coordinate`() {
++        val registry = ViewportRegistry()
++        registry.register("session-1", "alice", BoundingBox(22.0, 20.0, 106.0, 105.0))
++        registry.register("session-2", "bob", BoundingBox(40.0, 30.0, 120.0, 110.0))
++
++        val matching = registry.sessionsContaining(21.0, 105.5)
++
++        matching.map { it.sessionId } shouldContain "session-1"
++        matching.map { it.sessionId }.contains("session-2").shouldBeFalse()
++        registry.unregister("session-1").shouldBeTrue()
++        registry.isRegistered("session-1").shouldBeFalse()
++    }
++
++    @Test
++    public fun `should support concurrent register operations`() {
++        val registry = ViewportRegistry()
++        val viewport = BoundingBox(22.0, 20.0, 106.0, 105.0)
++        val workers = (1..8).map { workerIndex ->
++            thread(start = true) {
++                repeat(100) { item ->
++                    registry.register("session-$workerIndex-$item", "user-$workerIndex", viewport)
++                }
++            }
++        }
++
++        workers.forEach(Thread::join)
++
++        registry.activeSessions() shouldBe 800
++        registry.sessionsContaining(21.0, 105.5) shouldHaveSize 800
++    }
++}
+diff --git a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt
+index e42d455..309c612 100644
+--- a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt
++++ b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/JwtChannelInterceptorTest.kt
+@@ -1,3 +1,119 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class JwtChannelInterceptorTest
++import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
++import com.tracking.broadcaster.metrics.BroadcasterMetrics
++import com.tracking.broadcaster.security.BroadcasterBlacklistService
++import com.tracking.broadcaster.security.BroadcasterJwtTokenVerifier
++import com.tracking.broadcaster.security.BroadcasterSecurityProperties
++import com.tracking.broadcaster.security.JwksKeyProvider
++import io.jsonwebtoken.Jwts
++import io.kotest.matchers.shouldBe
++import io.micrometer.core.instrument.simple.SimpleMeterRegistry
++import java.security.KeyPair
++import java.security.KeyPairGenerator
++import java.time.Instant
++import java.util.Date
++import kotlin.test.Test
++import kotlin.test.assertFailsWith
++import org.springframework.messaging.Message
++import org.springframework.messaging.MessageChannel
++import org.springframework.messaging.MessageDeliveryException
++import org.springframework.messaging.simp.stomp.StompCommand
++import org.springframework.messaging.simp.stomp.StompHeaderAccessor
++
++public class JwtChannelInterceptorTest {
++    private val objectMapper = jacksonObjectMapper()
++    private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
++    private val securityProperties = BroadcasterSecurityProperties().apply { jwtIssuer = "tracking-auth" }
++
++    @Test
++    public fun `should allow stomp connect when jwt is valid`() {
++        val meterRegistry = SimpleMeterRegistry()
++        val interceptor = interceptor(meterRegistry, revokedUser = null)
++        val token = signedToken(subject = "alice", expiresAt = Instant.now().plusSeconds(120))
++        val message = connectMessage(token)
++
++        val result = interceptor.preSend(message, NoopChannel) ?: error("CONNECT should pass")
++
++        val accessor = StompHeaderAccessor.wrap(result)
++        accessor.user?.name shouldBe "alice"
++        meterRegistry.counter("ws.sessions.rejected_jwt").count() shouldBe 0.0
++    }
++
++    @Test
++    public fun `should reject stomp connect when token missing`() {
++        val meterRegistry = SimpleMeterRegistry()
++        val interceptor = interceptor(meterRegistry, revokedUser = null)
++
++        assertFailsWith<MessageDeliveryException> {
++            interceptor.preSend(connectMessage(null), NoopChannel)
++        }
++
++        meterRegistry.counter("ws.sessions.rejected_jwt").count() shouldBe 1.0
++    }
++
++    @Test
++    public fun `should reject stomp connect when token expired`() {
++        val meterRegistry = SimpleMeterRegistry()
++        val interceptor = interceptor(meterRegistry, revokedUser = null)
++        val expiredToken = signedToken(subject = "alice", expiresAt = Instant.now().minusSeconds(30))
++
++        assertFailsWith<MessageDeliveryException> {
++            interceptor.preSend(connectMessage(expiredToken), NoopChannel)
++        }
++
++        meterRegistry.counter("ws.sessions.rejected_jwt").count() shouldBe 1.0
++    }
++
++    @Test
++    public fun `should reject stomp connect when user revoked`() {
++        val meterRegistry = SimpleMeterRegistry()
++        val interceptor = interceptor(meterRegistry, revokedUser = "alice")
++        val token = signedToken(subject = "alice", expiresAt = Instant.now().plusSeconds(120))
++
++        assertFailsWith<MessageDeliveryException> {
++            interceptor.preSend(connectMessage(token), NoopChannel)
++        }
++
++        meterRegistry.counter("ws.sessions.rejected_jwt").count() shouldBe 1.0
++    }
++
++    private fun interceptor(meterRegistry: SimpleMeterRegistry, revokedUser: String?): JwtChannelInterceptor {
++        val keyProvider = JwksKeyProvider { kid -> if (kid == "kid-1") keyPair.public else null }
++        val verifier = BroadcasterJwtTokenVerifier(keyProvider, objectMapper, securityProperties)
++        val blacklist = BroadcasterBlacklistService(securityProperties)
++        revokedUser?.let(blacklist::revokeUsername)
++        return JwtChannelInterceptor(
++            jwtTokenVerifier = verifier,
++            blacklistService = blacklist,
++            broadcasterMetrics = BroadcasterMetrics(meterRegistry, com.tracking.broadcaster.viewport.ViewportRegistry()),
++        )
++    }
++
++    private fun signedToken(subject: String, expiresAt: Instant): String {
++        return Jwts.builder()
++            .header()
++            .keyId("kid-1")
++            .and()
++            .issuer("tracking-auth")
++            .subject(subject)
++            .id("token-$subject")
++            .claim("roles", listOf("ROLE_USER"))
++            .expiration(Date.from(expiresAt))
++            .signWith(keyPair.private)
++            .compact()
++    }
++
++    private fun connectMessage(token: String?): Message<ByteArray> {
++        val accessor = StompHeaderAccessor.create(StompCommand.CONNECT)
++        accessor.sessionId = "session-1"
++        token?.let { accessor.setNativeHeader("Authorization", "Bearer $it") }
++        return org.springframework.messaging.support.MessageBuilder.createMessage(ByteArray(0), accessor.messageHeaders)
++    }
++
++    private object NoopChannel : MessageChannel {
++        override fun send(message: Message<*>): Boolean = true
++
++        override fun send(message: Message<*>, timeout: Long): Boolean = true
++    }
++}
+diff --git a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/SessionRateLimiterTest.kt b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/SessionRateLimiterTest.kt
+index 2b13653..4255bcd 100644
+--- a/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/SessionRateLimiterTest.kt
++++ b/service-broadcaster/src/test/kotlin/com/tracking/broadcaster/ws/SessionRateLimiterTest.kt
+@@ -1,3 +1,54 @@
+ package com.tracking.broadcaster.ws
+ 
+-public class SessionRateLimiterTest
++import io.kotest.matchers.booleans.shouldBeFalse
++import io.kotest.matchers.booleans.shouldBeTrue
++import io.kotest.matchers.shouldBe
++import kotlin.test.Test
++
++public class SessionRateLimiterTest {
++    @Test
++    public fun `should allow under limit and reject over limit`() {
++        var now = 1_000L
++        val limiter = SessionRateLimiter(
++            maxRequestsPerWindow = 2,
++            windowMillis = 60_000,
++            nowProvider = { now },
++        )
++
++        limiter.allow("session-1").shouldBeTrue()
++        limiter.allow("session-1").shouldBeTrue()
++        limiter.allow("session-1").shouldBeFalse()
++    }
++
++    @Test
++    public fun `should reset limit after window passes`() {
++        var now = 1_000L
++        val limiter = SessionRateLimiter(
++            maxRequestsPerWindow = 1,
++            windowMillis = 1_000,
++            nowProvider = { now },
++        )
++
++        limiter.allow("session-1").shouldBeTrue()
++        limiter.allow("session-1").shouldBeFalse()
++        now += 1_001
++        limiter.allow("session-1").shouldBeTrue()
++    }
++
++    @Test
++    public fun `should clear session state explicitly`() {
++        var now = 1_000L
++        val limiter = SessionRateLimiter(
++            maxRequestsPerWindow = 1,
++            windowMillis = 60_000,
++            nowProvider = { now },
++        )
++
++        limiter.allow("session-1").shouldBeTrue()
++        limiter.allow("session-1").shouldBeFalse()
++        limiter.clear("session-1")
++
++        limiter.allow("session-1").shouldBeTrue()
++        limiter.trackedSessions() shouldBe 1
++    }
++}
+diff --git a/service-gateway/src/main/kotlin/com/tracking/gateway/config/SecurityHeadersFilter.kt b/service-gateway/src/main/kotlin/com/tracking/gateway/config/SecurityHeadersFilter.kt
+index beb3bfe..9705081 100644
+--- a/service-gateway/src/main/kotlin/com/tracking/gateway/config/SecurityHeadersFilter.kt
++++ b/service-gateway/src/main/kotlin/com/tracking/gateway/config/SecurityHeadersFilter.kt
+@@ -25,7 +25,7 @@ public class SecurityHeadersFilter : GlobalFilter, Ordered {
+         exchange: org.springframework.web.server.ServerWebExchange,
+         chain: org.springframework.cloud.gateway.filter.GatewayFilterChain,
+     ): Mono<Void> {
+-        return chain.filter(exchange).then(
++        exchange.response.beforeCommit {
+             Mono.fromRunnable {
+                 val headers = exchange.response.headers
+                 defaultHeaders().forEach { (name, value) ->
+@@ -38,8 +38,9 @@ public class SecurityHeadersFilter : GlobalFilter, Ordered {
+                         headers.add("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+                     }
+                 }
+-            },
+-        )
++            }
++        }
++        return chain.filter(exchange)
+     }
+ 
+     private fun isSecureRequest(request: ServerHttpRequest): Boolean {

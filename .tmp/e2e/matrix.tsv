@@ -1,0 +1,12 @@
+P0-Infra+Apps health	PASS	all health endpoints reachable
+P2/P3 Auth register via gateway	PASS	access token issued
+P2 Admin login	PASS	bootstrap admin login ok
+P2 API key create	PASS	apiKeyId=1
+P3 Centralized auth at gateway	PASS	ingest without api-key => 401
+P4 Ingestion accepted	PASS	status=202 attempt=1
+P5->P6 Processing to Storage	PASS	row persisted, trace=e2e-req-1|00-11111111111111111111111111111111-2222222222222222-01
+P7 WebSocket broadcast via gateway	PASS	received STOMP message with ICAO ABC123
+P3 Rate limiting /auth/login	PASS	429 observed
+P2 Revoke API key	PASS	revoke endpoint returned 204
+P3/P4 Revocation propagation (Kafka)	PASS	revoked api-key blocked at gateway/ingestion
+P3 CORS centralized	PASS	allow-origin header present

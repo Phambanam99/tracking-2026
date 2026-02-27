@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: service-broadcaster
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: false
+  kafka:
+    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+tracking:
+  kafka:
+    topics:
+      live: live-adsb
+      authRevocation: auth-revocation
+  broadcaster:
+    ws:
+      allowed-origin-patterns:
+        - ${BROADCASTER_ALLOWED_ORIGIN:http://localhost:5173}
+      max-viewport-updates-per-minute: 10
+    consumer:
+      group-id: service-broadcaster-v1
+      auto-offset-reset: latest
+      max-poll-records: 500
+      retry:
+        backoff-millis: 1000
+        max-attempts: 3
+      auth-revocation-group: ${spring.application.name}-${random.uuid}
+    cleanup:
+      interval-millis: 30000
+      stale-timeout-millis: 300000
+    security:
+      fail-closed: true
+      jwt-issuer: ${AUTH_JWT_ISSUER:tracking-auth}
+      jwks-uri: ${AUTH_JWKS_URI:http://service-auth:8081/api/v1/auth/.well-known/jwks.json}
+      jwks-refresh-interval-millis: 300000
+      jwks-connect-timeout-millis: 300
+      jwks-read-timeout-millis: 1000
+      access-token-ttl-seconds: 900
+      revocation-user-ttl-seconds: 900
