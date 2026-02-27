@@ -1,0 +1,14 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.2)
+
+2026-02-27T16:49:21.448+07:00  INFO 38512 --- [service-auth] [           main] com.tracking.auth.AuthApplicationKt      : Starting AuthApplicationKt v0.1.0-SNAPSHOT using Java 21.0.9 with PID 38512 (C:\Users\NamP7\Documents\workspace\2026\tracking-2026\service-auth\build\libs\service-auth-0.1.0-SNAPSHOT.jar started by NamP7 in C:\Users\NamP7\Documents\workspace\2026\tracking-2026)
+2026-02-27T16:49:21.449+07:00  INFO 38512 --- [service-auth] [           main] com.tracking.auth.AuthApplicationKt      : The following 1 profile is active: "local"
+2026-02-27T16:49:21.450+07:00 DEBUG 38512 --- [service-auth] [           main] o.s.boot.SpringApplication               : Loading source class com.tracking.auth.AuthApplication
+2026-02-27T16:49:21.509+07:00 DEBUG 38512 --- [service-auth] [           main] ConfigServletWebServerApplicationContext : Refreshing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@613a8ee1

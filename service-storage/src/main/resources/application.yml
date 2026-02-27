@@ -1,6 +1,12 @@
 spring:
   application:
     name: service-storage
+  flyway:
+    create-schemas: true
+    default-schema: storage
+    locations: classpath:db/migration
+    schemas: storage
+    table: flyway_schema_history_storage
   jackson:
     deserialization:
       fail-on-unknown-properties: false
@@ -8,6 +14,8 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/tracking}
     username: ${SPRING_DATASOURCE_USERNAME:tracking}
     password: ${SPRING_DATASOURCE_PASSWORD:tracking}
+    hikari:
+      schema: storage
   kafka:
     bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
