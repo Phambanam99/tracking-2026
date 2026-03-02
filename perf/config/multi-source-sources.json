@@ -1,0 +1,74 @@
+{
+  "sources": [
+    {
+      "sourceId": "RADAR-HN",
+      "label": "Ha Noi",
+      "batchSize": 1000,
+      "baseLat": 21.0285,
+      "baseLon": 105.8542,
+      "icaoOffset": 0,
+      "phases": {
+        "warmup": { "requestRate": 10, "duration": "2m", "preAllocatedVus": 50, "maxVus": 100 },
+        "ramp": { "requestRate": 10, "duration": "5m", "preAllocatedVus": 50, "maxVus": 100 },
+        "sustained": { "requestRate": 10, "duration": "10m", "preAllocatedVus": 50, "maxVus": 100 },
+        "peak": { "requestRate": 20, "duration": "2m", "preAllocatedVus": 80, "maxVus": 160 }
+      }
+    },
+    {
+      "sourceId": "RADAR-HCM",
+      "label": "Ho Chi Minh City",
+      "batchSize": 1000,
+      "baseLat": 10.8231,
+      "baseLon": 106.6297,
+      "icaoOffset": 200000,
+      "phases": {
+        "warmup": { "requestRate": 10, "duration": "2m", "preAllocatedVus": 50, "maxVus": 100 },
+        "ramp": { "requestRate": 15, "duration": "5m", "preAllocatedVus": 60, "maxVus": 120 },
+        "sustained": { "requestRate": 15, "duration": "10m", "preAllocatedVus": 60, "maxVus": 120 },
+        "peak": { "requestRate": 20, "duration": "2m", "preAllocatedVus": 80, "maxVus": 160 }
+      }
+    },
+    {
+      "sourceId": "RADAR-DN",
+      "label": "Da Nang",
+      "batchSize": 1000,
+      "baseLat": 16.0544,
+      "baseLon": 108.2022,
+      "icaoOffset": 400000,
+      "phases": {
+        "warmup": { "requestRate": 10, "duration": "2m", "preAllocatedVus": 50, "maxVus": 100 },
+        "ramp": { "requestRate": 10, "duration": "5m", "preAllocatedVus": 50, "maxVus": 100 },
+        "sustained": { "requestRate": 10, "duration": "10m", "preAllocatedVus": 50, "maxVus": 100 },
+        "peak": { "requestRate": 20, "duration": "2m", "preAllocatedVus": 80, "maxVus": 160 }
+      }
+    },
+    {
+      "sourceId": "RADAR-HP",
+      "label": "Hai Phong",
+      "batchSize": 1000,
+      "baseLat": 20.8449,
+      "baseLon": 106.6881,
+      "icaoOffset": 600000,
+      "phases": {
+        "warmup": { "requestRate": 10, "duration": "2m", "preAllocatedVus": 50, "maxVus": 100 },
+        "ramp": { "requestRate": 20, "duration": "5m", "preAllocatedVus": 80, "maxVus": 160 },
+        "sustained": { "requestRate": 20, "duration": "10m", "preAllocatedVus": 80, "maxVus": 160 },
+        "peak": { "requestRate": 20, "duration": "2m", "preAllocatedVus": 80, "maxVus": 160 }
+      }
+    },
+    {
+      "sourceId": "RADAR-CT",
+      "label": "Can Tho",
+      "batchSize": 1000,
+      "baseLat": 10.0452,
+      "baseLon": 105.7469,
+      "icaoOffset": 800000,
+      "phases": {
+        "warmup": { "requestRate": 10, "duration": "2m", "preAllocatedVus": 50, "maxVus": 100 },
+        "ramp": { "requestRate": 15, "duration": "5m", "preAllocatedVus": 60, "maxVus": 120 },
+        "sustained": { "requestRate": 15, "duration": "10m", "preAllocatedVus": 60, "maxVus": 120 },
+        "peak": { "requestRate": 20, "duration": "2m", "preAllocatedVus": 80, "maxVus": 160 }
+      }
+    }
+  ]
+}

@@ -10,9 +10,11 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: 1
       properties:
-        batch.size: 65536
-        linger.ms: 5
+        batch.size: 131072
+        linger.ms: 10
         compression.type: lz4
+        buffer.memory: 67108864
+        max.request.size: 10485760
         delivery.timeout.ms: 1000
         max.block.ms: 1000
         request.timeout.ms: 800
@@ -36,6 +38,14 @@ management:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,250ms,500ms,1s,2s
 
 tracking:
   kafka:
@@ -51,8 +61,6 @@ tracking:
     admission:
       max-in-flight: 1024
     kafka:
-      publish-timeout-millis: 1000
-      batch-publish-concurrency: 64
     security:
       enforce-api-key: true
       api-key-header: x-api-key

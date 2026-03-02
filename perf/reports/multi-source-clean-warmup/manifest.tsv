@@ -1,0 +1,2 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+warmup	RADAR-HN	1000	10	2m	50	100	10000	perf/reports/multi-source-clean-warmup/warmup-RADAR-HN.summary.json	perf/reports/multi-source-clean-warmup/warmup-RADAR-HN.log

@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+sustained	RADAR-HN	1000	10	10m	50	100	10000	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HN.summary.json	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HN.log
+sustained	RADAR-HCM	1000	15	10m	60	120	15000	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HCM.summary.json	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HCM.log
+sustained	RADAR-DN	1000	10	10m	50	100	10000	perf/reports/multi-source-postfix-sustained/sustained-RADAR-DN.summary.json	perf/reports/multi-source-postfix-sustained/sustained-RADAR-DN.log
+sustained	RADAR-HP	1000	20	10m	80	160	20000	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HP.summary.json	perf/reports/multi-source-postfix-sustained/sustained-RADAR-HP.log
+sustained	RADAR-CT	1000	15	10m	60	120	15000	perf/reports/multi-source-postfix-sustained/sustained-RADAR-CT.summary.json	perf/reports/multi-source-postfix-sustained/sustained-RADAR-CT.log

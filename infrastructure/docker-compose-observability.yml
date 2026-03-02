@@ -5,21 +5,28 @@ services:
     image: prom/prometheus:v2.55.0
     container_name: tracking-prometheus
     restart: unless-stopped
+    entrypoint: [ "/bin/sh", "-c" ]
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=7d
-      - --web.enable-lifecycle
+      - >
+        /opt/tracking/render-prometheus-config.sh /etc/prometheus/prometheus.yml /tmp/prometheus.yml && exec /bin/prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=7d --web.enable-lifecycle
+    environment:
+      SERVICE_GATEWAY_METRICS_TARGET: ${SERVICE_GATEWAY_METRICS_TARGET:-host.docker.internal:8080}
+      SERVICE_AUTH_METRICS_TARGET: ${SERVICE_AUTH_METRICS_TARGET:-host.docker.internal:8081}
+      SERVICE_INGESTION_METRICS_TARGET: ${SERVICE_INGESTION_METRICS_TARGET:-host.docker.internal:8082}
+      SERVICE_BROADCASTER_METRICS_TARGET: ${SERVICE_BROADCASTER_METRICS_TARGET:-host.docker.internal:8083}
+      SERVICE_STORAGE_METRICS_TARGET: ${SERVICE_STORAGE_METRICS_TARGET:-host.docker.internal:8084}
+      SERVICE_PROCESSING_METRICS_TARGET: ${SERVICE_PROCESSING_METRICS_TARGET:-host.docker.internal:8085}
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/render-prometheus-config.sh:/opt/tracking/render-prometheus-config.sh:ro
       - ../observability/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
       - prometheus-data:/prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/ready >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9090/-/ready >/dev/null 2>&1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -39,7 +46,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ../observability/grafana:/var/lib/grafana/dashboards:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null 2>&1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,7 +60,7 @@ services:
     ports:
       - "${ZIPKIN_PORT:-9411}:9411"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9411/health >/dev/null 2>&1"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9411/health >/dev/null 2>&1" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -64,7 +71,7 @@ services:
     image: otel/opentelemetry-collector-contrib:0.102.1
     container_name: tracking-otel-collector
     restart: unless-stopped
-    command: ["--config=/etc/otelcol/config.yml"]
+    command: [ "--config=/etc/otelcol/config.yml" ]
     depends_on:
       zipkin:
         condition: service_healthy
@@ -75,6 +82,61 @@ services:
       - ../observability/otel/collector-config.yml:/etc/otelcol/config.yml:ro
     networks:
       - tracking-net
+
+  # --- INFRASTRUCTURE EXPORTERS ---
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: tracking-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-tracking}:${POSTGRES_PASSWORD:-tracking}@postgres:5432/${POSTGRES_DB:-tracking}?sslmode=disable"
+    ports:
+      - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+    networks:
+      - tracking-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9187/metrics > /dev/null 2>&1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    container_name: tracking-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    ports:
+      - "${REDIS_EXPORTER_PORT:-9121}:9121"
+    networks:
+      - tracking-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9121/metrics > /dev/null 2>&1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: tracking-kafka-exporter
+    restart: unless-stopped
+    command: [ "--kafka.server=kafka:9092" ]
+    ports:
+      - "${KAFKA_EXPORTER_PORT:-9308}:9308"
+    networks:
+      - tracking-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9308/metrics > /dev/null 2>&1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
 networks:
   tracking-net:

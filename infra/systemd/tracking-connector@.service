@@ -1,0 +1,24 @@
+[Unit]
+Description=Tracking connector %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tracking
+Group=tracking
+WorkingDirectory=/opt/tracking-2026
+EnvironmentFile=/etc/tracking/connectors/%i.env
+ExecStart=/opt/tracking-2026/connectors/run_connector.sh %i
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/log/tracking-connectors /tmp
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

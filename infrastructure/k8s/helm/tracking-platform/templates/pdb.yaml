@@ -1,0 +1,24 @@
+{{- $components := list "gateway" "auth" "ingestion" "broadcaster" "processing" "storage" -}}
+{{- range $component := $components }}
+{{- $config := index $.Values $component -}}
+{{- if $config.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "tracking-platform.componentName" (dict "root" $ "component" $component) }}
+  labels:
+    {{- include "tracking-platform.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  {{- if $config.pdb.minAvailable }}
+  minAvailable: {{ $config.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ default 1 $config.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "tracking-platform.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $component }}
+{{- end }}
+{{- end }}

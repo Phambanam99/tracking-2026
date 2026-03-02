@@ -1,0 +1,120 @@
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9604024066666665","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1606418432","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:32:41+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"69742.26072138597","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"69742.26072138597","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009500509709886022","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"66007.0400387081","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"138.50247973872018","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"10061.062053949436","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"1.1512898445500008","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1749024768","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:33:38+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"74531.51618398637","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"74531.51618398637","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009500530823309493","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"65761.2449216483","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"445.4923582898046","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"9968.538402011995","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"1.1512898445500004","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1266679808","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:34:34+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"74609.63174817472","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"74609.63174817472","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.00095005489206043","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"66331.50094444715","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"158.9577178282559","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"9791.80994817649","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9944921676","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1112713200","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:35:31+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"76101.66215693855","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"76125.82141476615","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009500467483320607","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"66665.15279623141","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"136.90059185892017","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"9294.093489551877","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.981174197827381","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1138479584","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:36:28+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"76120.05219660723","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"76120.05219660723","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009500464467151728","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"65614.12623236033","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"328.3636187898705","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"10173.883626522327","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9813801403722222","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1167050112","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:37:24+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"1.2124334761375004","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1170688712","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:38:21+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9755951077656251","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1170688712","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:39:17+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}

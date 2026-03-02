@@ -1,0 +1,324 @@
+# Aircraft Display Fix Plan
+
+## Purpose
+
+This document replaces the previous plan with a corrected implementation plan based on the current repository state.
+
+The previous version mixed together:
+
+- real ingestion failures
+- frontend issues that are already fixed
+- optimization ideas that are not the main blocker
+- a few assumptions that do not match the codebase anymore
+
+This revised plan separates those concerns and defines a safer rollout order.
+
+## Progress Update
+
+Status after implementation and verification:
+
+- Phase 1 is complete:
+  - all connectors now emit `source_id` in the record body
+  - source header fallback is enabled by default
+- Phase 2 is complete:
+  - ADSBX now enables derived speed and heading by default
+- Phase 3 uncovered and fixed one additional contract issue:
+  - top-level Kafka/WebSocket payloads were already `snake_case`
+  - nested `metadata` fields were still partially serialized as `camelCase`
+  - runtime contract is now consistently `snake_case`, while deserialization still accepts legacy `camelCase`
+- Phase 4 has started in measurement mode:
+  - frontend now records socket batch flush cost and map layer sync cost behind optional debug instrumentation
+  - this is intentionally observability-first, not a rendering algorithm change
+
+## Current State Summary
+
+After reviewing the connectors, ingestion path, processing path, broadcaster, topic contracts, and current frontend code, the situation is:
+
+1. The most credible operational blocker in the current plan is still missing `source_id` in connector record bodies.
+2. `SEND_SOURCE_HEADER` is still default `false` in connectors, so header fallback is not guaranteed.
+3. ADSBX still keeps `ADSBX_INCLUDE_DERIVED_SPEED_HEADING=false` by default, which can reduce icon rotation quality.
+4. Frontend already has:
+   - popup position, event time, source
+   - detail panel
+   - altitude legend
+   - style cache
+   - batched socket upserts
+5. Runtime JSON contract has just been standardized back to `snake_case` across Kafka and WebSocket. Any new plan must assume `event_time`, `source_id`, `is_historical`, and `sent_at` on the wire.
+
+## Review Of The Old Plan
+
+### What was correct
+
+- Missing `source_id` in connector payloads is a real risk.
+- Header fallback should exist, but should not be the only mechanism.
+- ADSBX missing speed and heading can reduce UX quality.
+
+### What was incorrect or incomplete
+
+1. "Country does not show because records are rejected when `source_id` is missing" is too simplistic.
+   Country display depends on successful ingestion plus enrichment/reference data quality. Missing `source_id` can explain data loss, but not every missing country case.
+
+2. "Aircraft icon only one type because ADSBX lacks speed/heading" is not accurate.
+   Rotation depends on heading, but icon shape depends on metadata and `resolveShape()`. Missing heading can explain no rotation, not generic shape by itself.
+
+3. The frontend performance section is outdated.
+   The repo already has `getCachedAircraftStyle()` and batched socket updates. A fresh plan should not treat those as missing.
+
+4. The proposed `preWarmStyleCache()` was too aggressive.
+   Warming every shape x every altitude bucket x every heading bucket at startup can shift cost to initial page load and hurt time-to-interactive. This should be optional and measurement-driven, not a default fix.
+
+5. The proposed root cause list did not distinguish:
+   - data not entering the pipeline
+   - data entering but being weakly enriched
+   - data rendered without rotation
+   - data rendered with fallback shape
+
+## Corrected Root Cause Model
+
+### P0: Data admission failures
+
+The highest-risk issue is connector payload completeness.
+
+Observed in current code:
+
+- `connectors/adsbx_connector.py` does not include `source_id` in each record body
+- `connectors/radarbox_connector.py` does not include `source_id` in each record body
+- `connectors/common.py` keeps `send_source_header=False` by default
+
+Impact:
+
+- ingestion may reject records when body lacks `source_id`
+- header fallback only works when explicitly enabled
+- source attribution is fragile
+
+### P1: Incomplete movement data from ADSBX
+
+Observed in current code:
+
+- `ADSBX_INCLUDE_DERIVED_SPEED_HEADING` still defaults to `false`
+
+Impact:
+
+- heading may be missing
+- icon rotation may not reflect flight direction
+- speed-dependent display quality may degrade
+
+### P2: Metadata quality and icon differentiation
+
+Shape rendering depends on metadata path, not only heading.
+
+Relevant frontend behavior:
+
+- shape is resolved via `resolveShape()` in `frontend-ui/src/features/aircraft/db/iconResolver.ts`
+- that path relies on aircraft metadata such as `aircraftType`
+
+Impact:
+
+- if enrichment does not fill metadata consistently, icons may fall back to `unknown`
+- this is separate from heading/rotation quality
+
+### P3: High-volume rendering cost
+
+This is now an optimization topic, not the first-line fix.
+
+Current frontend already has:
+
+- cached styles in `frontend-ui/src/features/aircraft/render/aircraftStyle.ts`
+- batched socket writes in `frontend-ui/src/features/aircraft/hooks/useAircraftSocket.ts`
+
+Further performance work should only happen after measuring with real data volume.
+
+## Corrected Implementation Plan
+
+## Phase 1: Make ingestion reliable
+
+### Change 1.1
+
+Modify `connectors/adsbx_connector.py`
+
+Add `source_id` to every emitted record in `transform_adsbx_aircraft_list()`.
+
+Expected record shape:
+
+```python
+{
+    "icao": "...",
+    "lat": ...,
+    "lon": ...,
+    "event_time": ...,
+    "source_id": "ADSBX-SNAPSHOT",
+}
+```
+
+### Change 1.2
+
+Modify `connectors/radarbox_connector.py`
+
+Add `source_id` to every emitted record in `transform_radarbox_flight()`.
+
+Expected record shape:
+
+```python
+{
+    "icao": "...",
+    "lat": ...,
+    "lon": ...,
+    "event_time": ...,
+    "source_id": "RADARBOX-GLOBAL",
+}
+```
+
+### Change 1.3
+
+Modify `connectors/common.py`
+
+Change connector header fallback to default on:
+
+- `send_source_header: bool = True`
+- env parsing should default to true unless explicitly disabled
+
+Rationale:
+
+- body field becomes the primary contract
+- header remains a backup path
+- rollout is safer across mixed deployments
+
+### Acceptance for Phase 1
+
+- every connector record contains `source_id` in body
+- every connector request contains `X-Source-Id` unless explicitly disabled
+- ingestion accepts connector batches without relying on lucky env setup
+
+## Phase 2: Improve ADSBX movement quality
+
+### Change 2.1
+
+Modify `connectors/adsbx_connector.py`
+
+Change default:
+
+```python
+ADSBX_INCLUDE_DERIVED_SPEED_HEADING=true
+```
+
+Implementation should still allow env override to disable it.
+
+### Acceptance for Phase 2
+
+- ADSBX records include heading when source data provides a usable value
+- aircraft icons rotate more consistently in the map
+
+## Phase 3: Validate enrichment path, do not guess
+
+This phase is mostly verification, not code-first work.
+
+Questions to answer with tests or sampled payloads:
+
+1. For aircraft that show generic icons, is `aircraftType` missing in `live-adsb`?
+2. For aircraft that show no country, is `metadata.countryCode` missing in `live-adsb`?
+3. Are those gaps connector-specific or reference-data-specific?
+
+Only after those answers:
+
+- decide whether to improve processing enrichment
+- or accept frontend fallback behavior
+
+### Acceptance for Phase 3
+
+- at least one sampled `live-adsb` payload from each source is inspected
+- root cause of generic icons is attributed to either metadata gap or resolver mapping gap
+- root cause of missing country is attributed to either enrichment gap or data admission loss
+
+## Phase 4: Performance only if metrics justify it
+
+Do not treat this as part of the primary fix.
+
+### What should not be done by default
+
+- no unconditional startup prewarm of all shape/band/heading combinations
+- no WebGL migration without evidence
+
+### What is acceptable if profiling proves a need
+
+1. Idle-time prewarm for the most common shapes only
+2. Additional `addFeatures()` batching in `AircraftMapLayer`
+3. WebGL renderer evaluation only when SVG style cache is still not enough
+
+### Acceptance for Phase 4
+
+- performance work is tied to measured dataset size and frame drops
+- no startup regression is introduced just to optimize worst-case volume
+
+## Files That Actually Need Changes
+
+### Required code changes
+
+- `connectors/common.py`
+- `connectors/adsbx_connector.py`
+- `connectors/radarbox_connector.py`
+
+### Likely test updates
+
+- `connectors/tests/test_common.py`
+- `connectors/tests/test_adsbx_connector.py`
+- `connectors/tests/test_radarbox_connector.py`
+
+### Verification-only files
+
+- `frontend-ui/src/features/aircraft/render/aircraftStyle.ts`
+- `frontend-ui/src/features/aircraft/db/iconResolver.ts`
+- `docs/topic-contracts.md`
+
+These do not need automatic modification as part of the primary fix unless verification shows a remaining gap.
+
+## Rollout Order
+
+1. Add tests for connector output containing `source_id`
+2. Add tests for default header fallback enabled
+3. Implement connector changes
+4. Run connector tests
+5. Run targeted ingestion and processing tests if available
+6. Manually verify records flow through to `live-adsb`
+7. Enable ADSBX derived speed/heading default
+8. Validate map behavior with real traffic
+
+## Verification Plan
+
+### Automated
+
+Connector tests:
+
+```bash
+python -m pytest connectors/tests/ -v
+```
+
+Targeted backend contract checks:
+
+```bash
+./gradlew :service-ingestion:test --tests "*KafkaHeadersPropagationTest*"
+./gradlew :service-processing:test --tests "*KafkaProducerTraceHeadersTest*"
+./gradlew :service-broadcaster:test --tests "*LiveFlightMessageSerializationTest*"
+```
+
+### Manual
+
+With full stack running:
+
+1. Start ADSBX and RadarBox connectors
+2. Confirm ingestion no longer rejects batches due to missing source id
+3. Confirm `live-adsb` records carry `source_id`
+4. In the frontend map:
+   - popup shows `Source`
+   - event time appears
+   - aircraft rotate when heading is present
+   - country and shape quality are checked on real samples, not assumed
+
+## Definition Of Done
+
+- connector payloads always include `source_id`
+- header fallback is enabled by default
+- ADSBX heading/speed default is improved
+- connector tests pass
+- targeted Kafka/WebSocket contract tests pass
+- manual validation confirms data from both sources reaches the map
+- remaining icon or country gaps, if any, are documented as enrichment-quality issues rather than ingestion failures

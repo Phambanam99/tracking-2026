@@ -1,15 +1,389 @@
 {
-  "title": "Tracking Ingestion Latency",
-  "schemaVersion": 39,
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
   "panels": [
     {
-      "type": "timeseries",
-      "title": "Ingestion p95 latency",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{uri=\"/api/v1/ingest\"}[5m])) by (le))"
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"service-gateway\",uri=~\"/api/v1/auth.*|/api/v1/ingest.*|/ws/live.*\"}[5m])) by (le, uri))",
+          "legendFormat": "{{ uri }}"
         }
-      ]
+      ],
+      "title": "Gateway p95 latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=\"service-ingestion\",uri=\"/api/v1/ingest/adsb/batch\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ],
+      "title": "Ingestion batch p95 latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))",
+          "legendFormat": "accepted records/s"
+        },
+        {
+          "expr": "sum(rate(tracking_ingestion_kafka_published_total[1m]))",
+          "legendFormat": "published records/s"
+        }
+      ],
+      "title": "Ingestion throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tracking_ingestion_rejected_auth_total[5m]))",
+          "legendFormat": "auth rejected"
+        },
+        {
+          "expr": "sum(rate(tracking_ingestion_rejected_admission_total[5m]))",
+          "legendFormat": "admission rejected"
+        },
+        {
+          "expr": "sum(rate(tracking_ingestion_rejected_producer_unavailable_total[5m]))",
+          "legendFormat": "producer unavailable"
+        }
+      ],
+      "title": "Ingestion reject taxonomy",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tracking_processing_pipeline_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "pipeline p95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tracking_processing_kafka_publish_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "publish p95"
+        }
+      ],
+      "title": "Processing latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tracking_processing_published_live_total[1m]))",
+          "legendFormat": "live"
+        },
+        {
+          "expr": "sum(rate(tracking_processing_published_historical_total[1m]))",
+          "legendFormat": "historical"
+        },
+        {
+          "expr": "sum(rate(tracking_processing_published_dlq_total[1m]))",
+          "legendFormat": "dlq"
+        }
+      ],
+      "title": "Processing publish rates",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(tracking_storage_batch_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "batch p95"
+        }
+      ],
+      "title": "Storage batch p95 latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "tracking_storage_buffer_size",
+          "legendFormat": "buffer size"
+        },
+        {
+          "expr": "sum(rate(tracking_storage_batch_failed_total[5m]))",
+          "legendFormat": "failed batches/s"
+        }
+      ],
+      "title": "Storage backpressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "ws_sessions_active",
+          "legendFormat": "active sessions"
+        },
+        {
+          "expr": "sum(rate(ws_messages_pushed_total[1m]))",
+          "legendFormat": "messages pushed/s"
+        }
+      ],
+      "title": "Broadcaster runtime",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\",job=~\"service-(gateway|auth|ingestion|broadcaster|processing|storage)\"})",
+          "legendFormat": "{{ job }}"
+        }
+      ],
+      "title": "JVM heap usage",
+      "type": "timeseries"
     }
-  ]
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": [
+    "tracking",
+    "p9"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Tracking Runtime Overview",
+  "version": 3
 }

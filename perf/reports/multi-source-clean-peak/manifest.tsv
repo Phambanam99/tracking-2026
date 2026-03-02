@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+peak	RADAR-HN	1000	20	2m	80	160	20000	perf/reports/multi-source-clean-peak/peak-RADAR-HN.summary.json	perf/reports/multi-source-clean-peak/peak-RADAR-HN.log
+peak	RADAR-HCM	1000	20	2m	80	160	20000	perf/reports/multi-source-clean-peak/peak-RADAR-HCM.summary.json	perf/reports/multi-source-clean-peak/peak-RADAR-HCM.log
+peak	RADAR-DN	1000	20	2m	80	160	20000	perf/reports/multi-source-clean-peak/peak-RADAR-DN.summary.json	perf/reports/multi-source-clean-peak/peak-RADAR-DN.log
+peak	RADAR-HP	1000	20	2m	80	160	20000	perf/reports/multi-source-clean-peak/peak-RADAR-HP.summary.json	perf/reports/multi-source-clean-peak/peak-RADAR-HP.log
+peak	RADAR-CT	1000	20	2m	80	160	20000	perf/reports/multi-source-clean-peak/peak-RADAR-CT.summary.json	perf/reports/multi-source-clean-peak/peak-RADAR-CT.log

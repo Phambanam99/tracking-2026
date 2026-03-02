@@ -34,13 +34,25 @@ jobs:
           curl -fsSL https://github.com/prometheus/prometheus/releases/download/v2.55.0/prometheus-2.55.0.linux-amd64.tar.gz -o /tmp/prometheus.tar.gz
           echo "${PROMETHEUS_SHA256}  /tmp/prometheus.tar.gz" | sha256sum -c -
           tar -xzf /tmp/prometheus.tar.gz -C /tmp
-          /tmp/prometheus-2.55.0.linux-amd64/promtool check config <(
-            sed "s|/etc/prometheus/alert-rules.yml|$PWD/observability/prometheus/alert-rules.yml|" infrastructure/prometheus/prometheus.yml
-          )
+          bash -n infrastructure/prometheus/render-prometheus-config.sh
+          SERVICE_GATEWAY_METRICS_TARGET=host.docker.internal:18080 \
+          SERVICE_AUTH_METRICS_TARGET=host.docker.internal:18081 \
+          SERVICE_INGESTION_METRICS_TARGET=host.docker.internal:18082 \
+          SERVICE_BROADCASTER_METRICS_TARGET=host.docker.internal:18083 \
+          SERVICE_STORAGE_METRICS_TARGET=host.docker.internal:18084 \
+          SERVICE_PROCESSING_METRICS_TARGET=host.docker.internal:18085 \
+          ./infrastructure/prometheus/render-prometheus-config.sh infrastructure/prometheus/prometheus.yml /tmp/prometheus.yml
+          sed -i "s|/etc/prometheus/alert-rules.yml|$PWD/observability/prometheus/alert-rules.yml|" /tmp/prometheus.yml
+          /tmp/prometheus-2.55.0.linux-amd64/promtool check config /tmp/prometheus.yml
           /tmp/prometheus-2.55.0.linux-amd64/promtool check rules observability/prometheus/alert-rules.yml
 
       - name: Validate topic script shell syntax
         run: bash -n infrastructure/kafka/create-topics.sh
+
+      - name: Validate backup scripts shell syntax
+        run: |
+          bash -n infra/postgres/backup.sh
+          bash -n infra/postgres/restore.sh
 
   validate-helm:
     runs-on: ubuntu-latest
@@ -67,3 +79,12 @@ jobs:
           helm template tracking-dev infrastructure/k8s/helm/tracking-platform \
             -f infrastructure/k8s/helm/tracking-platform/values.yaml \
             -f infrastructure/k8s/environments/dev/values.yaml >/dev/null
+
+      - name: Helm template render (stg/prod)
+        run: |
+          helm template tracking-stg infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/stg/values.yaml >/dev/null
+          helm template tracking-prod infrastructure/k8s/helm/tracking-platform \
+            -f infrastructure/k8s/helm/tracking-platform/values.yaml \
+            -f infrastructure/k8s/environments/prod/values.yaml >/dev/null

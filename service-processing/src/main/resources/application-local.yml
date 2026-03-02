@@ -1,9 +1,12 @@
+server:
+  port: ${SERVER_PORT:8085}
+
 spring:
   config:
     activate:
       on-profile: local
   kafka:
-    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${TRACKING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
     consumer:
       auto-offset-reset: earliest
 
@@ -11,8 +14,6 @@ tracking:
   processing:
     consumer:
       group-id: service-processing-local
-    producer:
-      publish-timeout-millis: 1500
     enrichment:
       planespotters:
         enabled: false

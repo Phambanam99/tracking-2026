@@ -18,6 +18,17 @@ docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.e
 docker compose -f infrastructure/docker-compose-observability.yml --env-file infrastructure/.env.example up -d
 ```
 
+Nếu service runtime không publish metrics trên dải mặc định `8080-8085`, override bằng:
+```bash
+SERVICE_GATEWAY_METRICS_TARGET=host.docker.internal:18080 \
+SERVICE_AUTH_METRICS_TARGET=host.docker.internal:18081 \
+SERVICE_INGESTION_METRICS_TARGET=host.docker.internal:18082 \
+SERVICE_BROADCASTER_METRICS_TARGET=host.docker.internal:18083 \
+SERVICE_STORAGE_METRICS_TARGET=host.docker.internal:18084 \
+SERVICE_PROCESSING_METRICS_TARGET=host.docker.internal:18085 \
+docker compose -f infrastructure/docker-compose-observability.yml --env-file infrastructure/.env.example up -d
+```
+
 ### Kiểm tra nhanh
 - Kafka: `localhost:29092`
 - Postgres: `localhost:5432`

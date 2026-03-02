@@ -1,0 +1,96 @@
+name: perf-smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: perf-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-warmup-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build boot jars for E2E stack
+        run: |
+          ./gradlew \
+            :service-auth:bootJar \
+            :service-gateway:bootJar \
+            :service-ingestion:bootJar \
+            :service-processing:bootJar \
+            :service-storage:bootJar \
+            :service-broadcaster:bootJar \
+            --no-daemon
+
+      - name: Run PR perf smoke
+        id: perf_smoke
+        shell: bash
+        run: |
+          bash -n perf/scripts/run-pr-perf-smoke.sh
+          output="$(RUN_ID_PREFIX=ci-pr-smoke-${{ github.run_id }} perf/scripts/run-pr-perf-smoke.sh)"
+          echo "$output"
+          warmup_run_dir="$(printf '%s\n' "$output" | awk -F= '/^WARMUP_RUN_DIR=/{print $2}')"
+          bundle_dir="$(printf '%s\n' "$output" | awk -F= '/^BUNDLE_DIR=/{print $2}')"
+          echo "warmup_run_dir=${warmup_run_dir}" >> "$GITHUB_OUTPUT"
+          echo "bundle_dir=${bundle_dir}" >> "$GITHUB_OUTPUT"
+
+      - name: Collect docker logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p .tmp/ci-perf-logs
+          for container in \
+            tracking-zookeeper \
+            tracking-kafka \
+            tracking-postgres \
+            tracking-redis \
+            tracking-prometheus \
+            tracking-grafana \
+            tracking-zipkin \
+            tracking-otel-collector \
+            tracking-e2e-auth \
+            tracking-e2e-gateway \
+            tracking-e2e-ingestion \
+            tracking-e2e-processing \
+            tracking-e2e-storage \
+            tracking-e2e-broadcaster
+          do
+            docker logs "$container" > ".tmp/ci-perf-logs/${container}.log" 2>&1 || true
+          done
+
+      - name: Upload smoke bundle
+        if: always() && steps.perf_smoke.outputs.bundle_dir != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-smoke-bundle
+          path: |
+            ${{ steps.perf_smoke.outputs.warmup_run_dir }}
+            ${{ steps.perf_smoke.outputs.bundle_dir }}
+
+      - name: Upload docker logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-smoke-docker-logs
+          path: .tmp/ci-perf-logs
+
+      - name: Tear down Docker stack
+        if: always()
+        shell: bash
+        run: |
+          docker compose -f .tmp/e2e/docker-compose.apps.yml down -v || true
+          docker compose -f infrastructure/docker-compose-observability.yml --env-file infrastructure/.env.example down -v || true
+          docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env.example down -v || true

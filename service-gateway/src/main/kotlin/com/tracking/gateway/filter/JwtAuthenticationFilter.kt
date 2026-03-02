@@ -37,6 +37,7 @@ public class JwtAuthenticationFilter(
         }
 
         val token = extractBearerToken(request.headers.getFirst(AUTHORIZATION_HEADER))
+            ?: extractWebsocketQueryToken(exchange)
             ?: return unauthorized(exchange, "JWT_MISSING", "Missing or invalid Bearer token.")
 
         return tokenVerifier.verify(token)
@@ -64,13 +65,35 @@ public class JwtAuthenticationFilter(
             return null
         }
 
-        val prefix = "Bearer "
-        if (!header.startsWith(prefix)) {
+        if (!header.startsWith(BEARER_PREFIX)) {
             return null
         }
 
-        val token = header.removePrefix(prefix).trim()
+        val token = header.removePrefix(BEARER_PREFIX).trim()
         return token.takeIf { it.isNotEmpty() }
+    }
+
+    private fun extractWebsocketQueryToken(exchange: ServerWebExchange): String? {
+        val request = exchange.request
+        if (!isWebsocketRequest(request.path.value())) {
+            return null
+        }
+
+        val token = request.queryParams.getFirst(WS_ACCESS_TOKEN_QUERY_PARAM)?.trim()
+        if (token.isNullOrBlank()) {
+            return null
+        }
+
+        return token.removePrefix(BEARER_PREFIX).trim().takeIf { it.isNotEmpty() }
+    }
+
+    private fun isWebsocketRequest(path: String): Boolean {
+        if (routesConfig.isWebsocketPath(path)) {
+            return true
+        }
+
+        val configuredPrefix = routesConfig.websocketPath.removeSuffix("/**")
+        return path == configuredPrefix || path.startsWith("$configuredPrefix/")
     }
 
     private fun isRevoked(principal: TokenPrincipal): Boolean {
@@ -107,6 +130,8 @@ public class JwtAuthenticationFilter(
 
     private companion object {
         private const val AUTHORIZATION_HEADER: String = "Authorization"
+        private const val BEARER_PREFIX: String = "Bearer "
+        private const val WS_ACCESS_TOKEN_QUERY_PARAM: String = "access_token"
         private const val HEADER_AUTH_USER: String = "X-Auth-User"
         private const val HEADER_AUTH_ROLES: String = "X-Auth-Roles"
         private const val HEADER_AUTH_TOKEN_ID: String = "X-Auth-Token-Id"

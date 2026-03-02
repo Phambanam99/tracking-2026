@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+sustained	RADAR-HN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HN.summary.json	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HN.log
+sustained	RADAR-HCM	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HCM.summary.json	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HCM.log
+sustained	RADAR-DN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-DN.summary.json	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-DN.log
+sustained	RADAR-HP	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HP.summary.json	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-HP.log
+sustained	RADAR-CT	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-CT.summary.json	perf/reports/multi-source-phase-smoke-sustained/sustained-RADAR-CT.log

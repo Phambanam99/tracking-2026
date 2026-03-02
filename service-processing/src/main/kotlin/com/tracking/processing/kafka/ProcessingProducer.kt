@@ -5,11 +5,10 @@ import com.tracking.common.dto.EnrichedFlight
 import com.tracking.processing.metrics.ProcessingMetrics
 import com.tracking.processing.tracing.KafkaTraceContextPropagator
 import com.tracking.processing.tracing.TraceContextHolder
-import java.util.concurrent.TimeUnit
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import org.slf4j.LoggerFactory
 
 public interface ProcessingProducer {
     public fun publish(topic: String, flight: EnrichedFlight): Unit
@@ -20,16 +19,25 @@ public class KafkaProcessingProducer(
     private val kafkaTemplate: KafkaTemplate<String, String>,
     private val objectMapper: ObjectMapper,
     private val processingMetrics: ProcessingMetrics,
-    @Value("\${tracking.processing.producer.publish-timeout-millis:1000}")
-    private val publishTimeoutMillis: Long = 1000,
 ) : ProcessingProducer {
+    private val logger = LoggerFactory.getLogger(KafkaProcessingProducer::class.java)
+
     override fun publish(topic: String, flight: EnrichedFlight) {
         val startedAtNanos = System.nanoTime()
         val payload = objectMapper.writeValueAsString(flight)
         val record = ProducerRecord(topic, flight.icao, payload)
         KafkaTraceContextPropagator.addTo(record.headers(), TraceContextHolder.current())
         try {
-            kafkaTemplate.send(record).get(publishTimeoutMillis, TimeUnit.MILLISECONDS)
+            // Preserve partition ordering while avoiding per-record broker round-trips on the hot path.
+            kafkaTemplate.send(record)
+                .whenComplete { _, error ->
+                    if (error == null) {
+                        return@whenComplete
+                    }
+
+                    processingMetrics.incrementKafkaPublishFailed()
+                    logger.warn("Processed flight publish completed exceptionally: topic={}, icao={}", topic, flight.icao, error)
+                }
         } finally {
             processingMetrics.recordKafkaPublishLatencyNanos(System.nanoTime() - startedAtNanos)
         }

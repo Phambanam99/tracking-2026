@@ -1,10 +1,74 @@
 groups:
-  - name: tracking-alerts
+  - name: tracking-runtime
     rules:
-      - alert: HighIngestionLatency
-        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{uri="/api/v1/ingest"}[5m])) by (le)) > 0.005
+      - alert: TrackingServiceDown
+        expr: up{job=~"service-(gateway|auth|ingestion|broadcaster|processing|storage)"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Prometheus cannot scrape {{ $labels.job }} for at least 2 minutes."
+
+      - alert: GatewayHigh5xxRate
+        expr: sum(rate(http_server_requests_seconds_count{job="service-gateway",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job="service-gateway"}[5m])), 1) > 0.02
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Gateway 5xx rate > 2%"
+          description: "Gateway is failing more than 2% of requests over the last 5 minutes."
+
+      - alert: IngestionHighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job="service-ingestion",uri="/api/v1/ingest/adsb/batch"}[5m])) by (le)) > 0.25
         for: 10m
         labels:
           severity: warning
         annotations:
-          summary: "Ingestion p95 latency > 5ms"
+          summary: "Ingestion p95 latency > 250ms"
+          description: "Batch ingest latency has been above 250ms for 10 minutes."
+
+      - alert: IngestionProducerUnavailableSpike
+        expr: sum(rate(tracking_ingestion_rejected_producer_unavailable_total[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ingestion producer unavailable spike"
+          description: "Producer-unavailable rejections are sustained above 5 records/s."
+
+      - alert: ProcessingDlqSpike
+        expr: sum(rate(tracking_processing_published_dlq_total[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Processing DLQ publish rate > 1 msg/s"
+          description: "Processing is diverting an unusual amount of traffic to DLQ."
+
+      - alert: StorageBatchFailures
+        expr: increase(tracking_storage_batch_failed_total[10m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Storage batch write failures detected"
+          description: "At least one storage batch has failed in the last 10 minutes."
+
+      - alert: StorageBufferBackpressure
+        expr: max_over_time(tracking_storage_buffer_size[10m]) > 80000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Storage buffer above 80k records"
+          description: "Storage buffer is close to pause threshold and may apply backpressure soon."
+
+      - alert: BroadcasterRejectedJwtSpike
+        expr: sum(rate(ws_sessions_rejected_jwt_total[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Broadcaster JWT rejects are spiking"
+          description: "WebSocket JWT rejects are sustained above 1 session/s."

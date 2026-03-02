@@ -1,0 +1,75 @@
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"0","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"71303168","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:02:52+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"0","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"9828.632273864665","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"9869.139378693499","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009556465434502427","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"3396.879412922193","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.008105248562032085","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"0","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"117440512","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:03:49+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"0","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"10818.998160770312","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"10818.998160770312","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009541115637521488","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"3548.4862092600033","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.00803508960255164","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"26","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"137399072","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:04:45+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"0","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.000954920698404789","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"3554.4143559306317","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.008038747675686974","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"16","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"138412032","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:05:42+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"0","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009531256774851751","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"3639.679859360181","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.007820544716693289","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"0","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"166418032","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:06:39+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"0","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}

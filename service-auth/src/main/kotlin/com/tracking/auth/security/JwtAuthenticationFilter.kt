@@ -42,10 +42,16 @@ public class JwtAuthenticationFilter(
 
         if (token != null && SecurityContextHolder.getContext().authentication == null) {
             val username = jwtService.extractUsername(token)
+            val userId = jwtService.extractUserId(token)
 
-            if (username != null && jwtService.isTokenValid(token, username) && !jwtService.isRefreshToken(token)) {
-                val authorities = jwtService.extractRoles(token).map { role -> SimpleGrantedAuthority(role) }
-                val authentication = UsernamePasswordAuthenticationToken(username, null, authorities)
+            if (username != null && userId != null
+                && jwtService.isTokenValid(token, username)
+                && !jwtService.isRefreshToken(token)
+            ) {
+                val roles = jwtService.extractRoles(token)
+                val authorities = roles.map { role -> SimpleGrantedAuthority(role) }
+                val principal = UserPrincipal(id = userId, username = username, roles = roles)
+                val authentication = UsernamePasswordAuthenticationToken(principal, null, authorities)
                 authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
                 SecurityContextHolder.getContext().authentication = authentication
             }

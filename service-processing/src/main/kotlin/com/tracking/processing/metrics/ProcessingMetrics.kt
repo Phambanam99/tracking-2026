@@ -19,6 +19,8 @@ public class ProcessingMetrics(
     private val publishedLiveCounter: Counter = meterRegistry.counter("tracking.processing.published.live")
     private val publishedHistoricalCounter: Counter = meterRegistry.counter("tracking.processing.published.historical")
     private val dlqPublishedCounter: Counter = meterRegistry.counter("tracking.processing.published.dlq")
+    private val kafkaPublishFailedCounter: Counter = meterRegistry.counter("tracking.processing.kafka.publish_failed")
+    private val dlqPublishFailedCounter: Counter = meterRegistry.counter("tracking.processing.kafka.dlq_publish_failed")
 
     private val pipelineLatencyTimer: Timer = meterRegistry.timer("tracking.processing.pipeline.latency")
     private val enrichmentLatencyTimer: Timer = meterRegistry.timer("tracking.processing.enrichment.latency")
@@ -42,6 +44,10 @@ public class ProcessingMetrics(
         }
 
     public fun incrementDlqPublished(): Unit = dlqPublishedCounter.increment()
+
+    public fun incrementKafkaPublishFailed(): Unit = kafkaPublishFailedCounter.increment()
+
+    public fun incrementDlqPublishFailed(): Unit = dlqPublishFailedCounter.increment()
 
     public fun recordPipelineLatencyNanos(nanos: Long): Unit =
         pipelineLatencyTimer.record(nanos.coerceAtLeast(0L), TimeUnit.NANOSECONDS)

@@ -505,103 +505,229 @@
 - [x] Trace context (traceparent, x-request-id) được extract từ Kafka headers vào MDC cho mọi log trong luồng push.
 
 ### P8 - Module frontend-ui Secure UX
-- [ ] `UI-01` React + Vite + Tailwind skeleton
+- [x] `UI-01` React + Vite + Tailwind skeleton
   - Files:
     - `frontend-ui/package.json`
+    - `frontend-ui/index.html`
     - `frontend-ui/vite.config.ts`
+    - `frontend-ui/tsconfig.json`
+    - `frontend-ui/src/App.tsx`
+    - `frontend-ui/src/styles.css`
     - `frontend-ui/src/main.tsx`
-- [ ] `UI-02` Auth state + auth pages
+- [x] `UI-02` Auth state + auth pages
   - Files:
     - `frontend-ui/src/features/auth/store/useAuthStore.ts`
     - `frontend-ui/src/features/auth/api/authApi.ts`
     - `frontend-ui/src/features/auth/pages/LoginPage.tsx`
     - `frontend-ui/src/features/auth/pages/RegisterPage.tsx`
-- [ ] `UI-03` HTTP client + interceptor
+- [x] `UI-03` HTTP client + interceptor
   - Files:
     - `frontend-ui/src/shared/api/httpClient.ts`
-- [ ] `UI-04` Token handling hardening
+- [x] `UI-04` Token handling hardening
   - Files:
     - `frontend-ui/src/features/auth/security/tokenStorage.ts`
     - `frontend-ui/src/features/auth/security/tokenRefreshScheduler.ts`
-- [ ] `UI-05` Map + WebSocket hook
+- [x] `UI-05` Map + WebSocket hook
   - Files:
     - `frontend-ui/src/features/map/components/MapView.tsx`
     - `frontend-ui/src/features/map/hooks/useFlightSocket.ts`
-- [ ] `UI-06` useRef + RAF render pipeline
+- [x] `UI-06` useRef + RAF render pipeline
   - Files:
     - `frontend-ui/src/features/map/store/useFlightRefStore.ts`
     - `frontend-ui/src/features/map/render/useAnimationFrameRenderer.ts`
     - `frontend-ui/src/features/map/render/flightLayer.ts`
-- [ ] `UI-07` Admin pages
+- [x] `UI-07` Admin pages
   - Files:
     - `frontend-ui/src/features/admin/pages/UserManagementPage.tsx`
     - `frontend-ui/src/features/admin/pages/ApiKeyManagementPage.tsx`
-- [ ] `UI-08` Frontend tests
+- [x] `UI-08` Frontend tests
   - Files:
+    - `frontend-ui/vitest.config.ts`
+    - `frontend-ui/src/test/setup.ts`
     - `frontend-ui/src/features/auth/store/useAuthStore.test.ts`
     - `frontend-ui/src/features/map/hooks/useFlightSocket.test.ts`
     - `frontend-ui/src/features/map/render/flightLayer.test.ts`
     - `frontend-ui/src/features/auth/security/tokenStorage.test.ts`
 
+#### P8 Dependency Order (Must Follow)
+1. `UI-01` Bootstrap runtime trước: app phải build và mount được, có base layout và route shell.
+2. `UI-03` HTTP client + interceptor trước `UI-02`: auth flows phải dùng chung transport policy (credentials, refresh retry, auth header).
+3. `UI-04` Token strategy trước khi finalize auth pages/store: access token in-memory, refresh qua backend endpoint.
+4. `UI-02` Auth state + Login/Register + Logout tích hợp thật với gateway auth APIs.
+5. `UI-05` WebSocket hook theo contract STOMP của P7 (`/ws/live`, `/app/viewport`, `/user/topic/flights`).
+6. `UI-06` Render pipeline `useRef + RAF` gắn vào map state/store, không render mỗi event socket.
+7. `UI-07` Admin pages (user/api key) sau khi auth role-aware flow ổn định.
+8. `UI-08` Test matrix + build gate pass trước khi đóng P8.
+
+#### P8 Acceptance Criteria
+- [x] `npm run build` trong `frontend-ui` pass, app mount được từ `index.html`.
+- [x] Login/Register hoạt động qua gateway (`/api/v1/auth/login`, `/api/v1/auth/register`) và cập nhật auth state reactive.
+- [x] HTTP client luôn gửi `credentials: include`; 401 trigger refresh flow 1 lần rồi retry request, fail thì clear session.
+- [x] Access token chỉ tồn tại trong memory; không persist vào `localStorage`/`sessionStorage`.
+- [x] WebSocket client dùng STOMP với JWT ở CONNECT header, subscribe đúng `/user/topic/flights`, gửi viewport qua `/app/viewport`.
+- [x] Map render pipeline dùng `useRef + requestAnimationFrame`, batch update marker state theo frame.
+- [x] Admin pages có guard theo role và gọi đúng API auth/api-key cơ bản.
+- [x] Tối thiểu 4 test P8 pass (auth store, token storage, socket hook behavior, flight layer transform).
+- [x] Không log access token/refresh token vào console.
+
 ### P9 - NFR/Perf/Security Hardening
-- [ ] `NFR-01` Load test ingest 100k msg/s
+- [x] `NFR-01` Load test ingest 100k msg/s
   - Files:
-    - `perf/k6/ingestion-load.js`
-    - `perf/reports/README.md`
-- [ ] `NFR-02` Soak test 24h + memory profiling
+    - `perf/k6/ingestion-load.js` — k6 scenario chuyển sang batch ingest `/api/v1/ingest/adsb/batch`, env-configurable `BATCH_SIZE`, `REQUEST_RATE`, `BASE_URL`, `API_KEY`, thresholds p95/p99 và 2xx rate.
+    - `perf/reports/README.md` — template lưu kết quả benchmark, command mẫu, acceptance reporting fields.
+- [x] `NFR-02` Soak test 24h + memory profiling
   - Files:
-    - `perf/soak/soak-test-plan.md`
-- [ ] `NFR-03` Latency dashboard + alerts
+    - `perf/soak/soak-test-plan.md` — command chạy 24h, memory profiling checklist, exit criteria cho heap/GC/buffer/backpressure.
+- [x] `NFR-03` Latency dashboard + alerts
   - Files:
-    - `observability/grafana/ingestion-latency-dashboard.json`
-    - `observability/prometheus/alert-rules.yml`
-- [ ] `NFR-04` Distributed tracing baseline
+    - `observability/grafana/ingestion-latency-dashboard.json` — dashboard seed cho gateway/ingestion/processing/storage/broadcaster.
+    - `observability/prometheus/alert-rules.yml` — alerts cho service down, gateway 5xx, ingestion latency/producer unavailable, processing DLQ, storage failure/backpressure, broadcaster JWT reject.
+- [x] `NFR-04` Distributed tracing baseline
   - Files:
-    - `observability/otel/collector-config.yml`
-    - `docs/observability.md`
-- [ ] `NFR-05` Security scanning + dependency audit
+    - `observability/otel/collector-config.yml` — OTEL Collector thêm `memory_limiter + batch`, export sang Zipkin.
+    - `docs/observability.md` — tài liệu metric endpoints, ports, alerts, trace propagation chain.
+- [x] `NFR-05` Security scanning + dependency audit
   - Files:
-    - `.github/workflows/security.yml`
-    - `docs/security-checklist.md`
+    - `.github/workflows/security.yml` — GitHub Dependency Review, Trivy SARIF, Gradle dependency submission, frontend `npm audit`.
+    - `docs/security-checklist.md` — checklist hardening cập nhật theo runtime + CI state.
+- [x] `NFR-06` User Admin API + frontend wire-up (unblock `UserManagementPage` placeholder từ P8)
+  - Files:
+    - `service-auth/src/main/kotlin/com/tracking/auth/admin/UserAdminController.kt` — REST endpoints: GET `/api/v1/auth/users` (paginated list), PUT `/{id}/disable`, PUT `/{id}/enable`. Chỉ `ROLE_ADMIN` truy cập.
+    - `service-auth/src/main/kotlin/com/tracking/auth/admin/UserAdminService.kt` — Business logic: list users, toggle active status, audit log mỗi thay đổi.
+    - `service-auth/src/test/kotlin/com/tracking/auth/admin/UserAdminControllerTest.kt` — Test RBAC (admin pass, user reject), test list/disable/enable.
+    - `frontend-ui/src/features/admin/pages/UserManagementPage.tsx` — Thay placeholder bằng table user list + disable/enable buttons, gọi endpoint thật.
+    - `frontend-ui/src/features/admin/api/userAdminApi.ts` — HTTP client functions: listUsers(), disableUser(id), enableUser(id).
 
 ### P10 - Release Readiness
-- [ ] `REL-01` Runbook vận hành và incident response
+- [x] `REL-01` Runbook vận hành và incident response
   - Files:
     - `docs/runbook.md`
     - `docs/incident-response.md`
-- [ ] `REL-02` Backup/restore drill cho PostgreSQL/Timescale
+- [x] `REL-02` Backup/restore drill cho PostgreSQL/Timescale
   - Files:
     - `infra/postgres/backup-restore.md`
-- [ ] `REL-03` Threat model & abuse cases
+- [x] `REL-03` Threat model & abuse cases
   - Files:
     - `docs/threat-model.md`
+    - `docs/abuse-cases.md`
+- [x] `REL-04` Helm chart hardening cho production rollout
+  - Files:
+    - `infrastructure/k8s/helm/tracking-platform/values.yaml`
+    - `infrastructure/k8s/helm/tracking-platform/templates/_helpers.tpl`
+    - `infrastructure/k8s/helm/tracking-platform/templates/*deployment.yaml`
+    - `infrastructure/k8s/helm/tracking-platform/templates/pdb.yaml`
+    - `infrastructure/k8s/helm/tracking-platform/templates/hpa.yaml`
+    - `infrastructure/k8s/environments/dev/values.yaml`
+    - `infrastructure/k8s/environments/stg/values.yaml`
+    - `infrastructure/k8s/environments/prod/values.yaml`
+- [x] `REL-05` Cross-module acceptance verification
+  - Files:
+    - `docs/acceptance-verification.md`
+    - `PLAN.md`
+
+#### P10 Dependency Order
+1. `REL-05` xác nhận lại evidence cross-module để biết chính xác khoảng trống release.
+2. `REL-01` nâng cấp runbook + incident response để có khả năng vận hành/rollback.
+3. `REL-02` backup/restore drill trước khi chấp nhận write production data.
+4. `REL-03` threat model + abuse cases để chốt risk register và control mapping.
+5. `REL-04` harden Helm chart, sau đó render `dev/stg/prod` và kiểm tra non-public exposure.
+
+#### P10 Acceptance Criteria
+- [x] `docs/runbook.md` có startup order, health verification, rollback procedure, service-specific troubleshooting, log/query cheat sheet.
+- [x] `docs/incident-response.md` có severity matrix, escalation matrix, playbook cho sự cố phổ biến, communication template, postmortem template.
+- [x] `infra/postgres/backup-restore.md` có backup strategy, retention policy, restore drill, validation queries và script vận hành.
+- [x] `docs/threat-model.md` có data flow, trust boundaries, STRIDE/risk scoring và control mapping; `docs/abuse-cases.md` liệt kê abuse scenarios chính.
+- [x] Helm chart có `startupProbe`, `resources`, `PDB`, `HPA` scaffolding và ports/env nhất quán với runtime services.
+- [x] `helm lint`/`helm template` render được cho `dev/stg/prod`.
+- [x] Toàn bộ cross-module checklist có evidence tại `docs/acceptance-verification.md` và được cập nhật trạng thái.
+
+### P11 - Storage Scalability & Query Tier
+- [ ] `STOX-01` Query inventory + sizing baseline + storage SLA matrix
+  - Files:
+    - `docs/storage-improvement-plan.md`
+    - `infra/postgres/storage-baseline.sql`
+    - `docs/services/storage-guide.md`
+    - `docs/services/storage-technical.md`
+- [ ] `STOX-02` Query-driven indexes + chunk strategy review
+  - Files:
+    - `service-storage/src/main/resources/db/migration/V5__flight_positions_query_indexes.sql`
+    - `service-storage/src/main/resources/db/migration/V6__flight_positions_chunk_strategy.sql`
+    - `docs/services/storage-technical.md`
+- [ ] `STOX-03` Continuous aggregates / read models cho analytics và monitoring
+  - Files:
+    - `service-storage/src/main/resources/db/migration/V7__storage_read_models.sql`
+    - `service-storage/src/main/resources/db/migration/V8__storage_read_model_policies.sql`
+    - `docs/storage-improvement-plan.md`
+- [ ] `STOX-04` Verified archive manifest + export pipeline + retention revision
+  - Files:
+    - `service-storage/src/main/resources/db/migration/V9__storage_archive_manifest.sql`
+    - `infra/postgres/archive-storage-chunks.sh`
+    - `infra/postgres/storage-baseline.sql`
+    - `infra/postgres/backup-restore.md`
+- [ ] `STOX-05` `service-query` read-only API cho history/reporting
+  - Files:
+    - `service-query/build.gradle.kts`
+    - `service-query/src/main/kotlin/com/tracking/query/QueryApplication.kt`
+    - `service-query/src/main/resources/application.yml`
+    - `service-query/src/main/kotlin/com/tracking/query/history/FlightHistoryController.kt`
+    - `service-query/src/main/kotlin/com/tracking/query/stats/FlightStatsController.kt`
+- [ ] `STOX-06` Spatial / historical search enablement
+  - Files:
+    - `service-storage/src/main/resources/db/migration/V10__flight_positions_spatial.sql`
+    - `service-query/src/main/kotlin/com/tracking/query/search/SpatialSearchController.kt`
+    - `service-query/src/test/kotlin/com/tracking/query/search/SpatialSearchControllerTest.kt`
+- [ ] `STOX-07` Read scale-out và replica strategy
+  - Files:
+    - `infrastructure/docker-compose.yml`
+    - `infrastructure/k8s/base/storage-statefulset.yaml`
+    - `docs/runbook.md`
+    - `docs/storage-improvement-plan.md`
+
+#### P11 Dependency Order
+1. `STOX-01` phải chốt query inventory, SLA, bytes/row, rows/day, chunk inventory và compression status trước mọi migration mới.
+2. `STOX-02` chỉ thêm index/chỉnh chunk strategy sau khi `STOX-01` chỉ ra query nào thật sự cần tối ưu.
+3. `STOX-03` tạo aggregate/read model theo endpoint/query class cụ thể; không tạo aggregate cardinality gần bằng raw.
+4. `STOX-04` dựng archive manifest + export verification trước khi giảm retention raw hoặc chuyển sang tiering mới.
+5. `STOX-05` chỉ tách `service-query` khi read workload và API contract đã rõ.
+6. `STOX-06` chỉ bật spatial layer sau khi có use case thật và benchmark chứng minh đáng đổi schema/read model.
+7. `STOX-07` chỉ triển khai replica/read scale-out sau khi read pressure đủ lớn và runbook failover/lag đã hoàn chỉnh.
+
+#### P11 Acceptance Criteria
+- [ ] Có baseline script và báo cáo đo được: table size, estimated rows, bytes/row, rows/day, chunk count, compression status.
+- [ ] Có query inventory và SLA matrix cho ít nhất các nhóm: recent history, operational source stats, historical replay, fleet/report analytics, spatial search.
+- [ ] Mọi index mới hoặc thay đổi chunk interval đều có before/after benchmark về query latency và write overhead.
+- [ ] Aggregate/read model mới chỉ phục vụ query class cụ thể, có retention/policy riêng và có đo refresh lag.
+- [ ] Archive pipeline có manifest, row-count/checksum verification, retry path và restore drill pass trước khi giảm retention raw.
+- [ ] `service-query` tách biệt read concern khỏi `service-storage`, có auth/audit phù hợp và không tác động write path khi read tăng tải.
+- [ ] Spatial search chỉ được bật khi query plan dùng index đúng và migration/backfill không làm suy giảm ingest/persist SLA.
+- [ ] Replica/read scale-out có alert replication lag, runbook failover và smoke test read consistency.
 
 ## Cross-module acceptance checklist (v2)
-- [ ] End-to-end luồng: ingest -> raw -> processing -> live/historical -> storage/broadcaster.
-- [ ] Producer luôn set Kafka key = `icao`; ordering theo partition được kiểm chứng bằng test.
-- [ ] API key crawler có thể revoke tức thời và propagate đến gateway/ingestion.
+- [x] End-to-end luồng: ingest -> raw -> processing -> live/historical -> storage/broadcaster.
+- [x] Producer luôn set Kafka key = `icao`; ordering theo partition được kiểm chứng bằng test.
+- [x] API key crawler có thể revoke tức thời và propagate đến gateway/ingestion.
 - [x] P4: Ingestion áp dụng backpressure + load-shedding (429/503) theo policy; không để unbounded queue gây OOM khi Kafka nghẽn.
 - [x] P4: Ingestion hỗ trợ bulk ingest và Kafka producer batching/compression để đạt throughput mục tiêu.
 - [x] P4: Ingestion inject `traceparent`/`x-request-id` vào Kafka headers để duy trì distributed trace qua event bus.
 - [x] P4: Ingestion graceful shutdown flush producer thành công trong rolling update.
-- [ ] P5: Phân tích ICAO Hexident để tìm Quốc gia đăng ký và cấu trúc URL ảnh từ Planespotters (tar1090 style).
-- [ ] JWT bắt buộc cho WebSocket handshake.
-- [ ] Gateway route đúng cho `/api/v1/auth/**`, `/api/v1/ingest/**`, `/ws/live/**`.
-- [ ] Gateway chặn request sai auth tại lớp cửa vào (401/403 chuẩn, fail-closed).
-- [ ] Gateway rate limit được `/api/v1/auth/login` theo IP và `/api/v1/ingest/**` theo API key.
-- [ ] CORS xử lý tập trung tại Gateway cho domain frontend.
-- [ ] Gateway verify JWT offline qua JWKS cache; auth-service không nằm trên critical path của mọi request JWT.
-- [ ] Revocation event `auth-revocation` được consume tại gateway và block token/api-key bị revoke trong SLA `<= 5s`.
-- [ ] Gateway áp dụng timeout/circuit-breaker cho outbound dependency và trả lỗi deterministic khi downstream lỗi.
-- [ ] Gateway propagate `traceparent`/`x-request-id` end-to-end qua downstream services.
-- [ ] Gateway chặn oversized payload theo policy route với mã `413 Payload Too Large`.
-- [ ] Historical data không đẩy realtime ra UI.
-- [ ] Kinematic rule drop khi vận tốc > 1200 km/h.
-- [ ] Spatial filtering chỉ gửi flight trong viewport client.
-- [ ] Storage idempotent (retry không tạo duplicate rows).
-- [ ] Batch insert Timescale ổn định ở tải cao.
-- [ ] Không service nội bộ nào public trực tiếp ra internet (không bypass gateway).
-- [ ] Không log token, api key, credential hoặc payload nhạy cảm.
-- [ ] `infrastructure/docker-compose.yml` khởi chạy đủ Kafka/Zookeeper/PostgreSQL/Redis với healthcheck pass.
-- [ ] `infrastructure/docker-compose-observability.yml` khởi chạy Prometheus/Grafana/Zipkin và scrape được metrics.
-- [ ] Helm chart trong `infrastructure/k8s` deploy được theo `dev/stg/prod` values và không expose service nội bộ ra public.
+- [x] P5: Phân tích ICAO Hexident để tìm Quốc gia đăng ký và cấu trúc URL ảnh từ Planespotters (tar1090 style).
+- [x] JWT bắt buộc cho WebSocket handshake.
+- [x] Gateway route đúng cho `/api/v1/auth/**`, `/api/v1/ingest/**`, `/ws/live/**`.
+- [x] Gateway chặn request sai auth tại lớp cửa vào (401/403 chuẩn, fail-closed).
+- [x] Gateway rate limit được `/api/v1/auth/login` theo IP và `/api/v1/ingest/**` theo API key.
+- [x] CORS xử lý tập trung tại Gateway cho domain frontend.
+- [x] Gateway verify JWT offline qua JWKS cache; auth-service không nằm trên critical path của mọi request JWT.
+- [x] Revocation event `auth-revocation` được consume tại gateway và block token/api-key bị revoke trong SLA `<= 5s`.
+- [x] Gateway áp dụng timeout/circuit-breaker cho outbound dependency và trả lỗi deterministic khi downstream lỗi.
+- [x] Gateway propagate `traceparent`/`x-request-id` end-to-end qua downstream services.
+- [x] Gateway chặn oversized payload theo policy route với mã `413 Payload Too Large`.
+- [x] Historical data không đẩy realtime ra UI.
+- [x] Kinematic rule drop khi vận tốc > 1200 km/h.
+- [x] Spatial filtering chỉ gửi flight trong viewport client.
+- [x] Storage idempotent (retry không tạo duplicate rows).
+- [x] Batch insert Timescale ổn định ở tải cao.
+- [x] Không service nội bộ nào public trực tiếp ra internet (không bypass gateway).
+- [x] Không log token, api key, credential hoặc payload nhạy cảm.
+- [x] `infrastructure/docker-compose.yml` khởi chạy đủ Kafka/Zookeeper/PostgreSQL/Redis với healthcheck pass.
+- [x] `infrastructure/docker-compose-observability.yml` khởi chạy Prometheus/Grafana/Zipkin và scrape được metrics.
+- [x] Helm chart trong `infrastructure/k8s` deploy được theo `dev/stg/prod` values và không expose service nội bộ ra public.

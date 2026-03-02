@@ -50,14 +50,14 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           {{- end }}
+          {{- if .Values.global.probes.startup.enabled }}
+          startupProbe:
+            {{- include "tracking-platform.httpProbe" .Values.global.probes.startup | nindent 12 }}
+          {{- end }}
           livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: http
+            {{- include "tracking-platform.httpProbe" .Values.global.probes.liveness | nindent 12 }}
           readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: http
+            {{- include "tracking-platform.httpProbe" .Values.global.probes.readiness | nindent 12 }}
           resources:
             {{- toYaml .Values.broadcaster.resources | nindent 12 }}
 ---

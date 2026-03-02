@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+ramp	RADAR-HN	1000	10	5m	50	100	10000	perf/reports/multi-source-final-ramp/ramp-RADAR-HN.summary.json	perf/reports/multi-source-final-ramp/ramp-RADAR-HN.log
+ramp	RADAR-HCM	1000	15	5m	60	120	15000	perf/reports/multi-source-final-ramp/ramp-RADAR-HCM.summary.json	perf/reports/multi-source-final-ramp/ramp-RADAR-HCM.log
+ramp	RADAR-DN	1000	10	5m	50	100	10000	perf/reports/multi-source-final-ramp/ramp-RADAR-DN.summary.json	perf/reports/multi-source-final-ramp/ramp-RADAR-DN.log
+ramp	RADAR-HP	1000	20	5m	80	160	20000	perf/reports/multi-source-final-ramp/ramp-RADAR-HP.summary.json	perf/reports/multi-source-final-ramp/ramp-RADAR-HP.log
+ramp	RADAR-CT	1000	15	5m	60	120	15000	perf/reports/multi-source-final-ramp/ramp-RADAR-CT.summary.json	perf/reports/multi-source-final-ramp/ramp-RADAR-CT.log

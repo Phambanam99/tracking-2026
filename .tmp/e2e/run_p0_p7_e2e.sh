@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT_DIR"
+export E2E_RUN_ID="${E2E_RUN_ID:-$(date +%s)}"
 
 MATRIX_FILE=".tmp/e2e/matrix.tsv"
 : > "$MATRIX_FILE"

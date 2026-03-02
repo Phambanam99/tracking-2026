@@ -39,3 +39,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- printf "%s-secrets" (include "tracking-platform.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "tracking-platform.httpProbe" -}}
+httpGet:
+  path: {{ default "/actuator/health" .path }}
+  port: http
+periodSeconds: {{ default 10 .periodSeconds }}
+timeoutSeconds: {{ default 3 .timeoutSeconds }}
+failureThreshold: {{ default 3 .failureThreshold }}
+{{- if .successThreshold }}
+successThreshold: {{ .successThreshold }}
+{{- end }}
+{{- if .initialDelaySeconds }}
+initialDelaySeconds: {{ .initialDelaySeconds }}
+{{- end }}
+{{- end -}}

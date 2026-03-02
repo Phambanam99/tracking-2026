@@ -14,8 +14,21 @@ public class JwtServiceTest {
     private val jwtService: JwtService = JwtService(jwksKeyProvider)
 
     @Test
+    public fun `should generate access token containing uid claim`() {
+        val token = jwtService.generateAccessToken(
+            userId = 42L,
+            username = "alice",
+            roles = setOf("ROLE_USER"),
+            ttl = Duration.ofMinutes(5),
+        )
+
+        assertEquals(42L, jwtService.extractUserId(token))
+    }
+
+    @Test
     public fun `should generate valid access token with roles`() {
         val token = jwtService.generateAccessToken(
+            userId = 1L,
             username = "alice",
             roles = setOf("ROLE_USER", "ROLE_ADMIN"),
             ttl = Duration.ofMinutes(5),
@@ -47,7 +60,7 @@ public class JwtServiceTest {
 
     @Test
     public fun `should keep token valid after key rotation during grace window`() {
-        val tokenBeforeRotation = jwtService.generateAccessToken("alice", setOf("ROLE_USER"), Duration.ofMinutes(5))
+        val tokenBeforeRotation = jwtService.generateAccessToken(1L, "alice", setOf("ROLE_USER"), Duration.ofMinutes(5))
 
         jwksKeyProvider.rotate()
 

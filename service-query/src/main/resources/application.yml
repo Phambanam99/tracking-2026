@@ -1,0 +1,69 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: service-query
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tracking}
+    username: ${DB_USER:tracking}
+    password: ${DB_PASS:tracking}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 3000
+      read-only: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: service-query-live-cache
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+tracking:
+  query:
+    live-cache:
+      topic: live-adsb
+      ttl-seconds: 300
+      key-prefix: "aircraft:"
+      index-key: "aircraft:index"
+      cleanup-interval-ms: 60000
+    search:
+      max-results: 100
+      min-query-length: 2
+    history:
+      max-results: 5000
+    photo-cache:
+      storage-dir: ${TRACKING_QUERY_PHOTO_CACHE_STORAGE_DIR:${java.io.tmpdir}/tracking-aircraft-photos}
+      poll-interval-millis: 1500
+      cleanup-interval-millis: 3600000
+      batch-size: 2
+      failure-ttl-minutes: 30
+      max-entry-age-hours: 168
+      max-entries: 5000
+      request-timeout-millis: 2500
+      planespotters-base-url: https://api.planespotters.net/pub/photos/hex
+  security:
+    jwt-issuer: ${AUTH_JWT_ISSUER:tracking-auth}
+    jwks-uri: ${AUTH_JWKS_URI:http://service-auth:8081/api/v1/auth/.well-known/jwks.json}
+    jwks-cache-ttl-seconds: 300
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

@@ -1,0 +1,36 @@
+# service-query overlay
+# Usage: cd infrastructure && docker compose -f docker-compose.yml -f docker-compose-query.yml up -d
+name: tracking-core
+
+services:
+  service-query:
+    build: ../service-query
+    container_name: tracking-service-query
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: tracking
+      DB_USER: tracking
+      DB_PASS: tracking
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      AUTH_JWKS_URI: http://service-auth:8081/api/v1/auth/.well-known/jwks.json
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tracking-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8085/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

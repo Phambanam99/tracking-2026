@@ -1,0 +1,34 @@
+{{- $components := list "gateway" "auth" "ingestion" "broadcaster" "processing" "storage" -}}
+{{- range $component := $components }}
+{{- $config := index $.Values $component -}}
+{{- if $config.hpa.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "tracking-platform.componentName" (dict "root" $ "component" $component) }}
+  labels:
+    {{- include "tracking-platform.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "tracking-platform.componentName" (dict "root" $ "component" $component) }}
+  minReplicas: {{ default $config.replicaCount $config.hpa.minReplicas }}
+  maxReplicas: {{ $config.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ default 70 $config.hpa.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ default 80 $config.hpa.targetMemoryUtilizationPercentage }}
+{{- end }}
+{{- end }}

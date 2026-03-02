@@ -2,6 +2,10 @@ gateway:
   service:
     type: NodePort
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false
 
 ingress:
   enabled: true
@@ -13,15 +17,35 @@ ingress:
 
 auth:
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false
 
 ingestion:
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false
 
 processing:
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false
 
 storage:
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false
 
 broadcaster:
   replicaCount: 1
+  pdb:
+    enabled: false
+  hpa:
+    enabled: false

@@ -5,13 +5,19 @@ receivers:
       http:
 
 processors:
+  memory_limiter:
+    check_interval: 2s
+    limit_mib: 256
+    spike_limit_mib: 64
   batch:
+    send_batch_size: 1024
+    timeout: 5s
 
 exporters:
   zipkin:
     endpoint: http://zipkin:9411/api/v2/spans
-  logging:
-    verbosity: normal
+  debug:
+    verbosity: basic
 
 extensions:
   health_check:
@@ -19,8 +25,11 @@ extensions:
 
 service:
   extensions: [health_check]
+  telemetry:
+    logs:
+      level: info
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [zipkin, logging]
+      processors: [memory_limiter, batch]
+      exporters: [zipkin, debug]

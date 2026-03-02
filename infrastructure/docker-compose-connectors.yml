@@ -1,0 +1,50 @@
+name: tracking-connectors
+
+services:
+  adsbx-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-adsbx-connector
+    restart: unless-stopped
+    command: [ "adsbx" ]
+    env_file:
+      - ../connectors/env/adsbx.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    shm_size: "1gb"
+    networks:
+      - tracking-net
+
+  fr24-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-fr24-connector
+    restart: unless-stopped
+    command: [ "fr24" ]
+    env_file:
+      - ../connectors/env/fr24.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
+  radarbox-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-radarbox-connector
+    restart: unless-stopped
+    command: [ "radarbox" ]
+    env_file:
+      - ../connectors/env/radarbox.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
+networks:
+  tracking-net:
+    name: tracking-net
+    external: true # Đã được tạo bởi infrastructure/docker-compose.yml

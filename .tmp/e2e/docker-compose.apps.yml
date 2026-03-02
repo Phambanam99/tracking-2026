@@ -49,6 +49,7 @@ services:
     environment:
       SERVER_PORT: "8085"
       TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACKING_PROCESSING_CONSUMER_GROUP_ID: service-processing-e2e-${E2E_RUN_ID:-manual}
       TRACKING_PROCESSING_ENRICHMENT_PLANESPOTTERS_ENABLED: "false"
     ports:
       - "18085:8085"
@@ -64,6 +65,7 @@ services:
     environment:
       SERVER_PORT: "8084"
       TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACKING_STORAGE_CONSUMER_GROUP_ID: service-storage-e2e-${E2E_RUN_ID:-manual}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tracking_e2e_p7
       SPRING_DATASOURCE_USERNAME: tracking
       SPRING_DATASOURCE_PASSWORD: tracking
@@ -81,10 +83,36 @@ services:
     environment:
       SERVER_PORT: "8083"
       TRACKING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACKING_BROADCASTER_CONSUMER_GROUP_ID: service-broadcaster-e2e-${E2E_RUN_ID:-manual}
       TRACKING_BROADCASTER_SECURITY_JWT_ISSUER: tracking-auth
       AUTH_JWKS_URI: http://service-auth:8081/api/v1/auth/.well-known/jwks.json
     ports:
       - "18083:8083"
+    networks:
+      - tracking-net
+
+  service-query:
+    image: eclipse-temurin:21-jre
+    container_name: tracking-e2e-query
+    command: ["java", "-jar", "/app/app.jar"]
+    volumes:
+      - ../../service-query/build/libs/service-query-0.1.0-SNAPSHOT.jar:/app/app.jar:ro
+      - ./photo-cache:/tmp/tracking-aircraft-photos
+    environment:
+      SERVER_PORT: "8085"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_CONSUMER_GROUP_ID: service-query-e2e-${E2E_RUN_ID:-manual}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: tracking_e2e_p7
+      DB_USER: tracking
+      DB_PASS: tracking
+      AUTH_JWKS_URI: http://service-auth:8081/api/v1/auth/.well-known/jwks.json
+      TRACKING_QUERY_PHOTO_CACHE_STORAGE_DIR: /tmp/tracking-aircraft-photos
+    ports:
+      - "18086:8085"
     networks:
       - tracking-net
 

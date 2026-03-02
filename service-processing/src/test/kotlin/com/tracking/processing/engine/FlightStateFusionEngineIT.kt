@@ -7,7 +7,6 @@ import com.tracking.processing.dedup.DedupCacheConfig
 import com.tracking.processing.dedup.DedupKeyService
 import com.tracking.processing.enrich.FlightEnricher
 import com.tracking.processing.enrich.IcaoCountryResolver
-import com.tracking.processing.enrich.NoopAircraftPhotoProvider
 import com.tracking.processing.enrich.ReferenceDataCache
 import com.tracking.processing.enrich.ReferenceDataLoader
 import com.tracking.processing.eventtime.EventTimeDecision
@@ -107,7 +106,6 @@ public class FlightStateFusionEngineIT {
                 FlightEnricher(
                     ReferenceDataCache(referenceLoader, refreshInterval = Duration.ofMinutes(10)),
                     IcaoCountryResolver(imageUrlTemplate = "https://images/{icao}.jpg"),
-                    NoopAircraftPhotoProvider,
                 ),
             topicRouter = TopicRouter(),
             processingProducer = producer,

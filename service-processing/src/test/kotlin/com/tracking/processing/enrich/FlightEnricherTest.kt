@@ -18,7 +18,6 @@ public class FlightEnricherTest {
             FlightEnricher(
                 referenceDataCache = cache,
                 icaoCountryResolver = IcaoCountryResolver(),
-                aircraftPhotoProvider = AircraftPhotoProvider { null },
             )
         val flight =
             CanonicalFlight(
@@ -37,7 +36,7 @@ public class FlightEnricherTest {
     }
 
     @Test
-    public fun `should enrich missing country and image fields from icao resolver`() {
+    public fun `should enrich missing country field from icao resolver without generating image url`() {
         val cache =
             ReferenceDataCache(
                 loader = ReferenceDataLoader { mapOf("888001" to AircraftMetadata(operator = "RadarX")) },
@@ -46,8 +45,7 @@ public class FlightEnricherTest {
         val enricher =
             FlightEnricher(
                 referenceDataCache = cache,
-                icaoCountryResolver = IcaoCountryResolver(imageUrlTemplate = "https://img/{icao}.jpg"),
-                aircraftPhotoProvider = AircraftPhotoProvider { "https://api.photo/888001.jpg" },
+                icaoCountryResolver = IcaoCountryResolver(),
             )
         val flight =
             CanonicalFlight(
@@ -62,6 +60,71 @@ public class FlightEnricherTest {
 
         enriched.metadata?.countryCode shouldBe "VN"
         enriched.metadata?.countryFlagUrl shouldBe "https://flagcdn.com/h80/vn.png"
-        enriched.metadata?.imageUrl shouldBe "https://api.photo/888001.jpg"
+        enriched.metadata?.imageUrl shouldBe null
+    }
+
+    @Test
+    public fun `should preserve cached aircraft type and fill registration and country fallback together`() {
+        val cache =
+            ReferenceDataCache(
+                loader = ReferenceDataLoader {
+                    mapOf(
+                        "A00001" to
+                            AircraftMetadata(
+                                aircraftType = "A321",
+                                operator = "Vietnam Airlines",
+                            ),
+                    )
+                },
+                refreshInterval = Duration.ofMinutes(10),
+            )
+        val enricher =
+            FlightEnricher(
+                referenceDataCache = cache,
+                icaoCountryResolver = IcaoCountryResolver(),
+            )
+        val flight =
+            CanonicalFlight(
+                icao = "A00001",
+                lat = 21.0,
+                lon = 105.0,
+                eventTime = 3_000L,
+                sourceId = "adsbx-1",
+            )
+
+        val enriched = enricher.enrich(flight, isHistorical = false)
+
+        enriched.metadata?.registration shouldBe "N1"
+        enriched.metadata?.aircraftType shouldBe "A321"
+        enriched.metadata?.operator shouldBe "Vietnam Airlines"
+        enriched.metadata?.countryCode shouldBe "US"
+        enriched.metadata?.countryFlagUrl shouldBe "https://flagcdn.com/h80/us.png"
+    }
+
+    @Test
+    public fun `should fallback to source aircraft type when cache is empty`() {
+        val cache =
+            ReferenceDataCache(
+                loader = ReferenceDataLoader { emptyMap() },
+                refreshInterval = Duration.ofMinutes(10),
+            )
+        val enricher =
+            FlightEnricher(
+                referenceDataCache = cache,
+                icaoCountryResolver = IcaoCountryResolver(),
+            )
+        val flight =
+            CanonicalFlight(
+                icao = "A00004",
+                lat = 21.0,
+                lon = 105.0,
+                aircraftType = "B738",
+                eventTime = 4_000L,
+                sourceId = "radarbox-1",
+            )
+
+        val enriched = enricher.enrich(flight, isHistorical = false)
+
+        enriched.metadata?.aircraftType shouldBe "B738"
     }
 }

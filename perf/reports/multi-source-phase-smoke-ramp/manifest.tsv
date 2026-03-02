@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+ramp	RADAR-HN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HN.summary.json	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HN.log
+ramp	RADAR-HCM	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HCM.summary.json	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HCM.log
+ramp	RADAR-DN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-DN.summary.json	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-DN.log
+ramp	RADAR-HP	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HP.summary.json	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-HP.log
+ramp	RADAR-CT	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-CT.summary.json	perf/reports/multi-source-phase-smoke-ramp/ramp-RADAR-CT.log

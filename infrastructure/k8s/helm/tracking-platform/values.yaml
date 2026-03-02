@@ -6,6 +6,23 @@ global:
     runAsNonRoot: true
     runAsUser: 10001
     fsGroup: 10001
+  probes:
+    startup:
+      enabled: true
+      path: /actuator/health
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 30
+    liveness:
+      path: /actuator/health
+      periodSeconds: 15
+      timeoutSeconds: 3
+      failureThreshold: 5
+    readiness:
+      path: /actuator/health
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 6
 
 config:
   create: true
@@ -49,7 +66,23 @@ gateway:
     enabled: true
   env:
     SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
+    SERVER_PORT: "8080"
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
 auth:
   replicaCount: 2
@@ -63,7 +96,23 @@ auth:
     enabled: true
   env:
     SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
+    SERVER_PORT: "8081"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
 ingestion:
   replicaCount: 2
@@ -78,7 +127,23 @@ ingestion:
     enabled: true
   env:
     SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
+    SERVER_PORT: "8082"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
 broadcaster:
   replicaCount: 2
@@ -92,26 +157,28 @@ broadcaster:
     enabled: true
   env:
     SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
+    SERVER_PORT: "8083"
+  resources:
+    requests:
+      cpu: 300m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
 
 processing:
   replicaCount: 2
   image:
     repository: tracking/service-processing
-    tag: latest
-  containerPort: 8084
-  service:
-    port: 8084
-  metrics:
-    enabled: true
-  env:
-    SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
-
-storage:
-  replicaCount: 2
-  image:
-    repository: tracking/service-storage
     tag: latest
   containerPort: 8085
   service:
@@ -120,4 +187,50 @@ storage:
     enabled: true
   env:
     SPRING_PROFILES_ACTIVE: k8s
-  resources: {}
+    SERVER_PORT: "8085"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+storage:
+  replicaCount: 2
+  image:
+    repository: tracking/service-storage
+    tag: latest
+  containerPort: 8084
+  service:
+    port: 8084
+  metrics:
+    enabled: true
+  env:
+    SPRING_PROFILES_ACTIVE: k8s
+    SERVER_PORT: "8084"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  pdb:
+    enabled: false
+    maxUnavailable: 1
+  hpa:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80

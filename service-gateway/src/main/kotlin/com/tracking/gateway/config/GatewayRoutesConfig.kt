@@ -35,6 +35,10 @@ public class GatewayRoutesConfig(
         return apiKeyProtectedPaths.any { pattern -> matches(path, pattern) }
     }
 
+    public fun isWebsocketPath(path: String): Boolean {
+        return matches(path, websocketPath)
+    }
+
     public fun isPublicAuthPath(path: String): Boolean {
         return publicAuthPaths.any { pattern ->
             path == pattern || path.startsWith("$pattern/")

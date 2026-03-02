@@ -1,0 +1,2 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+warmup	RADAR-HN	200	2	20s	2	4	400	perf/reports/local-ci-smoke-check-warmup/warmup-RADAR-HN.summary.json	perf/reports/local-ci-smoke-check-warmup/warmup-RADAR-HN.log

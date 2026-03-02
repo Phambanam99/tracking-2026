@@ -44,6 +44,7 @@ public class SecurityIntegrationTest {
         assertTrue(securityConfig.isPublicPath("/api/v1/auth/login"))
         assertTrue(securityConfig.isPublicPath("/api/v1/auth/register"))
         assertTrue(securityConfig.isPublicPath("/api/v1/auth/.well-known/jwks.json"))
+        assertTrue(securityConfig.isPublicPath("/actuator/prometheus"))
     }
 
     @Test
@@ -58,6 +59,14 @@ public class SecurityIntegrationTest {
     }
 
     @Test
+    public fun `should allow access to prometheus actuator without token`() {
+        mockMvc.perform(get("/actuator/prometheus"))
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+            .andExpect(content().string("# metrics"))
+    }
+
+    @Test
     public fun `should block protected endpoint without token`() {
         mockMvc.perform(get("/api/v1/private/ping"))
             .andExpect(status().isUnauthorized)
@@ -65,7 +74,7 @@ public class SecurityIntegrationTest {
 
     @Test
     public fun `should allow protected endpoint with valid jwt`() {
-        val accessToken = jwtService.generateAccessToken("alice", setOf("ROLE_USER"))
+        val accessToken = jwtService.generateAccessToken(1L, "alice", setOf("ROLE_USER"))
 
         mockMvc.perform(
             get("/api/v1/private/ping")
@@ -124,6 +133,9 @@ internal class SecurityTestBeans {
 
 @RestController
 internal class SecurityProbeController {
+    @GetMapping("/actuator/prometheus")
+    public fun prometheus(): String = "# metrics"
+
     @GetMapping("/api/v1/private/ping")
     public fun ping(): String = "pong"
 

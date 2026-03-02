@@ -1,0 +1,75 @@
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009529656607700312","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"806.8139707244765","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0.6021863998517695","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"174.9814711876969","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.006828976972515723","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"0","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"88080384","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:28:47+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"9979.878670000926","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"9844.07705844216","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009502497550113627","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"310027.4413828235","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"1208.1864357329753","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"46738.19382993339","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"1.697108604575","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1426063360","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:29:44+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"10421.491431218157","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"10421.491431218157","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"0.0009500380015200609","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"9785.749021605725","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"634.277377671769","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9687537319333334","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"2214592512","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:30:40+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"1.0436305792","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1476395008","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:31:35+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ingestion_records_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_accepted_batch_records_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ingestion_publish_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_kafka_published_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ingestion_admission_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_admission_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ingestion_producer_reject_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_ingestion_rejected_producer_unavailable_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"processing_pipeline_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(tracking_processing_pipeline_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"processing_live_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_live_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"processing_historical_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_historical_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"processing_dlq_rate","status":"success","samples":1,"value":"0","query":"sum(rate(tracking_processing_published_dlq_total[1m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"storage_batch_p95","status":"success","samples":1,"value":"0.9735259178","query":"histogram_quantile(0.95,sum(rate(tracking_storage_batch_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"storage_buffer_size","status":"success","samples":1,"value":"5000","query":"max(tracking_storage_buffer_size)"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"storage_batch_failures_5m","status":"success","samples":1,"value":"0","query":"sum(increase(tracking_storage_batch_failed_total[5m]))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ws_sessions_active","status":"success","samples":1,"value":"0","query":"max(ws_sessions_active)"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"ws_push_p95","status":"success","samples":1,"value":"NaN","query":"histogram_quantile(0.95,sum(rate(ws_push_latency_seconds_bucket[1m])) by (le))"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"jvm_heap_used","status":"success","samples":1,"value":"1581252608","query":"max(jvm_memory_used_bytes{area=\"heap\"})"}
+{"timestamp":"2026-03-01T13:32:32+07:00","metric":"alerts_firing","status":"success","samples":1,"value":"1","query":"sum(ALERTS{alertstate=\"firing\"}) or vector(0)"}

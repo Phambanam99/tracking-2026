@@ -8,13 +8,15 @@ public class FlightEnricher(
     private val referenceDataCache: ReferenceDataCache,
     private val icaoCountryResolver: IcaoCountryResolver,
     private val aircraftPhotoProvider: AircraftPhotoProvider = NoopAircraftPhotoProvider,
+    private val icaoRegistrationResolver: IcaoRegistrationResolver = IcaoRegistrationResolver(),
 ) {
     public fun enrich(flight: CanonicalFlight, isHistorical: Boolean): EnrichedFlight {
         val cachedMetadata = referenceDataCache.findByIcao(flight.icao)
         val resolvedCountry = icaoCountryResolver.resolve(flight.icao)
         val metadata =
             AircraftMetadata(
-                registration = cachedMetadata?.registration,
+                registration = cachedMetadata?.registration
+                    ?: icaoRegistrationResolver.resolve(flight.icao),
                 aircraftType = cachedMetadata?.aircraftType,
                 operator = cachedMetadata?.operator,
                 countryCode = cachedMetadata?.countryCode ?: resolvedCountry?.countryCode,

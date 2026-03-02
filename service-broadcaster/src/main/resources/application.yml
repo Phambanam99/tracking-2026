@@ -20,6 +20,16 @@ management:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        ws.push.latency: true
+      slo:
+        http.server.requests: 50ms,100ms,250ms,500ms,1s,2s
+        ws.push.latency: 5ms,10ms,25ms,50ms,100ms,250ms
 
 tracking:
   kafka:

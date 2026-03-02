@@ -1,0 +1,17 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+warmup	RADAR-HN	1000	10	2m	50	100	10000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/warmup-RADAR-HN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/warmup-RADAR-HN.log
+ramp	RADAR-HN	1000	10	5m	50	100	10000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HN.log
+ramp	RADAR-HCM	1000	15	5m	60	120	15000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HCM.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HCM.log
+ramp	RADAR-DN	1000	10	5m	50	100	10000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-DN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-DN.log
+ramp	RADAR-HP	1000	20	5m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HP.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-HP.log
+ramp	RADAR-CT	1000	15	5m	60	120	15000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-CT.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/ramp-RADAR-CT.log
+sustained	RADAR-HN	1000	10	10m	50	100	10000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HN.log
+sustained	RADAR-HCM	1000	15	10m	60	120	15000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HCM.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HCM.log
+sustained	RADAR-DN	1000	10	10m	50	100	10000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-DN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-DN.log
+sustained	RADAR-HP	1000	20	10m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HP.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-HP.log
+sustained	RADAR-CT	1000	15	10m	60	120	15000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-CT.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/sustained-RADAR-CT.log
+peak	RADAR-HN	1000	20	2m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HN.log
+peak	RADAR-HCM	1000	20	2m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HCM.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HCM.log
+peak	RADAR-DN	1000	20	2m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-DN.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-DN.log
+peak	RADAR-HP	1000	20	2m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HP.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-HP.log
+peak	RADAR-CT	1000	20	2m	80	160	20000	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-CT.summary.json	perf/reports/multi-source-ci-patched-bundle-20260301-150842/peak-RADAR-CT.log

@@ -1,0 +1,165 @@
+{
+    "metrics": {
+        "iteration_duration": {
+            "p(95)": 16.228060150000005,
+            "avg": 13.063138928888879,
+            "min": 10.166766,
+            "med": 12.5873665,
+            "max": 66.427332,
+            "p(90)": 15.039231899999999
+        },
+        "http_req_receiving": {
+            "avg": 0.09925010155555553,
+            "min": 0.044071,
+            "med": 0.089122,
+            "max": 1.165034,
+            "p(90)": 0.1366332,
+            "p(95)": 0.17608755000000006
+        },
+        "http_req_waiting": {
+            "med": 5.543391,
+            "max": 49.67949,
+            "p(90)": 7.010075,
+            "p(95)": 7.764526650000001,
+            "avg": 5.8517419595555635,
+            "min": 0
+        },
+        "http_req_blocked": {
+            "max": 53.051584,
+            "p(90)": 0.007131099999999999,
+            "p(95)": 0.00819215,
+            "avg": 0.022083157111111085,
+            "min": 0.002861,
+            "med": 0.005462
+        },
+        "iterations": {
+            "count": 4500,
+            "rate": 15.971116037043547
+        },
+        "dropped_iterations": {
+            "count": 0,
+            "rate": 0,
+            "thresholds": {
+                "count==0": false
+            }
+        },
+        "http_reqs": {
+            "count": 4500,
+            "rate": 15.971116037043547
+        },
+        "ingest_batch_status_202": {
+            "count": 4500,
+            "rate": 15.971116037043547
+        },
+        "http_req_failed": {
+            "fails": 4500,
+            "passes": 0,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 4500,
+            "fails": 0,
+            "value": 1
+        },
+        "data_sent": {
+            "count": 658694020,
+            "rate": 2337795.2502948185
+        },
+        "ingest_batch_status_2xx": {
+            "count": 4500,
+            "rate": 15.971116037043547
+        },
+        "vus": {
+            "value": 0,
+            "min": 0,
+            "max": 0
+        },
+        "data_received": {
+            "count": 3694500,
+            "rate": 13112.286266412753
+        },
+        "http_req_duration{scenario:ingest_batch}": {
+            "med": 5.8008225,
+            "max": 49.986404,
+            "p(90)": 7.3284113,
+            "p(95)": 8.0955279,
+            "avg": 6.116052474444465,
+            "min": 0.170986,
+            "thresholds": {
+                "p(99)<1200": false,
+                "p(95)<750": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 6.116052474444465,
+            "min": 0.170986,
+            "med": 5.8008225,
+            "max": 49.986404,
+            "p(90)": 7.3284113,
+            "p(95)": 8.0955279
+        },
+        "ingest_batch_expected_status": {
+            "passes": 4500,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "http_req_sending": {
+            "max": 2.340355,
+            "p(90)": 0.198629,
+            "p(95)": 0.23455805000000002,
+            "avg": 0.16506041333333363,
+            "min": 0.097893,
+            "med": 0.1462125
+        },
+        "http_req_duration": {
+            "avg": 6.116052474444465,
+            "min": 0.170986,
+            "med": 5.8008225,
+            "max": 49.986404,
+            "p(90)": 7.3284113,
+            "p(95)": 8.0955279
+        },
+        "http_req_connecting": {
+            "avg": 0.014980186666666668,
+            "min": 0,
+            "med": 0,
+            "max": 52.935853,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "vus_max": {
+            "value": 60,
+            "min": 60,
+            "max": 60
+        }
+    },
+    "root_group": {
+        "checks": {
+            "ingest batch matched expected status": {
+                "id": "9e1098a50ce2f0b3f99f21343b12df35",
+                "passes": 4500,
+                "fails": 0,
+                "name": "ingest batch matched expected status",
+                "path": "::ingest batch matched expected status"
+            }
+        },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {}
+    }
+}

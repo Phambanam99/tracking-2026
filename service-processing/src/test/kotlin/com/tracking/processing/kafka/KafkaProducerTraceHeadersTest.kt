@@ -9,11 +9,14 @@ import com.tracking.processing.tracing.ProcessingTraceContext
 import com.tracking.processing.tracing.ProcessingTraceHeaders
 import com.tracking.processing.tracing.TraceContextHolder
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import java.time.Duration
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.BDDMockito.given
@@ -36,7 +39,6 @@ public class KafkaProducerTraceHeadersTest {
             kafkaTemplate = kafkaTemplate,
             objectMapper = ObjectMapper(),
             processingMetrics = ProcessingMetrics(SimpleMeterRegistry()),
-            publishTimeoutMillis = 1000,
         )
 
         TraceContextHolder.withContext(
@@ -57,6 +59,10 @@ public class KafkaProducerTraceHeadersTest {
 
         assertEquals("live-adsb", record.topic())
         assertEquals("ABC123", record.key())
+        assertTrue(record.value().contains("\"event_time\":1700000000000"))
+        assertTrue(record.value().contains("\"source_id\":\"radar-1\""))
+        assertTrue(!record.value().contains("\"eventTime\""))
+        assertTrue(!record.value().contains("\"sourceId\""))
 
         val requestIdHeader = record.headers().lastHeader(ProcessingTraceHeaders.REQUEST_ID)
         val traceparentHeader = record.headers().lastHeader(ProcessingTraceHeaders.TRACEPARENT)
@@ -83,7 +89,6 @@ public class KafkaProducerTraceHeadersTest {
             objectMapper = ObjectMapper(),
             processingMetrics = ProcessingMetrics(SimpleMeterRegistry()),
             invalidDlqTopic = "invalid-telemetry-dlq",
-            publishTimeoutMillis = 1000,
         )
 
         TraceContextHolder.withContext(
@@ -119,6 +124,24 @@ public class KafkaProducerTraceHeadersTest {
             "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01",
             String(traceparentHeader.value(), StandardCharsets.UTF_8),
         )
+    }
+
+    @Test
+    public fun `should not block on broker acknowledgement for processed topic publish`() {
+        @Suppress("UNCHECKED_CAST")
+        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
+        given(kafkaTemplate.send(any<ProducerRecord<String, String>>()))
+            .willReturn(CompletableFuture<SendResult<String, String>>())
+
+        val producer = KafkaProcessingProducer(
+            kafkaTemplate = kafkaTemplate,
+            objectMapper = ObjectMapper(),
+            processingMetrics = ProcessingMetrics(SimpleMeterRegistry()),
+        )
+
+        assertTimeoutPreemptively(Duration.ofMillis(100)) {
+            producer.publish("live-adsb", validEnrichedFlight())
+        }
     }
 
     private fun validEnrichedFlight(): EnrichedFlight =

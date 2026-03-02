@@ -12,10 +12,10 @@ public class JwksRotationIT {
         val provider = JwksKeyProvider(encryptionService = EncryptionService(TEST_MASTER_KEY))
         val jwtService = JwtService(provider)
         val firstKid = provider.activeKid()
-        val tokenFromFirstKey = jwtService.generateAccessToken("alice", setOf("ROLE_USER"))
+        val tokenFromFirstKey = jwtService.generateAccessToken(1L, "alice", setOf("ROLE_USER"))
 
         val secondKid = provider.rotate()
-        val tokenFromSecondKey = jwtService.generateAccessToken("alice", setOf("ROLE_USER"))
+        val tokenFromSecondKey = jwtService.generateAccessToken(1L, "alice", setOf("ROLE_USER"))
 
         val jwks = provider.jwks()
         val keys = (jwks["keys"] as List<*>).filterIsInstance<Map<String, Any>>()

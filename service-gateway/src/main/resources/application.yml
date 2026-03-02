@@ -66,6 +66,33 @@ spring:
                 key-resolver: '#{@gatewayUserKeyResolver}'
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
+        - id: watchlist-route
+          uri: ${GATEWAY_ROUTE_AUTH_URI:http://service-auth:8081}
+          predicates:
+            - Path=/api/v1/watchlist/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayUserKeyResolver}'
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+          metadata:
+            connect-timeout: 750
+            response-timeout: 1500
+        # === NEW: Query/Search route ===
+        - id: query-route
+          uri: ${GATEWAY_ROUTE_QUERY_URI:http://service-query:8085}
+          predicates:
+            - Path=/api/v1/aircraft/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: '#{@gatewayUserKeyResolver}'
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+          metadata:
+            connect-timeout: 1000
+            response-timeout: 3000
 
 resilience4j:
   circuitbreaker:
@@ -98,6 +125,8 @@ tracking:
       websocket-path: /ws/live/**
       jwt-protected-paths:
         - /api/v1/auth/**
+        - /api/v1/watchlist/**
+        - /api/v1/aircraft/**
         - /ws/live/**
       api-key-protected-paths:
         - /api/v1/ingest/**
@@ -146,3 +175,23 @@ tracking:
       per-path:
         "/api/v1/ingest/**": 262144
         "/api/v1/auth/**": 65536
+        "/api/v1/watchlist/**": 65536
+        "/api/v1/aircraft/**": 65536
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,250ms,500ms,1s,2s

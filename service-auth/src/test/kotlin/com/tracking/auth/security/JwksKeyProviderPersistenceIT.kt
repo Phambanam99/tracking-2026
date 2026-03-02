@@ -26,7 +26,7 @@ public class JwksKeyProviderPersistenceIT {
         )
         val firstJwtService = JwtService(firstProvider)
         val firstActiveKid = firstProvider.activeKid()
-        val token = firstJwtService.generateAccessToken("alice", setOf("ROLE_USER"))
+        val token = firstJwtService.generateAccessToken(1L, "alice", setOf("ROLE_USER"))
 
         val secondProvider = JwksKeyProvider(
             encryptionService = encryptionService,

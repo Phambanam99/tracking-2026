@@ -37,6 +37,14 @@ management:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        tracking.storage.batch.latency: true
+      slo:
+        tracking.storage.batch.latency: 50ms,100ms,250ms,500ms,1s,2s
 
 tracking:
   kafka:
@@ -47,6 +55,7 @@ tracking:
   storage:
     consumer:
       group-id: service-storage-v1
+      concurrency: 4
       poll-timeout-millis: 5000
       retry:
         backoff-millis: 1000

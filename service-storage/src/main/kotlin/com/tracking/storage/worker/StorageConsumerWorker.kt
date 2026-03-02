@@ -31,6 +31,7 @@ public class StorageConsumerWorker(
         topics = ["\${tracking.kafka.topics.live:live-adsb}", "\${tracking.kafka.topics.historical:historical-adsb}"],
         groupId = "\${tracking.storage.consumer.group-id:service-storage-v1}",
         containerFactory = "storageKafkaListenerContainerFactory",
+        concurrency = "\${tracking.storage.consumer.concurrency:4}",
     )
     public fun consume(
         records: List<ConsumerRecord<String, String>>,

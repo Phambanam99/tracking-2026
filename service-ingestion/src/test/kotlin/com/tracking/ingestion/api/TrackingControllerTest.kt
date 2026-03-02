@@ -5,7 +5,9 @@ import com.tracking.ingestion.kafka.RawAdsbProducer
 import com.tracking.ingestion.tracing.TraceContext
 import com.tracking.ingestion.tracing.TraceContextExtractor
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.BDDMockito.given
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -14,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import reactor.core.publisher.Mono
+import kotlin.test.assertEquals
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -59,6 +62,7 @@ public class TrackingControllerTest {
                   "icao": "ICAO123",
                   "lat": 10.5,
                   "lon": 106.7,
+                  "aircraft_type": "a321",
                   "event_time": 1708941600000,
                   "source_id": "SRC-1"
                 }
@@ -68,6 +72,13 @@ public class TrackingControllerTest {
             .expectStatus().isAccepted
             .expectBody()
             .jsonPath("$.accepted").isEqualTo(true)
+
+        @Suppress("UNCHECKED_CAST")
+        val flightCaptor =
+            ArgumentCaptor.forClass(com.tracking.common.dto.CanonicalFlight::class.java)
+                as ArgumentCaptor<com.tracking.common.dto.CanonicalFlight>
+        verify(rawAdsbProducer).publish(flightCaptor.capture(), any())
+        assertEquals("A321", flightCaptor.value.aircraftType)
     }
 
     @Test

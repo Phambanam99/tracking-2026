@@ -28,6 +28,7 @@ public class JwtService(
     private val objectMapper: ObjectMapper = objectMapperProvider?.ifAvailable ?: ObjectMapper()
 
     public fun generateAccessToken(
+        userId: Long,
         username: String,
         roles: Set<String>,
         ttl: Duration = Duration.ofSeconds(accessTokenTtlSeconds),
@@ -41,6 +42,7 @@ public class JwtService(
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plus(ttl)))
             .claim(CLAIM_ROLES, roles.toList())
+            .claim(CLAIM_USER_ID, userId)
             .id(UUID.randomUUID().toString())
             .signWith(jwksKeyProvider.activePrivateKey(), Jwts.SIG.RS256)
             .compact()
@@ -66,6 +68,11 @@ public class JwtService(
     }
 
     public fun extractUsername(token: String): String? = parseClaims(token)?.subject
+
+    public fun extractUserId(token: String): Long? {
+        val claims = parseClaims(token) ?: return null
+        return (claims[CLAIM_USER_ID] as? Number)?.toLong()
+    }
 
     public fun extractTokenId(token: String): String? = parseClaims(token)?.id
 
@@ -158,6 +165,7 @@ public class JwtService(
 
     private companion object {
         private const val CLAIM_ROLES: String = "roles"
+        private const val CLAIM_USER_ID: String = "uid"
         private const val CLAIM_TOKEN_TYPE: String = "token_type"
         private const val TOKEN_TYPE_REFRESH: String = "refresh"
         private const val BEARER_PREFIX: String = "Bearer "

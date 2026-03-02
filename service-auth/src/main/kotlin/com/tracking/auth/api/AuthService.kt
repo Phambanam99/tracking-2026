@@ -127,6 +127,7 @@ public class AuthService(
 
         val accessToken =
                 jwtService.generateAccessToken(
+                        userId = user.id!!,
                         username = user.username,
                         roles = user.roleNames(),
                 )
@@ -159,6 +160,7 @@ public class AuthService(
     private fun issueTokens(user: UserEntity): AuthTokensResponse {
         val accessToken =
                 jwtService.generateAccessToken(
+                        userId = user.id!!,
                         username = user.username,
                         roles = user.roleNames(),
                 )

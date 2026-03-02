@@ -49,6 +49,12 @@ public class KafkaHeadersPropagationTest {
 
         assertEquals("raw-adsb", record.topic())
         assertEquals("ICAO123", record.key())
+        assertEquals(true, record.value().contains("\"aircraft_type\":\"A321\""))
+        assertEquals(true, record.value().contains("\"event_time\":1708941600000"))
+        assertEquals(true, record.value().contains("\"source_id\":\"SRC-1\""))
+        assertEquals(false, record.value().contains("\"aircraftType\""))
+        assertEquals(false, record.value().contains("\"eventTime\""))
+        assertEquals(false, record.value().contains("\"sourceId\""))
 
         val requestIdHeader = record.headers().lastHeader("x-request-id")
         val traceparentHeader = record.headers().lastHeader("traceparent")
@@ -64,7 +70,6 @@ public class KafkaHeadersPropagationTest {
             objectMapper = ObjectMapper(),
             topicProperties = KafkaTopicProperties(raw = "raw-adsb"),
             recordKeyStrategy = RecordKeyStrategy(),
-            producerProperties = IngestionKafkaProperties(publishTimeoutMillis = 1000),
             ingestionMetrics = IngestionMetrics(SimpleMeterRegistry()),
         )
     }
@@ -74,6 +79,7 @@ public class KafkaHeadersPropagationTest {
             icao = "ICAO123",
             lat = 10.5,
             lon = 106.7,
+            aircraftType = "A321",
             eventTime = 1708941600000,
             sourceId = "SRC-1",
         )

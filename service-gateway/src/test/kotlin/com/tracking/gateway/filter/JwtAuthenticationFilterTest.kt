@@ -63,9 +63,49 @@ public class JwtAuthenticationFilterTest {
         assertEquals("token-1", chain.capturedExchange?.request?.headers?.getFirst("X-Auth-Token-Id"))
     }
 
-    private fun buildFilter(tokenVerifier: TokenVerifier): JwtAuthenticationFilter {
+    @Test
+    public fun `should accept websocket jwt from query parameter access_token`() {
+        val filter = buildFilter(tokenVerifier = FixedTokenVerifier(validPrincipal()))
+        val exchange = MockServerWebExchange.from(
+            MockServerHttpRequest.get("/ws/live")
+                .queryParam("access_token", "valid-jwt")
+                .build(),
+        )
+        val chain = CapturingChain()
+
+        filter.filter(exchange, chain).block()
+
+        assertTrue(chain.invoked)
+        assertEquals("alice", chain.capturedExchange?.request?.headers?.getFirst("X-Auth-User"))
+    }
+
+    @Test
+    public fun `should accept websocket query token when protected path uses exact websocket route`() {
+        val filter = buildFilter(
+            tokenVerifier = FixedTokenVerifier(validPrincipal()),
+            routesConfig = GatewayRoutesConfig(
+                websocketPath = "/ws/live/**",
+                jwtProtectedPaths = listOf("/ws/live"),
+            ),
+        )
+        val exchange = MockServerWebExchange.from(
+            MockServerHttpRequest.get("/ws/live")
+                .queryParam("access_token", "valid-jwt")
+                .build(),
+        )
+        val chain = CapturingChain()
+
+        filter.filter(exchange, chain).block()
+
+        assertTrue(chain.invoked)
+    }
+
+    private fun buildFilter(
+        tokenVerifier: TokenVerifier,
+        routesConfig: GatewayRoutesConfig = GatewayRoutesConfig(),
+    ): JwtAuthenticationFilter {
         return JwtAuthenticationFilter(
-            routesConfig = GatewayRoutesConfig(),
+            routesConfig = routesConfig,
             tokenVerifier = tokenVerifier,
             blacklistService = BlacklistService(GatewaySecurityProperties()),
             objectMapper = ObjectMapper(),

@@ -1,0 +1,165 @@
+{
+    "metrics": {
+        "http_req_receiving": {
+            "avg": 0.0976188713333334,
+            "min": 0.03737,
+            "med": 0.090814,
+            "max": 1.902432,
+            "p(90)": 0.1225544,
+            "p(95)": 0.14445069999999996
+        },
+        "ingest_batch_status_202": {
+            "count": 9000,
+            "rate": 15.955317990859095
+        },
+        "data_received": {
+            "rate": 13099.316070495317,
+            "count": 7389000
+        },
+        "http_req_duration": {
+            "avg": 6.816439649222231,
+            "min": 0.197279,
+            "med": 6.441224999999999,
+            "max": 194.526313,
+            "p(90)": 7.857512300000001,
+            "p(95)": 8.522722649999999
+        },
+        "http_req_duration{expected_response:true}": {
+            "min": 0.197279,
+            "med": 6.441224999999999,
+            "max": 194.526313,
+            "p(90)": 7.857512300000001,
+            "p(95)": 8.522722649999999,
+            "avg": 6.816439649222231
+        },
+        "http_req_blocked": {
+            "min": 0.002783,
+            "med": 0.004999,
+            "max": 86.350986,
+            "p(90)": 0.0063991000000000004,
+            "p(95)": 0.00747505,
+            "avg": 0.019162294111111006
+        },
+        "http_reqs": {
+            "count": 9000,
+            "rate": 15.955317990859095
+        },
+        "iterations": {
+            "count": 9000,
+            "rate": 15.955317990859095
+        },
+        "vus": {
+            "value": 0,
+            "min": 0,
+            "max": 1
+        },
+        "ingest_batch_expected_status": {
+            "fails": 0,
+            "passes": 9000,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "http_req_waiting": {
+            "p(95)": 8.2061455,
+            "avg": 6.5432351936666615,
+            "min": 0,
+            "med": 6.181172500000001,
+            "max": 194.200695,
+            "p(90)": 7.5526929
+        },
+        "data_sent": {
+            "count": 1688424149,
+            "rate": 2993260.466748962
+        },
+        "iteration_duration": {
+            "p(90)": 24.2722845,
+            "p(95)": 26.293365099999995,
+            "avg": 21.127612202777712,
+            "min": 16.685134,
+            "med": 20.284044,
+            "max": 208.675712
+        },
+        "http_req_sending": {
+            "avg": 0.17558558422222262,
+            "min": 0.101442,
+            "med": 0.1505845,
+            "max": 34.113629,
+            "p(90)": 0.2012537,
+            "p(95)": 0.24406985
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 9000,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "dropped_iterations": {
+            "rate": 0,
+            "count": 0,
+            "thresholds": {
+                "count==0": false
+            }
+        },
+        "vus_max": {
+            "value": 60,
+            "min": 60,
+            "max": 60
+        },
+        "http_req_tls_handshaking": {
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0
+        },
+        "http_req_connecting": {
+            "avg": 0.01305735311111111,
+            "min": 0,
+            "med": 0,
+            "max": 86.26691,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "checks": {
+            "passes": 9000,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_duration{scenario:ingest_batch}": {
+            "p(95)": 8.522722649999999,
+            "avg": 6.816439649222231,
+            "min": 0.197279,
+            "med": 6.441224999999999,
+            "max": 194.526313,
+            "p(90)": 7.857512300000001,
+            "thresholds": {
+                "p(95)<750": false,
+                "p(99)<1200": false
+            }
+        },
+        "ingest_batch_status_2xx": {
+            "count": 9000,
+            "rate": 15.955317990859095
+        }
+    },
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "ingest batch matched expected status": {
+                    "name": "ingest batch matched expected status",
+                    "path": "::ingest batch matched expected status",
+                    "id": "9e1098a50ce2f0b3f99f21343b12df35",
+                    "passes": 9000,
+                    "fails": 0
+                }
+            },
+        "name": ""
+    }
+}

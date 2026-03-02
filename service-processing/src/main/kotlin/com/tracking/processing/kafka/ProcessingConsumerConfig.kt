@@ -8,7 +8,9 @@ import com.tracking.processing.engine.FlightProcessor
 import com.tracking.processing.engine.FlightStateFusionEngine
 import com.tracking.processing.enrich.FlightEnricher
 import com.tracking.processing.enrich.IcaoCountryResolver
+import com.tracking.processing.enrich.IcaoRegistrationResolver
 import com.tracking.processing.enrich.AircraftPhotoProvider
+import com.tracking.processing.enrich.CsvReferenceDataLoader
 import com.tracking.processing.enrich.NoopAircraftPhotoProvider
 import com.tracking.processing.enrich.PlanespottersPhotoProvider
 import com.tracking.processing.enrich.ReferenceDataCache
@@ -63,7 +65,19 @@ public class ProcessingConsumerConfig {
     ): KinematicValidator = KinematicValidator(maxSpeedKmh = maxSpeedKmh)
 
     @Bean
-    public fun referenceDataLoader(): ReferenceDataLoader = ReferenceDataLoader { emptyMap() }
+    public fun referenceDataLoader(
+        @Value("\${tracking.processing.enrichment.db-csv-path:classpath:db/aircraft_db.csv}")
+        csvPath: String,
+        applicationContext: org.springframework.context.ApplicationContext,
+    ): ReferenceDataLoader =
+        CsvReferenceDataLoader {
+            runCatching {
+                applicationContext.getResource(csvPath).inputStream
+            }.getOrNull()
+        }
+
+    @Bean
+    public fun icaoRegistrationResolver(): IcaoRegistrationResolver = IcaoRegistrationResolver()
 
     @Bean
     public fun referenceDataCache(
@@ -110,11 +124,13 @@ public class ProcessingConsumerConfig {
         cache: ReferenceDataCache,
         icaoCountryResolver: IcaoCountryResolver,
         aircraftPhotoProvider: AircraftPhotoProvider,
+        icaoRegistrationResolver: IcaoRegistrationResolver,
     ): FlightEnricher =
         FlightEnricher(
             referenceDataCache = cache,
             icaoCountryResolver = icaoCountryResolver,
             aircraftPhotoProvider = aircraftPhotoProvider,
+            icaoRegistrationResolver = icaoRegistrationResolver,
         )
 
     @Bean
@@ -174,6 +190,7 @@ public class RawAdsbConsumer(
     @KafkaListener(
         topics = ["\${tracking.kafka.topics.raw:raw-adsb}"],
         groupId = "\${tracking.processing.consumer.group-id:\${spring.application.name}-v1}",
+        concurrency = "\${tracking.processing.consumer.concurrency:8}",
     )
     public fun consume(record: ConsumerRecord<String, String>): Unit {
         consume(

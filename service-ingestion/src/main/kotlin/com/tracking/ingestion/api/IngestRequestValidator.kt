@@ -14,6 +14,7 @@ public class IngestRequestValidator(
 
         val icao = request.icao.normalizeOrNull()
             ?: throw IngestValidationException("icao is required.")
+        val aircraftType = request.aircraftType.normalizeAircraftTypeOrNull()
 
         val lat = request.lat ?: throw IngestValidationException("lat is required.")
         if (!lat.isFinite() || lat !in LAT_RANGE) {
@@ -47,6 +48,7 @@ public class IngestRequestValidator(
             altitude = request.altitude,
             speed = speed,
             heading = heading,
+            aircraftType = aircraftType,
             eventTime = eventTime,
             sourceId = sourceId,
         )
@@ -76,6 +78,8 @@ public class IngestRequestValidator(
         val normalized = this?.trim().orEmpty()
         return normalized.takeIf { it.isNotEmpty() }
     }
+
+    private fun String?.normalizeAircraftTypeOrNull(): String? = normalizeOrNull()?.uppercase()
 
     private companion object {
         private val LAT_RANGE: ClosedFloatingPointRange<Double> = -90.0..90.0

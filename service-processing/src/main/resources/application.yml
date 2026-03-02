@@ -13,6 +13,38 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      properties:
+        batch.size: 131072
+        linger.ms: 10
+        compression.type: lz4
+        buffer.memory: 67108864
+        max.request.size: 10485760
+        delivery.timeout.ms: 1000
+        max.block.ms: 1000
+        request.timeout.ms: 800
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        tracking.processing.pipeline.latency: true
+        tracking.processing.enrichment.latency: true
+        tracking.processing.kafka.publish.latency: true
+      slo:
+        tracking.processing.pipeline.latency: 5ms,10ms,25ms,50ms,100ms,250ms
+        tracking.processing.enrichment.latency: 5ms,10ms,25ms,50ms,100ms,250ms
+        tracking.processing.kafka.publish.latency: 5ms,10ms,25ms,50ms,100ms,250ms
 
 tracking:
   kafka:
@@ -24,12 +56,11 @@ tracking:
   processing:
     consumer:
       group-id: service-processing-v1
+      concurrency: 8
       strict-key-match: true
       retry:
         backoff-millis: 1000
         max-attempts: 3
-    producer:
-      publish-timeout-millis: 1000
     dedup:
       ttl-seconds: 2
       max-size: 1000000
@@ -37,10 +68,11 @@ tracking:
       ttl-hours: 2
       max-size: 200000
     enrichment:
+      db-csv-path: classpath:db/aircraft.csv
       refresh-interval-seconds: 600
       image-url-template: https://images.planespotters.net/{icao}.jpg
       planespotters:
-        enabled: true
+        enabled: false
         base-url: https://api.planespotters.net/pub/photos/hex
         timeout-millis: 700
         cache-ttl-minutes: 30

@@ -15,6 +15,7 @@ public class IngestionMetrics(
     private val authRejectedCounter: Counter = meterRegistry.counter("tracking.ingestion.rejected.auth")
     private val admissionRejectedCounter: Counter = meterRegistry.counter("tracking.ingestion.rejected.admission")
     private val producerUnavailableCounter: Counter = meterRegistry.counter("tracking.ingestion.rejected.producer_unavailable")
+    private val kafkaPublishFailedCounter: Counter = meterRegistry.counter("tracking.ingestion.kafka.publish_failed")
     private val revocationAppliedCounter: Counter = meterRegistry.counter("tracking.ingestion.revocation.applied")
 
     public fun incrementAcceptedSingle(): Unit = acceptedSingleCounter.increment()
@@ -30,6 +31,8 @@ public class IngestionMetrics(
     public fun incrementAdmissionRejected(): Unit = admissionRejectedCounter.increment()
 
     public fun incrementProducerUnavailable(): Unit = producerUnavailableCounter.increment()
+
+    public fun incrementKafkaPublishFailed(): Unit = kafkaPublishFailedCounter.increment()
 
     public fun incrementRevocationApplied(): Unit = revocationAppliedCounter.increment()
 }

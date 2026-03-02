@@ -1,13 +1,39 @@
+import { afterEach, describe, expect, test } from "vitest";
 import { clearTokens, loadTokens, saveTokens } from "./tokenStorage";
 
-clearTokens();
-saveTokens("a");
-const tokens = loadTokens();
+describe("tokenStorage", () => {
+  afterEach(() => {
+    clearTokens();
+  });
 
-if (tokens.accessToken !== "a") {
-  throw new Error("access token mismatch");
-}
+  test("should persist access and refresh tokens in sessionStorage", () => {
+    clearTokens();
+    saveTokens("access", "refresh");
 
-if (tokens.refreshToken !== null) {
-  throw new Error("refresh token must not be readable in JS (httpOnly cookie strategy)");
-}
+    const tokens = loadTokens();
+
+    expect(tokens.accessToken).toBe("access");
+    expect(tokens.refreshToken).toBe("refresh");
+    expect(sessionStorage.getItem("tracking_auth_tokens")).toContain("\"accessToken\":\"access\"");
+  });
+
+  test("should clear both tokens", () => {
+    saveTokens("access", "refresh");
+    clearTokens();
+
+    const tokens = loadTokens();
+
+    expect(tokens.accessToken).toBeNull();
+    expect(tokens.refreshToken).toBeNull();
+    expect(sessionStorage.getItem("tracking_auth_tokens")).toBeNull();
+  });
+
+  test("should recover gracefully from malformed sessionStorage data", () => {
+    sessionStorage.setItem("tracking_auth_tokens", "{not-json");
+
+    const tokens = loadTokens();
+
+    expect(tokens.accessToken).toBeNull();
+    expect(tokens.refreshToken).toBeNull();
+  });
+});

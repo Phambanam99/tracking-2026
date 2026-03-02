@@ -26,6 +26,7 @@ public class SecurityConfig(
         "/api/v1/auth/refresh-token",
         "/api/v1/auth/.well-known/jwks.json",
         "/actuator/health",
+        "/actuator/prometheus",
     )
 
     @Bean
@@ -37,6 +38,7 @@ public class SecurityConfig(
                 auth
                     .requestMatchers("/internal/**").hasRole("INTERNAL")
                     .requestMatchers("/api/v1/auth/api-keys/**").hasRole("ADMIN")
+                    .requestMatchers("/api/v1/auth/users/**").hasRole("ADMIN")
                     .requestMatchers(*publicPaths.toTypedArray()).permitAll()
                     .anyRequest().authenticated()
             }

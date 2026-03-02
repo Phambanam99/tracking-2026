@@ -18,6 +18,9 @@ public data class IngestFlightRequest(
     val speed: Double? = null,
     @JsonProperty("heading")
     val heading: Double? = null,
+    @JsonProperty("aircraft_type")
+    @JsonAlias("aircraftType")
+    val aircraftType: String? = null,
     @JsonProperty("event_time")
     @JsonAlias("eventTime", "timestamp")
     val eventTime: Long? = null,

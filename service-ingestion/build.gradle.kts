@@ -13,6 +13,11 @@ springBoot {
     mainClass.set("com.tracking.ingestion.IngestionApplicationKt")
 }
 
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    requiresUnpack("**/netty-*.jar")
+    requiresUnpack("**/reactor-netty-*.jar")
+}
+
 dependencies {
     implementation(project(":common-dto"))
     implementation(kotlin("reflect"))

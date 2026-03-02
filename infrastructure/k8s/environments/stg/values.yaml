@@ -2,6 +2,8 @@ gateway:
   service:
     type: LoadBalancer
   replicaCount: 2
+  pdb:
+    enabled: true
 
 ingress:
   enabled: true
@@ -13,15 +15,25 @@ ingress:
 
 auth:
   replicaCount: 2
+  pdb:
+    enabled: true
 
 ingestion:
   replicaCount: 2
+  pdb:
+    enabled: true
 
 processing:
   replicaCount: 2
+  pdb:
+    enabled: true
 
 storage:
   replicaCount: 2
+  pdb:
+    enabled: true
 
 broadcaster:
   replicaCount: 2
+  pdb:
+    enabled: true

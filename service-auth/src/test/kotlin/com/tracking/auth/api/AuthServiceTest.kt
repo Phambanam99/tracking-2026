@@ -39,13 +39,13 @@ public class AuthServiceTest {
 
     @Test
     public fun `should login successfully and reset lockout counters`() {
-        val user = user(username = "alice", passwordHash = "encoded")
+        val user = user(username = "alice", passwordHash = "encoded", id = 10L)
         user.failedLoginAttempts = 3
         user.lockedUntil = Instant.now().minusSeconds(30)
 
         `when`(userRepository.findByUsernameIgnoreCase("alice")).thenReturn(user)
         `when`(passwordEncoder.matches("StrongPass123!", "encoded")).thenReturn(true)
-        `when`(jwtService.generateAccessToken("alice", setOf("ROLE_USER"))).thenReturn("access-token")
+        `when`(jwtService.generateAccessToken(10L, "alice", setOf("ROLE_USER"))).thenReturn("access-token")
         `when`(refreshTokenService.issueForUser(user)).thenReturn("refresh-token")
         `when`(userRepository.save(user)).thenReturn(user)
 
@@ -104,9 +104,11 @@ public class AuthServiceTest {
     private fun user(
         username: String,
         passwordHash: String,
+        id: Long = 1L,
     ): UserEntity {
         val roleUser = RoleEntity().apply { name = "ROLE_USER" }
         return UserEntity().apply {
+            this.id = id
             this.username = username
             this.email = "$username@example.com"
             this.passwordHash = passwordHash

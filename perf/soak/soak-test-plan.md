@@ -5,6 +5,21 @@
 - Kiểm chứng policy fail-fast: quá tải admission trả `429`, producer timeout trả `503`.
 - Kiểm chứng hành vi khi Kafka rebalance/broker down/broker slow.
 
+## Execution
+```bash
+BASE_URL=http://localhost:18080 \
+API_KEY=replace-me \
+BATCH_SIZE=1000 \
+REQUEST_RATE=30 \
+DURATION=24h \
+k6 run --summary-export perf/reports/soak-summary.json perf/k6/ingestion-load.js
+```
+
+## Memory profiling
+- JVM heap: `jcmd <pid> GC.heap_info`, `jcmd <pid> VM.native_memory summary`.
+- Container trend: `docker stats --no-stream`.
+- Prometheus range query: `jvm_memory_used_bytes`, `jvm_gc_pause_seconds`, `process_cpu_usage`.
+
 ## Baseline Load
 - Ingestion giữ tải ổn định `30k msg/s` liên tục trong `24h`.
 - Chạy song song workload batch `/api/v1/ingest/adsb/batch` ở mức `500 req/s`.
@@ -33,3 +48,4 @@
 - Không OOM, không full GC lặp.
 - Tỷ lệ `503` chỉ tăng trong failure window có chủ đích.
 - Sau failure, service hồi phục và throughput trở về baseline trong 5 phút.
+- Không có queue/buffer tăng vô hạn tại `tracking_storage_buffer_size` hoặc `tracking_ingestion_rejected_producer_unavailable_total`.

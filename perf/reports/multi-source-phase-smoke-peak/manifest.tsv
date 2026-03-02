@@ -1,0 +1,6 @@
+phase	sourceId	batchSize	requestRate	duration	preAllocatedVus	maxVus	targetMsgPerSec	summaryFile	logFile
+peak	RADAR-HN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HN.summary.json	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HN.log
+peak	RADAR-HCM	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HCM.summary.json	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HCM.log
+peak	RADAR-DN	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-DN.summary.json	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-DN.log
+peak	RADAR-HP	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HP.summary.json	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-HP.log
+peak	RADAR-CT	200	2	20s	2	4	400	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-CT.summary.json	perf/reports/multi-source-phase-smoke-peak/peak-RADAR-CT.log

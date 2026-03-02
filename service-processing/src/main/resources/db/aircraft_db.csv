@@ -1,0 +1,10 @@
+# Aircraft reference database
+# Format: icao,registration,aircraftType,operator,countryCode,countryFlagUrl,imageUrl
+# Lines starting with '#' are ignored.
+# This file is loaded at startup and refreshed every 10 minutes (configurable).
+#
+# To populate with real data, convert tar1090-db sharded JS files to this CSV format.
+# See: https://github.com/wiedehopf/tar1090-db
+#
+# Example entries:
+icao,registration,aircraftType,operator,countryCode,countryFlagUrl,imageUrl

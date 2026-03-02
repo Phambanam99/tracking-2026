@@ -7,5 +7,7 @@ build/
 out/
 node_modules/
 .env
+*.env
 .DS_Store
 *.log
+perf/.generated/

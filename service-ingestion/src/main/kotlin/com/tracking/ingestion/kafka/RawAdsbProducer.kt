@@ -7,16 +7,15 @@ import com.tracking.ingestion.metrics.IngestionMetrics
 import com.tracking.ingestion.tracing.TraceContext
 import com.tracking.ingestion.tracing.TraceContextExtractor
 import java.nio.charset.StandardCharsets
-import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeoutException
-import kotlin.math.max
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.KafkaException
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
-import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 
 @Component
 public class RawAdsbProducer(
@@ -24,32 +23,31 @@ public class RawAdsbProducer(
     private val objectMapper: ObjectMapper,
     private val topicProperties: KafkaTopicProperties,
     private val recordKeyStrategy: RecordKeyStrategy,
-    private val producerProperties: IngestionKafkaProperties,
     private val ingestionMetrics: IngestionMetrics,
 ) {
     private val logger = LoggerFactory.getLogger(RawAdsbProducer::class.java)
 
     public fun publish(flight: CanonicalFlight, traceContext: TraceContext): Mono<Void> {
         val key = recordKeyStrategy.keyFor(flight)
-        return Mono.defer {
-            val payload = objectMapper.writeValueAsString(flight)
-            val record = ProducerRecord(topicProperties.raw, key, payload)
-            addTraceHeaders(record, traceContext)
-            Mono.fromFuture(kafkaTemplate.send(record))
+        return Mono.fromCallable {
+            enqueue(flight, traceContext)
+            true
         }
-            .timeout(Duration.ofMillis(producerProperties.publishTimeoutMillis))
-            .doOnSuccess {
-                ingestionMetrics.incrementPublished(1)
-            }
+            .subscribeOn(Schedulers.boundedElastic())
             .then()
             .onErrorMap { error -> mapToProducerException(error, key) }
     }
 
     public fun publishBatch(flights: List<CanonicalFlight>, traceContext: TraceContext): Mono<Int> {
-        val concurrency = max(1, producerProperties.batchPublishConcurrency)
-        return Flux.fromIterable(flights)
-            .flatMap({ flight -> publish(flight, traceContext).thenReturn(1) }, concurrency)
-            .reduce(0, Int::plus)
+        return Mono.fromCallable {
+            flights.forEach { flight -> enqueue(flight, traceContext) }
+            flights.size
+        }
+            .subscribeOn(Schedulers.boundedElastic())
+            .onErrorMap { error ->
+                val key = flights.firstOrNull()?.let(recordKeyStrategy::keyFor) ?: "batch"
+                mapToProducerException(error, key)
+            }
     }
 
     public fun flush(): Unit = kafkaTemplate.flush()
@@ -66,6 +64,36 @@ public class RawAdsbProducer(
                 TraceContextExtractor.HEADER_TRACEPARENT,
                 traceparent.toByteArray(StandardCharsets.UTF_8),
             )
+        }
+    }
+
+    private fun enqueue(flight: CanonicalFlight, traceContext: TraceContext) {
+        val key = recordKeyStrategy.keyFor(flight)
+        val payload = objectMapper.writeValueAsString(flight)
+        val record = ProducerRecord(topicProperties.raw, key, payload)
+        addTraceHeaders(record, traceContext)
+
+        try {
+            // Accept the HTTP request once the producer buffer accepts the record; broker acks are tracked asynchronously.
+            val future = kafkaTemplate.send(record)
+            trackPublishResult(future, key)
+        } catch (error: Throwable) {
+            throw mapToProducerException(error, key)
+        }
+    }
+
+    private fun trackPublishResult(
+        future: CompletableFuture<*>,
+        key: String,
+    ) {
+        future.whenComplete { _, error ->
+            if (error == null) {
+                ingestionMetrics.incrementPublished(1)
+                return@whenComplete
+            }
+
+            ingestionMetrics.incrementKafkaPublishFailed()
+            logger.warn("Kafka publish completed exceptionally for key={}", key, rootCauseOf(error))
         }
     }
 
