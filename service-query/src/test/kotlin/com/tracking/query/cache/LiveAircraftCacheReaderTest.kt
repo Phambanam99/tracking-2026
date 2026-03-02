@@ -9,15 +9,18 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.springframework.data.geo.Distance
+import org.springframework.data.geo.GeoResult
+import org.springframework.data.geo.GeoResults
 import org.springframework.data.geo.Point
 import org.springframework.data.redis.connection.RedisGeoCommands
 import org.springframework.data.redis.core.GeoOperations
-import org.springframework.data.redis.core.GeoResult
-import org.springframework.data.redis.core.GeoResults
 import org.springframework.data.redis.core.HashOperations
-import org.springframework.data.redis.core.RedisGeoCommands.GeoLocation
+import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation
 import org.springframework.data.redis.core.SetOperations
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.domain.geo.BoundingBox
+import org.springframework.data.redis.domain.geo.GeoReference
 
 class LiveAircraftCacheReaderTest {
 
@@ -25,9 +28,11 @@ class LiveAircraftCacheReaderTest {
     private val setOps: SetOperations<String, String> = mock()
     private val hashOps: HashOperations<String, String, String> = mock()
     private val geoOps: GeoOperations<String, String> = mock()
+    private val aircraftReferenceLookup: AircraftReferenceLookup = mock()
 
     private val reader = LiveAircraftCacheReader(
         redisTemplate = redisTemplate,
+        aircraftReferenceLookup = aircraftReferenceLookup,
         keyPrefix = "aircraft:",
         indexKey = "aircraft:index",
         geoKey = "aircraft:geo",
@@ -38,6 +43,7 @@ class LiveAircraftCacheReaderTest {
         whenever(redisTemplate.opsForSet()).thenReturn(setOps)
         whenever(redisTemplate.opsForHash<String, String>()).thenReturn(hashOps)
         whenever(redisTemplate.opsForGeo()).thenReturn(geoOps)
+        whenever(aircraftReferenceLookup.findByIcao(any())).thenReturn(null)
     }
 
     private fun mockIndex(vararg icaos: String) {
@@ -56,6 +62,7 @@ class LiveAircraftCacheReaderTest {
         registration: String? = null,
         aircraftType: String? = null,
         operator: String? = null,
+        isMilitary: Boolean = false,
     ): Array<Pair<String, String>> {
         val pairs = mutableListOf(
             "icao" to icao,
@@ -67,6 +74,9 @@ class LiveAircraftCacheReaderTest {
         registration?.let { pairs.add("registration" to it) }
         aircraftType?.let { pairs.add("aircraft_type" to it) }
         operator?.let { pairs.add("operator" to it) }
+        if (isMilitary) {
+            pairs.add("is_military" to true.toString())
+        }
         return pairs.toTypedArray()
     }
 
@@ -129,6 +139,20 @@ class LiveAircraftCacheReaderTest {
     }
 
     @Test
+    fun `search falls back to reference metadata when redis hash misses aircraft type`() {
+        mockIndex("040033")
+        mockHash("040033", *flightHash("040033"))
+        whenever(aircraftReferenceLookup.findByIcao("040033"))
+            .thenReturn(AircraftReferenceMetadata(registration = "ET-ANR", aircraftType = "B77L", operator = "Ethiopian"))
+
+        val results = reader.searchLive("b77l", 100)
+
+        results shouldHaveSize 1
+        results.single().aircraftType shouldBe "B77L"
+        results.single().registration shouldBe "ET-ANR"
+    }
+
+    @Test
     fun `maxResults limits result count`() {
         val icaos = (1..10).map { "A%05X".format(it) }
         mockIndex(*icaos.toTypedArray())
@@ -151,17 +175,131 @@ class LiveAircraftCacheReaderTest {
 
     @Test
     fun `returns live aircraft inside a bounding box`() {
-        mockHash("ABC123", *flightHash("ABC123", lat = 21.02, lon = 105.81, aircraftType = "A321"))
+        mockHash("ABC123", *flightHash("ABC123", lat = 21.02, lon = 105.81, aircraftType = "A321", isMilitary = true))
         mockHash("DEF456", *flightHash("DEF456", lat = 21.04, lon = 105.84, aircraftType = "B738"))
         mockHash("OUT999", *flightHash("OUT999", lat = 10.0, lon = 106.0, aircraftType = "A359"))
-        whenever(geoOps.search(eq("aircraft:geo"), any(), any(), any<RedisGeoCommands.GeoSearchCommandArgs>()))
+        whenever(
+            geoOps.search(
+                eq("aircraft:geo"),
+                any<GeoReference<String>>(),
+                any<BoundingBox>(),
+                any<RedisGeoCommands.GeoSearchCommandArgs>(),
+            ),
+        )
             .thenReturn(
                 GeoResults(
                     listOf(
-                        GeoResult(GeoLocation("ABC123", Point(105.81, 21.02))),
-                        GeoResult(GeoLocation("DEF456", Point(105.84, 21.04))),
+                        GeoResult(GeoLocation("ABC123", Point(105.81, 21.02)), Distance(0.0)),
+                        GeoResult(GeoLocation("DEF456", Point(105.84, 21.04)), Distance(0.0)),
                     ),
                 ),
             )
 
-        val results = reader.findInBound
+        val results = reader.findInBoundingBox(
+            north = 21.1,
+            south = 21.0,
+            east = 105.9,
+            west = 105.7,
+            maxResults = 100,
+        )
+
+        results shouldHaveSize 2
+        results.map { it.icao } shouldBe listOf("ABC123", "DEF456")
+        results.first().isMilitary shouldBe true
+    }
+
+    @Test
+    fun `defaults military flag to false when hash field is absent`() {
+        mockHash("ABC123", *flightHash("ABC123"))
+        whenever(
+            geoOps.search(
+                eq("aircraft:geo"),
+                any<GeoReference<String>>(),
+                any<BoundingBox>(),
+                any<RedisGeoCommands.GeoSearchCommandArgs>(),
+            ),
+        )
+            .thenReturn(
+                GeoResults(
+                    listOf(
+                        GeoResult(GeoLocation("ABC123", Point(105.0, 21.0)), Distance(0.0)),
+                    ),
+                ),
+            )
+
+        val results = reader.findInBoundingBox(
+            north = 21.1,
+            south = 20.9,
+            east = 105.1,
+            west = 104.9,
+            maxResults = 10,
+        )
+
+        results.single().isMilitary shouldBe false
+    }
+
+    @Test
+    fun `bounding box query backfills missing reference metadata`() {
+        mockHash("505D58", *flightHash("505D58", lat = 21.02, lon = 105.81))
+        whenever(aircraftReferenceLookup.findByIcao("505D58"))
+            .thenReturn(AircraftReferenceMetadata(registration = "OM-JEX", aircraftType = "B738", operator = "Jet"))
+        whenever(
+            geoOps.search(
+                eq("aircraft:geo"),
+                any<GeoReference<String>>(),
+                any<BoundingBox>(),
+                any<RedisGeoCommands.GeoSearchCommandArgs>(),
+            ),
+        )
+            .thenReturn(
+                GeoResults(
+                    listOf(
+                        GeoResult(GeoLocation("505D58", Point(105.81, 21.02)), Distance(0.0)),
+                    ),
+                ),
+            )
+
+        val results = reader.findInBoundingBox(
+            north = 21.1,
+            south = 20.9,
+            east = 105.9,
+            west = 105.7,
+            maxResults = 10,
+        )
+
+        results.single().aircraftType shouldBe "B738"
+        results.single().registration shouldBe "OM-JEX"
+    }
+
+    @Test
+    fun `bounding box query respects max results`() {
+        mockHash("ABC123", *flightHash("ABC123", lat = 21.02, lon = 105.81))
+        mockHash("DEF456", *flightHash("DEF456", lat = 21.03, lon = 105.82))
+        whenever(
+            geoOps.search(
+                eq("aircraft:geo"),
+                any<GeoReference<String>>(),
+                any<BoundingBox>(),
+                any<RedisGeoCommands.GeoSearchCommandArgs>(),
+            ),
+        )
+            .thenReturn(
+                GeoResults(
+                    listOf(
+                        GeoResult(GeoLocation("ABC123", Point(105.81, 21.02)), Distance(0.0)),
+                        GeoResult(GeoLocation("DEF456", Point(105.82, 21.03)), Distance(0.0)),
+                    ),
+                ),
+            )
+
+        val results = reader.findInBoundingBox(
+            north = 21.1,
+            south = 21.0,
+            east = 105.9,
+            west = 105.7,
+            maxResults = 2,
+        )
+
+        results shouldHaveSize 2
+    }
+}

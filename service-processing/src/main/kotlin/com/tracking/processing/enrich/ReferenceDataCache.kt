@@ -21,7 +21,7 @@ public class ReferenceDataCache(
 
     public fun findByIcao(icao: String): AircraftMetadata? {
         refreshIfNeeded()
-        return data.get()[icao]
+        return data.get()[icao.trim().uppercase()]
     }
 
     public fun refreshNow(): Unit {

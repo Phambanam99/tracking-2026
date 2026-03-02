@@ -1,19 +1,32 @@
 import { useEffect, useRef } from "react";
+import type { FeatureLike } from "ol/Feature";
+import type { MapBrowserEvent } from "ol";
 import { Feature } from "ol";
 import { Point } from "ol/geom";
-import { fromLonLat } from "ol/proj";
 import VectorLayer from "ol/layer/Vector";
+import { fromLonLat } from "ol/proj";
 import VectorSource from "ol/source/Vector";
-import type OlMap from "ol/Map";
-import type { MapBrowserEvent } from "ol";
-import type { FeatureLike } from "ol/Feature";
 import { useMapContext } from "../../map/context/MapContext";
-import { useAircraftStore } from "../store/useAircraftStore";
+import { useWatchlistStore } from "../../watchlist/store/useWatchlistStore";
 import { resolveShape } from "../db/iconResolver";
 import { createAircraftStyle } from "../render/aircraftStyle";
+import { useAircraftStore } from "../store/useAircraftStore";
 import type { Aircraft } from "../types/aircraftTypes";
 
-const LAYER_Z_INDEX = 10;
+export type AircraftLayerFilter = "all" | "watchlist" | "military";
+
+type AircraftMapLayerProps = {
+  visible?: boolean;
+  filter?: AircraftLayerFilter;
+  variant?: "live" | "watchlist" | "military";
+  interactive?: boolean;
+};
+
+const LIVE_LAYER_Z_INDEX = 10;
+const WATCHLIST_LAYER_Z_INDEX = 11;
+const MILITARY_LAYER_Z_INDEX = 12;
+const MILITARY_FILL_COLOR = "#ef4444";
+const MILITARY_STROKE_COLOR = "#fbbf24";
 
 function getAircraftOpacity(lastSeen: number, now: number): number {
   const ageMs = now - lastSeen;
@@ -26,16 +39,66 @@ function getAircraftOpacity(lastSeen: number, now: number): number {
   return 0.25;
 }
 
-function buildFeature(aircraft: Aircraft, isSelected: boolean, now: number): Feature<Point> {
+export function shouldRenderAircraft(
+  aircraft: Aircraft,
+  filter: AircraftLayerFilter,
+  watchlistIcaos: Set<string>,
+): boolean {
+  if (filter === "all") {
+    return true;
+  }
+  if (filter === "watchlist") {
+    return watchlistIcaos.has(aircraft.icao.toLowerCase());
+  }
+  return aircraft.isMilitary;
+}
+
+function createStyleOptions(
+  aircraft: Aircraft,
+  isSelected: boolean,
+  now: number,
+  variant: "live" | "watchlist" | "military",
+  watchlistColors: Map<string, string>,
+): Parameters<typeof createAircraftStyle>[0] {
   const { shape, scale } = resolveShape(aircraft.aircraftType);
-  const style = createAircraftStyle({
+  const watchlistColor = watchlistColors.get(aircraft.icao.toLowerCase()) ?? "#38bdf8";
+
+  if (variant === "military") {
+    return {
+      shape,
+      scale: scale * 1.1,
+      heading: aircraft.heading,
+      altitude: aircraft.altitude,
+      isSelected,
+      opacity: Math.max(getAircraftOpacity(aircraft.lastSeen, now), 0.9),
+      fillColor: MILITARY_FILL_COLOR,
+      strokeColor: MILITARY_STROKE_COLOR,
+    };
+  }
+
+  return {
     shape,
-    scale,
+    scale: variant === "watchlist" ? scale * 1.15 : scale,
     heading: aircraft.heading,
     altitude: aircraft.altitude,
     isSelected,
-    opacity: getAircraftOpacity(aircraft.lastSeen, now),
-  });
+    opacity:
+      variant === "watchlist"
+        ? Math.max(getAircraftOpacity(aircraft.lastSeen, now), 0.95)
+        : getAircraftOpacity(aircraft.lastSeen, now),
+    fillColor: variant === "watchlist" ? watchlistColor : undefined,
+    strokeColor: variant === "watchlist" ? "#f8fafc" : undefined,
+  };
+}
+
+function buildFeature(
+  aircraft: Aircraft,
+  isSelected: boolean,
+  now: number,
+  variant: "live" | "watchlist" | "military",
+  watchlistColors: Map<string, string>,
+): Feature<Point> {
+  const style = createAircraftStyle(createStyleOptions(aircraft, isSelected, now, variant, watchlistColors));
 
   const feature = new Feature<Point>({
     geometry: new Point(fromLonLat([aircraft.lon, aircraft.lat])),
@@ -50,61 +113,78 @@ function syncFeatures(
   source: VectorSource,
   aircraftMap: Record<string, Aircraft>,
   selectedIcao: string | null,
+  filter: AircraftLayerFilter,
+  watchlistIcaos: Set<string>,
+  variant: "live" | "watchlist" | "military",
+  watchlistColors: Map<string, string>,
 ): void {
   const now = Date.now();
-  const nextIcaos = new Set(Object.keys(aircraftMap));
+  const visibleAircraft = Object.values(aircraftMap).filter((aircraft) =>
+    shouldRenderAircraft(aircraft, filter, watchlistIcaos),
+  );
+  const nextIcaos = new Set(visibleAircraft.map((aircraft) => aircraft.icao));
 
-  // Remove stale features
-  source.getFeatures().forEach((f) => {
-    const id = f.getId() as string;
+  source.getFeatures().forEach((feature) => {
+    const id = feature.getId() as string;
     if (!nextIcaos.has(id)) {
-      source.removeFeature(f);
+      source.removeFeature(feature);
     }
   });
 
-  // Add or update features
-  for (const aircraft of Object.values(aircraftMap)) {
+  for (const aircraft of visibleAircraft) {
     const isSelected = aircraft.icao === selectedIcao;
     const existing = source.getFeatureById(aircraft.icao) as Feature<Point> | null;
     if (existing) {
-      // Update position
       existing.getGeometry()?.setCoordinates(fromLonLat([aircraft.lon, aircraft.lat]));
-      // Update style (heading, altitude, selection may have changed)
-      const { shape, scale } = resolveShape(aircraft.aircraftType);
-      existing.setStyle(
-        createAircraftStyle({
-          shape,
-          scale,
-          heading: aircraft.heading,
-          altitude: aircraft.altitude,
-          isSelected,
-          opacity: getAircraftOpacity(aircraft.lastSeen, now),
-        }),
-      );
+      existing.setStyle(createAircraftStyle(createStyleOptions(aircraft, isSelected, now, variant, watchlistColors)));
     } else {
-      source.addFeature(buildFeature(aircraft, isSelected, now));
+      source.addFeature(buildFeature(aircraft, isSelected, now, variant, watchlistColors));
     }
   }
 }
 
-/**
- * Renders all tracked aircraft on the map as OpenLayers vector features.
- * Syncs with the Zustand aircraft store and handles click-to-select.
- * Must be rendered as a child of MapContainer (needs MapContext).
- */
-export function AircraftMapLayer(): null {
+export function AircraftMapLayer({
+  visible = true,
+  filter = "all",
+  variant = "live",
+  interactive = true,
+}: AircraftMapLayerProps): null {
   const { map } = useMapContext();
   const layerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const sourceRef = useRef<VectorSource | null>(null);
+  const aircraft = useAircraftStore((state) => state.aircraft);
+  const selectedIcao = useAircraftStore((state) => state.selectedIcao);
+  const selectAircraft = useAircraftStore((state) => state.selectAircraft);
+  const watchlistGroups = useWatchlistStore((state) => state.groups);
 
-  // Bootstrap the OL layer once
+  const watchlistIcaos = new Set<string>();
+  const watchlistColors = new Map<string, string>();
+  for (const group of watchlistGroups) {
+    if (!group.visibleOnMap || !group.entries) {
+      continue;
+    }
+    for (const entry of group.entries) {
+      const normalizedIcao = entry.icao.toLowerCase();
+      watchlistIcaos.add(normalizedIcao);
+      if (!watchlistColors.has(normalizedIcao)) {
+        watchlistColors.set(normalizedIcao, group.color);
+      }
+    }
+  }
+
   useEffect(() => {
     if (!map) return;
 
     const source = new VectorSource({ wrapX: false });
     const layer = new VectorLayer({
       source,
-      zIndex: LAYER_Z_INDEX,
+      zIndex:
+        variant === "military"
+          ? MILITARY_LAYER_Z_INDEX
+          : variant === "watchlist"
+            ? WATCHLIST_LAYER_Z_INDEX
+            : LIVE_LAYER_Z_INDEX,
+      visible,
     });
 
     map.addLayer(layer);
@@ -117,18 +197,17 @@ export function AircraftMapLayer(): null {
       sourceRef.current = null;
       layerRef.current = null;
     };
-  }, [map]);
+  }, [map, variant]);
 
-  // Sync features whenever the aircraft store changes
-  const aircraft = useAircraftStore((s) => s.aircraft);
-  const selectedIcao = useAircraftStore((s) => s.selectedIcao);
-  const selectAircraft = useAircraftStore((s) => s.selectAircraft);
+  useEffect(() => {
+    layerRef.current?.setVisible(visible);
+  }, [visible]);
 
   useEffect(() => {
     const source = sourceRef.current;
     if (!source) return;
-    syncFeatures(source, aircraft, selectedIcao);
-  }, [aircraft, selectedIcao]);
+    syncFeatures(source, aircraft, selectedIcao, filter, watchlistIcaos, variant, watchlistColors);
+  }, [aircraft, selectedIcao, filter, variant, watchlistGroups]);
 
   useEffect(() => {
     const source = sourceRef.current;
@@ -142,18 +221,26 @@ export function AircraftMapLayer(): null {
     const tick = (now: number): void => {
       if (now - lastOpacityRefreshAt >= 2_000) {
         lastOpacityRefreshAt = now;
-        syncFeatures(source, useAircraftStore.getState().aircraft, useAircraftStore.getState().selectedIcao);
+        const state = useAircraftStore.getState();
+        syncFeatures(
+          source,
+          state.aircraft,
+          state.selectedIcao,
+          filter,
+          useWatchlistStore.getState().getVisibleIcaos(),
+          variant,
+          buildWatchlistColorMap(),
+        );
       }
       frameId = window.requestAnimationFrame(tick);
     };
 
     frameId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frameId);
-  }, []);
+  }, [filter, variant]);
 
-  // Click handler: select aircraft
   useEffect(() => {
-    if (!map) return;
+    if (!map || !interactive || !visible) return;
 
     const handleClick = (event: MapBrowserEvent<PointerEvent>): void => {
       const hit = map.forEachFeatureAtPixel(
@@ -170,13 +257,29 @@ export function AircraftMapLayer(): null {
       }
     };
 
-    // @ts-expect-error – OL 10 overload resolution picks array variant; handler types are correct
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
     map.on("click", handleClick);
-    // @ts-expect-error – OL 10 overload resolution picks array variant
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
     return () => map.un("click", handleClick);
-  }, [map, selectAircraft]);
+  }, [interactive, visible, map, selectAircraft]);
 
   return null;
+}
+
+function buildWatchlistColorMap(): Map<string, string> {
+  const colors = new Map<string, string>();
+  for (const group of useWatchlistStore.getState().groups) {
+    if (!group.visibleOnMap || !group.entries) {
+      continue;
+    }
+    for (const entry of group.entries) {
+      const normalizedIcao = entry.icao.toLowerCase();
+      if (!colors.has(normalizedIcao)) {
+        colors.set(normalizedIcao, group.color);
+      }
+    }
+  }
+  return colors;
 }
 
 export { getAircraftOpacity };

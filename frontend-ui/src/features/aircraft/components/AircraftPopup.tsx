@@ -1,36 +1,47 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { fromLonLat } from "ol/proj";
+import { AddToWatchlistDropdown } from "../../watchlist/components/AddToWatchlistDropdown";
 import { useMapContext } from "../../map/context/MapContext";
 import { useFlightHistory } from "../hooks/useFlightHistory";
 import { useAircraftStore } from "../store/useAircraftStore";
 import type { Aircraft } from "../types/aircraftTypes";
-import { AddToWatchlistDropdown } from "../../watchlist/components/AddToWatchlistDropdown";
-
-/** Returns a flag emoji for a given ISO 3166-1 alpha-2 country code. */
-function countryFlag(code: string | null | undefined): string {
-  if (!code || code.length !== 2) return "🌐";
-  const offset = 0x1f1e6;
-  const chars = code
-    .toUpperCase()
-    .split("")
-    .map((c) => String.fromCodePoint(offset + c.charCodeAt(0) - 65));
-  return chars.join("");
-}
+import { getCountryName } from "../utils/countryDisplay";
 
 function formatAlt(ft: number | null | undefined): string {
-  if (ft == null) return "–";
+  if (ft == null) return "-";
   if (ft <= 0) return "Ground";
   return `${ft.toLocaleString()} ft`;
 }
 
 function formatSpeed(kts: number | null | undefined): string {
-  if (kts == null) return "–";
+  if (kts == null) return "-";
   return `${Math.round(kts)} kts`;
 }
 
 function formatHeading(deg: number | null | undefined): string {
-  if (deg == null) return "–";
-  return `${Math.round(deg)}°`;
+  if (deg == null) return "-";
+  return `${Math.round(deg)} deg`;
+}
+
+function CountryBadge({
+  countryCode,
+}: {
+  countryCode: string | null | undefined;
+  countryFlagUrl?: string | null | undefined;
+}): JSX.Element {
+  const name = getCountryName(countryCode);
+  if (name) {
+    return <span className="text-xs text-slate-300">{name}</span>;
+  }
+  return <span className="text-xs text-slate-500">Unknown</span>;
+}
+
+function MilitaryBadge(): JSX.Element {
+  return (
+    <span className="rounded-full border border-rose-400/40 bg-rose-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-200">
+      Military
+    </span>
+  );
 }
 
 type PopupContentProps = {
@@ -45,8 +56,7 @@ type PopupContentProps = {
   trailError: string | null;
 };
 
-const TRAIL_PRESETS = [1, 3, 6, 12, 24] as const;
-const TRAIL_MAX_HOURS = 168; // 7 days
+const TRAIL_MAX_HOURS = 168;
 
 function PopupContent({
   aircraft,
@@ -59,49 +69,65 @@ function PopupContent({
   isTrailLoading,
   trailError,
 }: PopupContentProps): JSX.Element {
-  const flag = countryFlag(aircraft.countryCode);
   const [customHours, setCustomHours] = useState<string>("1");
-
   const parsedHours = Math.min(TRAIL_MAX_HOURS, Math.max(1, Math.round(Number(customHours) || 1)));
 
   return (
     <div className="relative min-w-[220px] rounded-lg border border-slate-600 bg-slate-800 p-3 text-sm text-slate-100 shadow-xl">
-      {/* Close button */}
       <button
-        onClick={onClose}
-        className="absolute right-2 top-2 text-slate-400 hover:text-white"
         aria-label="Close popup"
+        className="absolute right-2 top-2 text-slate-400 hover:text-white"
+        onClick={onClose}
+        type="button"
       >
-        ✕
+        x
       </button>
 
-      {/* Header */}
       <div className="mb-2 flex items-center gap-2 font-semibold">
-        <span className="text-lg">{flag}</span>
+        <CountryBadge countryCode={aircraft.countryCode} countryFlagUrl={aircraft.countryFlagUrl} />
         <span>{aircraft.callsign ?? aircraft.registration ?? aircraft.icao}</span>
+        {aircraft.isMilitary ? <MilitaryBadge /> : null}
       </div>
 
-      {/* Detail rows */}
       <table className="w-full text-xs">
         <tbody>
-          {aircraft.registration && (
+          {aircraft.registration ? (
             <tr>
               <td className="pr-2 text-slate-400">Reg</td>
               <td>{aircraft.registration}</td>
             </tr>
-          )}
-          {aircraft.aircraftType && (
+          ) : null}
+          {aircraft.aircraftType ? (
             <tr>
               <td className="pr-2 text-slate-400">Type</td>
               <td>{aircraft.aircraftType}</td>
             </tr>
-          )}
-          {aircraft.operator && (
+          ) : null}
+          {aircraft.operator ? (
             <tr>
               <td className="pr-2 text-slate-400">Operator</td>
               <td>{aircraft.operator}</td>
             </tr>
-          )}
+          ) : null}
+          {(aircraft.countryCode || aircraft.countryFlagUrl) ? (
+            <tr>
+              <td className="pr-2 text-slate-400">Country</td>
+              <td>
+                <div className="flex items-center gap-2">
+                  <CountryBadge countryCode={aircraft.countryCode} countryFlagUrl={aircraft.countryFlagUrl} />
+                  <span>{aircraft.countryCode ?? "-"}</span>
+                </div>
+              </td>
+            </tr>
+          ) : null}
+          {aircraft.isMilitary ? (
+            <tr>
+              <td className="pr-2 text-slate-400">Class</td>
+              <td>
+                <MilitaryBadge />
+              </td>
+            </tr>
+          ) : null}
           <tr>
             <td className="pr-2 text-slate-400">ICAO</td>
             <td className="font-mono">{aircraft.icao.toUpperCase()}</td>
@@ -126,37 +152,18 @@ function PopupContent({
           Flight Trail
         </div>
 
-        {/* Quick preset buttons */}
-        <div className="flex flex-wrap gap-1">
-          {TRAIL_PRESETS.map((h) => (
-            <button
-              key={h}
-              className={`rounded border px-2 py-1 text-xs ${
-                parsedHours === h && customHours === String(h)
-                  ? "border-sky-400 bg-sky-500/20 text-sky-100"
-                  : "border-slate-600 text-slate-300 hover:border-slate-400"
-              }`}
-              onClick={() => setCustomHours(String(h))}
-              type="button"
-            >
-              {h}h
-            </button>
-          ))}
-        </div>
-
-        {/* Custom hours input */}
-        <div className="mt-2 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <input
-            aria-label="Custom trail hours"
-            className="w-16 rounded border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-slate-100 focus:border-sky-400 focus:outline-none"
+            aria-label="Trail hours"
+            className="w-20 rounded border border-slate-600 bg-slate-700 px-2 py-1 text-xs text-slate-100 focus:border-sky-400 focus:outline-none"
             max={TRAIL_MAX_HOURS}
             min={1}
-            onChange={(e) => setCustomHours(e.target.value)}
-            placeholder="hrs"
+            onChange={(event) => setCustomHours(event.target.value)}
+            placeholder="hours"
             type="number"
             value={customHours}
           />
-          <span className="text-xs text-slate-400">hours (max {TRAIL_MAX_HOURS}h)</span>
+          <span className="text-xs text-slate-400">max {TRAIL_MAX_HOURS}h</span>
         </div>
 
         <div className="mt-3 flex items-center gap-2">
@@ -182,12 +189,10 @@ function PopupContent({
         {trailError ? <p className="mt-2 text-xs text-rose-300">{trailError}</p> : null}
       </div>
 
-      {/* Add to Watchlist */}
       <div className="mt-3 border-t border-slate-700 pt-3">
         <AddToWatchlistDropdown icao={aircraft.icao} />
       </div>
 
-      {/* View Details button */}
       <div className="mt-2">
         <button
           className="w-full rounded border border-cyan-500 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/10"
@@ -201,26 +206,17 @@ function PopupContent({
   );
 }
 
-/**
- * Renders a floating popup for the currently selected aircraft using an OL
- * Overlay. Must be rendered inside MapContainer (needs MapContext).
- *
- * The popup element is mounted into a dedicated DOM node that is positioned
- * over the map canvas via the OL Overlay API.
- */
 export function AircraftPopup(): JSX.Element {
   const { map, mapContainerEl } = useMapContext();
   const popupRef = useRef<HTMLDivElement>(null);
   const connectorRef = useRef<SVGLineElement>(null);
-  const selectAircraft = useAircraftStore((s) => s.selectAircraft);
-  const showDetails = useAircraftStore((s) => s.showDetails);
-  const clearTrail = useAircraftStore((s) => s.clearTrail);
-  const selectedIcao = useAircraftStore((s) => s.selectedIcao);
-  const trailIcao = useAircraftStore((s) => s.trailIcao);
-  const trailCount = useAircraftStore((s) => s.trailPositions.length);
-  const aircraft = useAircraftStore((s) =>
-    selectedIcao ? s.aircraft[selectedIcao] : null,
-  );
+  const selectAircraft = useAircraftStore((state) => state.selectAircraft);
+  const showDetails = useAircraftStore((state) => state.showDetails);
+  const clearTrail = useAircraftStore((state) => state.clearTrail);
+  const selectedIcao = useAircraftStore((state) => state.selectedIcao);
+  const trailIcao = useAircraftStore((state) => state.trailIcao);
+  const trailCount = useAircraftStore((state) => state.trailPositions.length);
+  const aircraft = useAircraftStore((state) => (selectedIcao ? state.aircraft[selectedIcao] : null));
   const { isLoading, error, loadTrail } = useFlightHistory();
 
   const handleClose = (): void => {

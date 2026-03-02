@@ -122,6 +122,80 @@
       },
       "gridPos": {
         "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(tracking_ingestion_accepted_records_total{source_id=~\"$source_id\"}[1m])) by (source_id)",
+          "legendFormat": "{{ source_id }}"
+        },
+        {
+          "expr": "sum(rate(tracking_ingestion_kafka_published_records_total{source_id=~\"$source_id\"}[1m])) by (source_id)",
+          "legendFormat": "{{ source_id }} published"
+        }
+      ],
+      "title": "Ingestion throughput by source",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(tracking_ingestion_accepted_records_total{source_id=~\"$source_id\"}[15m])) by (source_id)",
+          "legendFormat": "{{ source_id }} accepted"
+        },
+        {
+          "expr": "sum(increase(tracking_ingestion_kafka_published_records_total{source_id=~\"$source_id\"}[15m])) by (source_id)",
+          "legendFormat": "{{ source_id }} published"
+        }
+      ],
+      "title": "Accepted vs published in last 15m",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
         "w": 8,
         "x": 0,
         "y": 8
@@ -377,7 +451,36 @@
     "p9"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "ADSB-HCKT",
+          "value": "ADSB-HCKT"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(tracking_ingestion_accepted_records_total, source_id)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Source",
+        "multi": false,
+        "name": "source_id",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(tracking_ingestion_accepted_records_total, source_id)",
+          "refId": "Prometheus-source_id-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",

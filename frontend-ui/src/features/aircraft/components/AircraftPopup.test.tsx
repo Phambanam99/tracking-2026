@@ -66,6 +66,7 @@ function makeAircraft(overrides: Partial<Aircraft> = {}): Aircraft {
     aircraftType: "A321",
     operator: "Vietnam Airlines",
     countryCode: "VN",
+    isMilitary: false,
     lastSeen: Date.now(),
     ...overrides,
   };
@@ -154,7 +155,7 @@ describe("AircraftPopup", () => {
     });
 
     await renderPopup();
-    expect(screen.getAllByText("–").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("-").length).toBeGreaterThanOrEqual(1);
   });
 
   test("close button deselects the aircraft", async () => {
@@ -188,7 +189,7 @@ describe("AircraftPopup", () => {
     });
 
     await renderPopup();
-    fireEvent.click(screen.getByRole("button", { name: "3h" }));
+    fireEvent.change(screen.getByLabelText("Trail hours"), { target: { value: "3" } });
     fireEvent.click(screen.getByRole("button", { name: "Show Trail (3h)" }));
 
     expect(mockLoadTrail).toHaveBeenCalledWith("VN1234", 3);
@@ -213,24 +214,27 @@ describe("AircraftPopup", () => {
     expect(screen.getByRole("button", { name: "Clear Trail (2 pts)" })).toBeDefined();
   });
 
-  test("renders VN flag for VN country code", async () => {
-    const aircraft = makeAircraft({ countryCode: "VN" });
+  test("renders country flag images when available", async () => {
+    const aircraft = makeAircraft({
+      countryCode: "VN",
+      countryFlagUrl: "https://flagcdn.com/h80/vn.png",
+    });
     act(() => {
       useAircraftStore.setState({ aircraft: { VN1234: aircraft }, selectedIcao: "VN1234" });
     });
 
     await renderPopup();
-    expect(screen.getByTestId("aircraft-popup").textContent).toContain("🇻🇳");
+    expect(screen.getAllByRole("img", { name: "VN flag" })).toHaveLength(2);
   });
 
-  test("renders globe fallback for missing country code", async () => {
+  test("renders globe fallback text for missing country code", async () => {
     const aircraft = makeAircraft({ countryCode: null });
     act(() => {
       useAircraftStore.setState({ aircraft: { VN1234: aircraft }, selectedIcao: "VN1234" });
     });
 
     await renderPopup();
-    expect(screen.getByTestId("aircraft-popup").textContent).toContain("🌐");
+    expect(screen.getByText("Globe")).toBeDefined();
   });
 
   test("falls back to ICAO in the header when callsign and registration are missing", async () => {
@@ -241,5 +245,16 @@ describe("AircraftPopup", () => {
 
     await renderPopup();
     expect(screen.getAllByText("VN1234").length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("renders military badges when aircraft is marked military", async () => {
+    const aircraft = makeAircraft({ isMilitary: true });
+    act(() => {
+      useAircraftStore.setState({ aircraft: { VN1234: aircraft }, selectedIcao: "VN1234" });
+    });
+
+    await renderPopup();
+
+    expect(screen.getAllByText("Military")).toHaveLength(2);
   });
 });

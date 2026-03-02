@@ -99,9 +99,9 @@ describe("useWatchlistStore", () => {
 
     const icaos = useWatchlistStore.getState().getVisibleIcaos();
 
-    expect(icaos.has("ABC123")).toBe(true);
-    expect(icaos.has("DEF456")).toBe(true);
-    expect(icaos.has("GHI789")).toBe(false); // hidden group
+    expect(icaos.has("abc123")).toBe(true);
+    expect(icaos.has("def456")).toBe(true);
+    expect(icaos.has("ghi789")).toBe(false); // hidden group
   });
 
   test("getVisibleIcaos returns empty set when no groups", () => {

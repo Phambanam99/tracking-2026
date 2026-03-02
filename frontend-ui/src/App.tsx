@@ -6,13 +6,16 @@ import { RegisterPage } from "./features/auth/pages/RegisterPage";
 import { logout, useAuthStore } from "./features/auth/store/useAuthStore";
 import { AircraftFeatureLayer } from "./features/aircraft/components/AircraftFeatureLayer";
 import { MapContainer } from "./features/map/components/MapContainer";
+import { LayerPanel } from "./features/map/components/LayerPanel";
 import { SearchPanel } from "./features/search/components/SearchPanel";
 import { WatchlistPanel } from "./features/watchlist/components/WatchlistPanel";
+import { useWatchlistSync } from "./features/watchlist/hooks/useWatchlistSync";
 
 type Page = "map" | "login" | "register" | "admin-users" | "admin-api-keys";
 
 export function App(): JSX.Element {
   const auth = useAuthStore((state) => state);
+  useWatchlistSync();
   const [page, setPage] = useState<Page>("map");
   const [showSearch, setShowSearch] = useState(false);
   const [showWatchlist, setShowWatchlist] = useState(false);
@@ -70,6 +73,7 @@ export function App(): JSX.Element {
         {currentPage === "map" && (
           <MapContainer>
             <AircraftFeatureLayer />
+            <LayerPanel />
             {showSearch && <SearchPanel onClose={() => setShowSearch(false)} />}
             {showWatchlist && <WatchlistPanel onClose={() => setShowWatchlist(false)} />}
           </MapContainer>

@@ -48,7 +48,11 @@ function createTrailStyle(): Style[] {
   ];
 }
 
-export function HistoryTrailLayer(): null {
+type HistoryTrailLayerProps = {
+  visible?: boolean;
+};
+
+export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): null {
   const { map } = useMapContext();
   const layerRef = useRef<VectorLayer<VectorSource<Feature<Geometry>>> | null>(null);
   const sourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
@@ -65,6 +69,7 @@ export function HistoryTrailLayer(): null {
       source,
       zIndex: TRAIL_LAYER_Z_INDEX,
       style: createTrailStyle(),
+      visible,
     });
 
     map.addLayer(layer);
@@ -77,7 +82,11 @@ export function HistoryTrailLayer(): null {
       sourceRef.current = null;
       layerRef.current = null;
     };
-  }, [map]);
+  }, [map, visible]);
+
+  useEffect(() => {
+    layerRef.current?.setVisible(visible);
+  }, [visible]);
 
   useEffect(() => {
     const source = sourceRef.current;

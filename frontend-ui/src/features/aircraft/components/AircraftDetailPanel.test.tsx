@@ -39,6 +39,7 @@ function makeAircraft(overrides: Partial<Aircraft> = {}): Aircraft {
     aircraftType: "A321",
     operator: "Vietnam Airlines",
     countryCode: "VN",
+    isMilitary: false,
     lastSeen: Date.now(),
     countryFlagUrl: "https://flagcdn.com/h80/vn.png",
     ...overrides,
@@ -129,5 +130,19 @@ describe("AircraftDetailPanel", () => {
 
     expect(screen.getByText("China")).toBeDefined();
     expect(screen.queryByText("CN")).toBeNull();
+  });
+
+  test("renders military badge and class field for military aircraft", () => {
+    const aircraft = makeAircraft({ isMilitary: true });
+    useAircraftStore.setState({
+      aircraft: { VN1234: aircraft },
+      selectedIcao: "VN1234",
+      detailIcao: "VN1234",
+    });
+
+    render(<AircraftDetailPanel />);
+
+    expect(screen.getAllByText("Military").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Class")).toBeDefined();
   });
 });

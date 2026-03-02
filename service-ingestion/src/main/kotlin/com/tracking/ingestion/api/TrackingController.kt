@@ -33,7 +33,7 @@ public class TrackingController(
         val traceContext = traceContextExtractor.extract(exchange.request)
 
         return rawAdsbProducer.publish(canonicalFlight, traceContext)
-            .doOnSuccess { ingestionMetrics.incrementAcceptedSingle() }
+            .doOnSuccess { ingestionMetrics.incrementAcceptedSingle(canonicalFlight.sourceId) }
             .thenReturn(IngestAcceptedResponse())
     }
 
@@ -48,7 +48,7 @@ public class TrackingController(
         val traceContext = traceContextExtractor.extract(exchange.request)
 
         return rawAdsbProducer.publishBatch(canonicalFlights, traceContext)
-            .doOnSuccess { accepted -> ingestionMetrics.incrementAcceptedBatch(accepted) }
+            .doOnSuccess { ingestionMetrics.incrementAcceptedBatch(canonicalFlights) }
             .map { accepted -> IngestBatchResponse(accepted = accepted) }
     }
 }

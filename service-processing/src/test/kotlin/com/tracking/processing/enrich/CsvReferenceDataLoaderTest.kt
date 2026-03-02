@@ -117,4 +117,28 @@ public class CsvReferenceDataLoaderTest {
         val loader = CsvReferenceDataLoader { csv.byteInputStream() }
         loader.load().shouldBeEmpty()
     }
+
+    @Test
+    public fun `should load semicolon separated aircraft reference rows`() {
+        val csv =
+            """
+            004002;Z-WPA;B732;00;BOEING 737-200;;;
+            A0616B;N12310;;00;C-27A SPARTAN;;RUSSELL MILITARY MUSEUM;
+            """.trimIndent()
+
+        val loader = CsvReferenceDataLoader { csv.byteInputStream() }
+        val data = loader.load()
+
+        data shouldHaveSize 2
+        data["004002"].shouldNotBeNull {
+            registration shouldBe "Z-WPA"
+            aircraftType shouldBe "B732"
+            operator shouldBe null
+        }
+        data["A0616B"].shouldNotBeNull {
+            registration shouldBe "N12310"
+            aircraftType shouldBe null
+            operator shouldBe "RUSSELL MILITARY MUSEUM"
+        }
+    }
 }

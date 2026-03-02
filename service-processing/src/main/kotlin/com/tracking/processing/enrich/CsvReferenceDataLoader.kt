@@ -38,22 +38,34 @@ public class CsvReferenceDataLoader(
                 if (line.isEmpty() || line.startsWith('#')) continue
                 // Skip header row
                 if (lineNo == 1 && line.startsWith("icao", ignoreCase = true)) continue
-                val cols = line.split(',')
-                if (cols.size < COLUMN_COUNT) {
+
+                val delimiter = detectDelimiter(line)
+                val cols = splitPreservingEmptyColumns(line, delimiter)
+                if (cols.size < minimumColumnCount(delimiter)) {
                     log.warn("Skipping malformed CSV line {}: '{}'", lineNo, line)
                     continue
                 }
                 val icao = cols[COL_ICAO].trim().uppercase()
                 if (icao.length != ICAO_HEX_LENGTH) continue
                 val metadata =
-                    AircraftMetadata(
-                        registration = cols[COL_REGISTRATION].trim().ifEmpty { null },
-                        aircraftType = cols[COL_AIRCRAFT_TYPE].trim().ifEmpty { null },
-                        operator = cols[COL_OPERATOR].trim().ifEmpty { null },
-                        countryCode = cols[COL_COUNTRY_CODE].trim().ifEmpty { null },
-                        countryFlagUrl = cols[COL_COUNTRY_FLAG_URL].trim().ifEmpty { null },
-                        imageUrl = cols.getOrNull(COL_IMAGE_URL)?.trim()?.ifEmpty { null },
-                    )
+                    when (delimiter) {
+                        ';' ->
+                            AircraftMetadata(
+                                registration = cols[COL_REGISTRATION].trim().ifEmpty { null },
+                                aircraftType = cols[COL_AIRCRAFT_TYPE].trim().ifEmpty { null },
+                                operator = cols.getOrNull(SEMICOLON_COL_OPERATOR)?.trim()?.ifEmpty { null },
+                            )
+
+                        else ->
+                            AircraftMetadata(
+                                registration = cols[COL_REGISTRATION].trim().ifEmpty { null },
+                                aircraftType = cols[COL_AIRCRAFT_TYPE].trim().ifEmpty { null },
+                                operator = cols[COL_OPERATOR].trim().ifEmpty { null },
+                                countryCode = cols[COL_COUNTRY_CODE].trim().ifEmpty { null },
+                                countryFlagUrl = cols[COL_COUNTRY_FLAG_URL].trim().ifEmpty { null },
+                                imageUrl = cols.getOrNull(COL_IMAGE_URL)?.trim()?.ifEmpty { null },
+                            )
+                    }
                 result[icao] = metadata
             }
             log.info("Loaded {} aircraft entries from reference CSV", result.size)
@@ -71,5 +83,13 @@ public class CsvReferenceDataLoader(
         private const val COL_COUNTRY_CODE = 4
         private const val COL_COUNTRY_FLAG_URL = 5
         private const val COL_IMAGE_URL = 6
+        private const val SEMICOLON_COL_OPERATOR = 6
+
+        private fun detectDelimiter(line: String): Char = if (line.count { it == ';' } > line.count { it == ',' }) ';' else ','
+
+        private fun splitPreservingEmptyColumns(line: String, delimiter: Char): List<String> =
+            line.split(delimiter.toString(), ignoreCase = false, limit = Int.MAX_VALUE)
+
+        private fun minimumColumnCount(delimiter: Char): Int = if (delimiter == ';') 3 else COLUMN_COUNT
     }
 }

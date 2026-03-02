@@ -38,6 +38,7 @@ describe("toAircraft", () => {
       countryCode: "VN",
       countryFlagUrl: "https://flagcdn.com/h80/vn.png",
       lastSeen: 1700000000123,
+      isMilitary: false,
     });
   });
 
@@ -61,6 +62,7 @@ describe("toAircraft", () => {
     expect(aircraft.operator).toBeNull();
     expect(aircraft.countryCode).toBeNull();
     expect(aircraft.lastSeen).toBe(1700000000999);
+    expect(aircraft.isMilitary).toBe(false);
   });
 
   test("should read nested metadata in snake_case from the runtime wire contract", () => {
@@ -90,6 +92,28 @@ describe("toAircraft", () => {
       eventTime: 1700000001444,
       sourceId: "ADSBX-SNAPSHOT",
       lastSeen: 1700000001555,
+      isMilitary: false,
+    });
+  });
+
+  test("should map military flag from backend metadata", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1700000002666);
+
+    const aircraft = toAircraft({
+      icao: "AE292B",
+      lat: 25.1,
+      lon: 55.2,
+      event_time: 1700000002555,
+      source_id: "ADSB-HCKT",
+      metadata: {
+        is_military: true,
+      },
+    });
+
+    expect(aircraft).toMatchObject({
+      icao: "AE292B",
+      isMilitary: true,
+      lastSeen: 1700000002666,
     });
   });
 });

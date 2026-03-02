@@ -9,6 +9,7 @@ public class FlightEnricher(
     private val icaoCountryResolver: IcaoCountryResolver,
     private val aircraftPhotoProvider: AircraftPhotoProvider = NoopAircraftPhotoProvider,
     private val icaoRegistrationResolver: IcaoRegistrationResolver = IcaoRegistrationResolver(),
+    private val militaryHexResolver: MilitaryHexResolver = MilitaryHexResolver(),
 ) {
     public fun enrich(flight: CanonicalFlight, isHistorical: Boolean): EnrichedFlight {
         val cachedMetadata = referenceDataCache.findByIcao(flight.icao)
@@ -17,7 +18,7 @@ public class FlightEnricher(
             AircraftMetadata(
                 registration = cachedMetadata?.registration
                     ?: icaoRegistrationResolver.resolve(flight.icao),
-                aircraftType = cachedMetadata?.aircraftType,
+                aircraftType = cachedMetadata?.aircraftType ?: flight.aircraftType,
                 operator = cachedMetadata?.operator,
                 countryCode = cachedMetadata?.countryCode ?: resolvedCountry?.countryCode,
                 countryFlagUrl = cachedMetadata?.countryFlagUrl ?: resolvedCountry?.countryFlagUrl,
@@ -25,6 +26,7 @@ public class FlightEnricher(
                     cachedMetadata?.imageUrl
                         ?: aircraftPhotoProvider.photoUrlFor(flight.icao)
                         ?: icaoCountryResolver.imageUrlFor(flight.icao),
+                isMilitary = militaryHexResolver.isMilitary(flight.icao),
             )
         val normalizedMetadata =
             if (
@@ -33,7 +35,8 @@ public class FlightEnricher(
                 metadata.operator == null &&
                 metadata.countryCode == null &&
                 metadata.countryFlagUrl == null &&
-                metadata.imageUrl == null
+                metadata.imageUrl == null &&
+                !metadata.isMilitary
             ) {
                 null
             } else {

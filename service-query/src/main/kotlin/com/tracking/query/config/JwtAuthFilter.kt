@@ -143,7 +143,6 @@ public class JwtAuthFilter(
                 val kidVal = jwk["kid"]?.asText() ?: "default"
                 val pubKey = parseRsaPublicKey(jwk) ?: return@forEach
                 result[kidVal] = pubKey
-                keyCache.put(kidVal, pubKey)
             }
             result
         } catch (ex: Exception) {

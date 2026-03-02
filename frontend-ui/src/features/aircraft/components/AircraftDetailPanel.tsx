@@ -27,6 +27,14 @@ function formatLastSeen(timestamp: number): string {
   return `${deltaMinutes}m ago`;
 }
 
+function MilitaryBadge(): JSX.Element {
+  return (
+    <span className="rounded-full border border-rose-400/40 bg-rose-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-200">
+      Military
+    </span>
+  );
+}
+
 export function AircraftDetailPanel(): JSX.Element | null {
   const detailIcao = useAircraftStore((state) => state.detailIcao);
   const aircraft = useAircraftStore((state) =>
@@ -58,6 +66,7 @@ export function AircraftDetailPanel(): JSX.Element | null {
                 />
               ) : null}
               <span>{aircraft.icao.toUpperCase()}</span>
+              {aircraft.isMilitary ? <MilitaryBadge /> : null}
               {photoMetadata.metadata ? (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
@@ -124,6 +133,7 @@ export function AircraftDetailPanel(): JSX.Element | null {
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto px-4 py-4 text-sm">
           <Field label="Registration" value={aircraft.registration} />
           <Field label="Type" value={aircraft.aircraftType} />
+          <Field label="Class" value={aircraft.isMilitary ? "Military" : null} />
           <Field label="Operator" value={aircraft.operator} />
           <Field label="Country" value={countryName} />
           <Field label="Altitude" value={aircraft.altitude != null ? `${aircraft.altitude.toLocaleString()} ft` : null} />

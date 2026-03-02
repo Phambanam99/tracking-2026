@@ -76,7 +76,7 @@ public class RawAdsbProducer(
         try {
             // Accept the HTTP request once the producer buffer accepts the record; broker acks are tracked asynchronously.
             val future = kafkaTemplate.send(record)
-            trackPublishResult(future, key)
+            trackPublishResult(future, key, flight.sourceId)
         } catch (error: Throwable) {
             throw mapToProducerException(error, key)
         }
@@ -85,10 +85,11 @@ public class RawAdsbProducer(
     private fun trackPublishResult(
         future: CompletableFuture<*>,
         key: String,
+        sourceId: String,
     ) {
         future.whenComplete { _, error ->
             if (error == null) {
-                ingestionMetrics.incrementPublished(1)
+                ingestionMetrics.incrementPublished(sourceId)
                 return@whenComplete
             }
 

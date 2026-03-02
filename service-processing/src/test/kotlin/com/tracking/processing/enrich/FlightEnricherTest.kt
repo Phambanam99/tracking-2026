@@ -17,7 +17,8 @@ public class FlightEnricherTest {
         val enricher =
             FlightEnricher(
                 referenceDataCache = cache,
-                icaoCountryResolver = IcaoCountryResolver(),
+                icaoCountryResolver = IcaoCountryResolver(imageUrlTemplate = ""),
+                militaryHexResolver = MilitaryHexResolver(emptySet()),
             )
         val flight =
             CanonicalFlight(
@@ -45,7 +46,8 @@ public class FlightEnricherTest {
         val enricher =
             FlightEnricher(
                 referenceDataCache = cache,
-                icaoCountryResolver = IcaoCountryResolver(),
+                icaoCountryResolver = IcaoCountryResolver(imageUrlTemplate = ""),
+                militaryHexResolver = MilitaryHexResolver(emptySet()),
             )
         val flight =
             CanonicalFlight(
@@ -82,6 +84,7 @@ public class FlightEnricherTest {
             FlightEnricher(
                 referenceDataCache = cache,
                 icaoCountryResolver = IcaoCountryResolver(),
+                militaryHexResolver = MilitaryHexResolver(emptySet()),
             )
         val flight =
             CanonicalFlight(
@@ -112,6 +115,7 @@ public class FlightEnricherTest {
             FlightEnricher(
                 referenceDataCache = cache,
                 icaoCountryResolver = IcaoCountryResolver(),
+                militaryHexResolver = MilitaryHexResolver(emptySet()),
             )
         val flight =
             CanonicalFlight(
@@ -126,5 +130,32 @@ public class FlightEnricherTest {
         val enriched = enricher.enrich(flight, isHistorical = false)
 
         enriched.metadata?.aircraftType shouldBe "B738"
+    }
+
+    @Test
+    public fun `should keep metadata when aircraft is military even without other enrichment fields`() {
+        val cache =
+            ReferenceDataCache(
+                loader = ReferenceDataLoader { emptyMap() },
+                refreshInterval = Duration.ofMinutes(10),
+            )
+        val enricher =
+            FlightEnricher(
+                referenceDataCache = cache,
+                icaoCountryResolver = IcaoCountryResolver(imageUrlTemplate = ""),
+                militaryHexResolver = MilitaryHexResolver(setOf("ae292b")),
+            )
+        val flight =
+            CanonicalFlight(
+                icao = "AE292B",
+                lat = 21.0,
+                lon = 105.0,
+                eventTime = 5_000L,
+                sourceId = "adsbx-2",
+            )
+
+        val enriched = enricher.enrich(flight, isHistorical = false)
+
+        enriched.metadata?.isMilitary shouldBe true
     }
 }

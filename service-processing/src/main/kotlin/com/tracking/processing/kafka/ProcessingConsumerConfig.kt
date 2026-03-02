@@ -11,6 +11,7 @@ import com.tracking.processing.enrich.IcaoCountryResolver
 import com.tracking.processing.enrich.IcaoRegistrationResolver
 import com.tracking.processing.enrich.AircraftPhotoProvider
 import com.tracking.processing.enrich.CsvReferenceDataLoader
+import com.tracking.processing.enrich.MilitaryHexResolver
 import com.tracking.processing.enrich.NoopAircraftPhotoProvider
 import com.tracking.processing.enrich.PlanespottersPhotoProvider
 import com.tracking.processing.enrich.ReferenceDataCache
@@ -80,6 +81,9 @@ public class ProcessingConsumerConfig {
     public fun icaoRegistrationResolver(): IcaoRegistrationResolver = IcaoRegistrationResolver()
 
     @Bean
+    public fun militaryHexResolver(): MilitaryHexResolver = MilitaryHexResolver()
+
+    @Bean
     public fun referenceDataCache(
         loader: ReferenceDataLoader,
         @Value("\${tracking.processing.enrichment.refresh-interval-seconds:600}")
@@ -125,12 +129,14 @@ public class ProcessingConsumerConfig {
         icaoCountryResolver: IcaoCountryResolver,
         aircraftPhotoProvider: AircraftPhotoProvider,
         icaoRegistrationResolver: IcaoRegistrationResolver,
+        militaryHexResolver: MilitaryHexResolver,
     ): FlightEnricher =
         FlightEnricher(
             referenceDataCache = cache,
             icaoCountryResolver = icaoCountryResolver,
             aircraftPhotoProvider = aircraftPhotoProvider,
             icaoRegistrationResolver = icaoRegistrationResolver,
+            militaryHexResolver = militaryHexResolver,
         )
 
     @Bean

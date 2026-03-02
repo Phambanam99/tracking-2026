@@ -80,6 +80,7 @@ class LiveAircraftCacheWriterTest {
                 aircraftType = "A321",
                 operator = "Vietnam Airlines",
                 countryCode = "vn",
+                isMilitary = true,
             ),
         )
         val json = objectMapper.writeValueAsString(flight)
@@ -88,4 +89,6 @@ class LiveAircraftCacheWriterTest {
         writer.onLiveFlight(record)
 
         verify(redisTemplate).executePipelined(any<RedisCallback<*>>())
-        verify(aircraftPhotoCacheService).enqueueWar
+        verify(aircraftPhotoCacheService).enqueueWarmup("780A3B")
+    }
+}

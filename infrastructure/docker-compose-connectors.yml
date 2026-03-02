@@ -1,6 +1,20 @@
 name: tracking-connectors
 
 services:
+  adsb-hckt-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-adsb-hckt-connector
+    restart: unless-stopped
+    command: [ "adsb-hckt" ]
+    env_file:
+      - ../connectors/env/hckt.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
   adsbx-connector:
     build:
       context: ..

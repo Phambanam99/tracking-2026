@@ -29,4 +29,9 @@ public data class AircraftMetadata(
     @param:JsonAlias("imageUrl")
     @SerialName("image_url")
     val imageUrl: String? = null,
+    @param:JsonProperty("is_military")
+    @get:JsonProperty("is_military")
+    @param:JsonAlias("isMilitary")
+    @SerialName("is_military")
+    val isMilitary: Boolean = false,
 )

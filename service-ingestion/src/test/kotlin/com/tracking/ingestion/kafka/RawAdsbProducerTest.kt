@@ -14,8 +14,8 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.KafkaException
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.mockito.BDDMockito.given
 import org.mockito.Mockito.mock
+import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import reactor.test.StepVerifier
@@ -23,13 +23,7 @@ import reactor.test.StepVerifier
 public class RawAdsbProducerTest {
     @Test
     public fun `should map enqueue timeout to service unavailable exception`() {
-        @Suppress("UNCHECKED_CAST")
-        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
-        given(
-            kafkaTemplate.send(
-                any<ProducerRecord<String, String>>(),
-            ),
-        ).willAnswer {
+        val kafkaTemplate = kafkaTemplateThat {
             throw KafkaException("buffer is full", TimeoutException("buffer full"))
         }
 
@@ -46,13 +40,7 @@ public class RawAdsbProducerTest {
 
     @Test
     public fun `should enqueue full batch without waiting for broker acknowledgements`() {
-        @Suppress("UNCHECKED_CAST")
-        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
-        given(
-            kafkaTemplate.send(
-                any<ProducerRecord<String, String>>(),
-            ),
-        ).willReturn(CompletableFuture<SendResult<String, String>>())
+        val kafkaTemplate = kafkaTemplateThat { CompletableFuture<SendResult<String, String>>() }
 
         val producer = rawAdsbProducer(kafkaTemplate)
 
@@ -65,14 +53,8 @@ public class RawAdsbProducerTest {
 
     @Test
     public fun `should record async publish failures separately from request rejection`() {
-        @Suppress("UNCHECKED_CAST")
-        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
         val future = CompletableFuture<SendResult<String, String>>()
-        given(
-            kafkaTemplate.send(
-                any<ProducerRecord<String, String>>(),
-            ),
-        ).willReturn(future)
+        val kafkaTemplate = kafkaTemplateThat { future }
 
         val meterRegistry = SimpleMeterRegistry()
         val metrics = IngestionMetrics(meterRegistry)
@@ -85,6 +67,24 @@ public class RawAdsbProducerTest {
 
         meterRegistry.counter("tracking.ingestion.kafka.publish_failed").count() shouldBeExactly 1.0
         meterRegistry.counter("tracking.ingestion.rejected.producer_unavailable").count() shouldBeExactly 0.0
+    }
+
+    @Test
+    public fun `should record async published records by source id`() {
+        val future = CompletableFuture<SendResult<String, String>>()
+        val kafkaTemplate = kafkaTemplateThat { future }
+
+        val meterRegistry = SimpleMeterRegistry()
+        val metrics = IngestionMetrics(meterRegistry)
+        val producer = rawAdsbProducer(kafkaTemplate, metrics)
+
+        StepVerifier.create(producer.publish(validFlight(sourceId = "ADSB-HCKT"), traceContext()))
+            .verifyComplete()
+
+        future.complete(mock(SendResult::class.java) as SendResult<String, String>)
+
+        meterRegistry.counter("tracking.ingestion.kafka.published.records", "source_id", "ADSB-HCKT").count() shouldBeExactly 1.0
+        meterRegistry.counter("tracking.ingestion.kafka.published").count() shouldBeExactly 1.0
     }
 
     private fun rawAdsbProducer(
@@ -101,13 +101,23 @@ public class RawAdsbProducerTest {
         )
     }
 
-    private fun validFlight(): CanonicalFlight {
+    private fun kafkaTemplateThat(
+        onSend: (ProducerRecord<String, String>) -> CompletableFuture<SendResult<String, String>>,
+    ): KafkaTemplate<String, String> {
+        @Suppress("UNCHECKED_CAST")
+        val producerFactory = mock(ProducerFactory::class.java) as ProducerFactory<String, String>
+        return object : KafkaTemplate<String, String>(producerFactory) {
+            override fun send(record: ProducerRecord<String, String>): CompletableFuture<SendResult<String, String>> = onSend(record)
+        }
+    }
+
+    private fun validFlight(sourceId: String = "SRC-1"): CanonicalFlight {
         return CanonicalFlight(
             icao = "ICAO123",
             lat = 10.5,
             lon = 106.7,
             eventTime = 1708941600000,
-            sourceId = "SRC-1",
+            sourceId = sourceId,
         )
     }
 

@@ -14,6 +14,7 @@ type LiveAircraftDto = {
   registration: string | null;
   aircraftType: string | null;
   operator: string | null;
+  isMilitary?: boolean;
 };
 
 export async function fetchLiveAircraftInViewport(
@@ -48,5 +49,6 @@ export async function fetchLiveAircraftInViewport(
     countryCode: null,
     countryFlagUrl: null,
     lastSeen: Date.now(),
+    isMilitary: flight.isMilitary ?? false,
   }));
 }

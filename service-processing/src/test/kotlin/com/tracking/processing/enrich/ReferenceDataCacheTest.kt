@@ -41,4 +41,17 @@ public class ReferenceDataCacheTest {
         loadCount shouldBe 2
         third?.operator shouldBe "SecondAir"
     }
+
+    @Test
+    public fun `should normalize icao lookups to uppercase`() {
+        val cache =
+            ReferenceDataCache(
+                loader = ReferenceDataLoader { mapOf("ABC123" to AircraftMetadata(aircraftType = "A320")) },
+                refreshInterval = Duration.ofMinutes(10),
+            )
+
+        val result = cache.findByIcao(" abc123 ")
+
+        result?.aircraftType shouldBe "A320"
+    }
 }

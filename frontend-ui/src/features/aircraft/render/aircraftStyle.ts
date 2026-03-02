@@ -9,6 +9,8 @@ export type AircraftStyleOptions = {
   altitude?: number | null;
   isSelected?: boolean;
   opacity?: number;
+  fillColor?: string;
+  strokeColor?: string;
 };
 
 /** Altitude color thresholds (feet). */
@@ -85,10 +87,12 @@ export function createAircraftStyle(options: AircraftStyleOptions): Style {
     altitude,
     isSelected = false,
     opacity = 1.0,
+    fillColor,
+    strokeColor,
   } = options;
 
-  const fill = isSelected ? "#ffdd00" : altitudeColor(altitude);
-  const stroke = isSelected ? "#000000" : "#000000";
+  const fill = isSelected ? "#ffdd00" : (fillColor ?? altitudeColor(altitude));
+  const stroke = strokeColor ?? "#000000";
 
   const src = buildSvgDataUri(shape, fill, stroke, scale);
 

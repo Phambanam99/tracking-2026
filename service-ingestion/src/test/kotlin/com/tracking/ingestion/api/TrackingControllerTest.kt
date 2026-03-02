@@ -2,12 +2,11 @@ package com.tracking.ingestion.api
 
 import com.tracking.ingestion.any
 import com.tracking.ingestion.kafka.RawAdsbProducer
+import com.tracking.common.dto.CanonicalFlight
 import com.tracking.ingestion.tracing.TraceContext
 import com.tracking.ingestion.tracing.TraceContextExtractor
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.BDDMockito.given
-import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -38,6 +37,8 @@ public class TrackingControllerTest {
 
     @Test
     public fun `should accept single ingest payload and publish to kafka`() {
+        var capturedFlight: CanonicalFlight? = null
+        var capturedTraceContext: TraceContext? = null
         given(
             traceContextExtractor.extract(any()),
         ).willReturn(
@@ -51,7 +52,11 @@ public class TrackingControllerTest {
                 any(),
                 any(),
             ),
-        ).willReturn(Mono.empty())
+        ).willAnswer { invocation ->
+            capturedFlight = invocation.getArgument(0)
+            capturedTraceContext = invocation.getArgument(1)
+            Mono.empty<Void>()
+        }
 
         webTestClient.post()
             .uri("/api/v1/ingest/adsb")
@@ -73,12 +78,8 @@ public class TrackingControllerTest {
             .expectBody()
             .jsonPath("$.accepted").isEqualTo(true)
 
-        @Suppress("UNCHECKED_CAST")
-        val flightCaptor =
-            ArgumentCaptor.forClass(com.tracking.common.dto.CanonicalFlight::class.java)
-                as ArgumentCaptor<com.tracking.common.dto.CanonicalFlight>
-        verify(rawAdsbProducer).publish(flightCaptor.capture(), any())
-        assertEquals("A321", flightCaptor.value.aircraftType)
+        assertEquals("A321", capturedFlight?.aircraftType)
+        assertEquals("req-1", capturedTraceContext?.requestId)
     }
 
     @Test

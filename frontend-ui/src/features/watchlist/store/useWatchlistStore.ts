@@ -10,7 +10,7 @@ interface WatchlistState {
   // Server sync
   fetchGroups: () => Promise<void>;
   fetchGroupEntries: (groupId: number) => Promise<void>;
-  createGroup: (name: string, color?: string) => Promise<void>;
+  createGroup: (name: string, color?: string) => Promise<WatchlistGroup>;
   updateGroup: (groupId: number, updates: UpdateGroupRequest) => Promise<void>;
   deleteGroup: (groupId: number) => Promise<void>;
   addAircraft: (groupId: number, icao: string, note?: string) => Promise<void>;
@@ -35,8 +35,31 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
   fetchGroups: async () => {
     set({ loading: true, error: null });
     try {
+      const existingGroups = get().groups;
       const groups = await api.fetchGroups();
-      set({ groups: groups.map((g) => ({ ...g, visibleOnMap: true })), loading: false });
+      const hydratedGroups = await Promise.all(
+        groups.map(async (group) => {
+          const existing = existingGroups.find((candidate) => candidate.id === group.id);
+          const visibleOnMap = existing?.visibleOnMap ?? true;
+
+          try {
+            const detailed = await api.fetchGroupWithEntries(group.id);
+            return {
+              ...group,
+              entryCount: detailed.entryCount,
+              entries: detailed.entries,
+              visibleOnMap,
+            };
+          } catch {
+            return {
+              ...group,
+              visibleOnMap,
+            };
+          }
+        }),
+      );
+
+      set({ groups: hydratedGroups, loading: false });
     } catch (e) {
       set({ error: (e as Error).message, loading: false });
     }
@@ -53,9 +76,11 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
 
   createGroup: async (name: string, color?: string) => {
     const group = await api.createGroup({ name, color });
+    const createdGroup = { ...group, visibleOnMap: true };
     set((state) => ({
-      groups: [...state.groups, { ...group, visibleOnMap: true }],
+      groups: [...state.groups, createdGroup],
     }));
+    return createdGroup;
   },
 
   updateGroup: async (groupId: number, updates: UpdateGroupRequest) => {
@@ -127,18 +152,18 @@ export const useWatchlistStore = create<WatchlistState>((set, get) => ({
     const icaos = new Set<string>();
     for (const g of groups) {
       if (g.visibleOnMap && g.entries) {
-        for (const e of g.entries) icaos.add(e.icao);
+        for (const e of g.entries) icaos.add(e.icao.toLowerCase());
       }
     }
     return icaos;
   },
 
   getGroupsForIcao: (icao: string) =>
-    get().groups.filter((g) => g.entries?.some((e) => e.icao === icao)),
+    get().groups.filter((g) => g.entries?.some((e) => e.icao.toLowerCase() === icao.toLowerCase())),
 
   getIcaoColor: (icao: string) => {
     for (const g of get().groups) {
-      if (g.visibleOnMap && g.entries?.some((e) => e.icao === icao)) {
+      if (g.visibleOnMap && g.entries?.some((e) => e.icao.toLowerCase() === icao.toLowerCase())) {
         return g.color;
       }
     }

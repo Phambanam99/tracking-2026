@@ -32,4 +32,11 @@ public class StaleIndexCleaner(
             if (redisTemplate.hasKey("$keyPrefix$icao") != true) {
                 redisTemplate.opsForSet().remove(indexKey, icao)
                 redisTemplate.opsForZSet().remove(geoKey, icao)
-                remove
+                removed++
+            }
+        }
+        if (removed > 0) {
+            log.debug("Cleaned up {} stale entries from {}", removed, indexKey)
+        }
+    }
+}

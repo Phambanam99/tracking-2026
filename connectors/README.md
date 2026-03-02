@@ -5,6 +5,7 @@ Standalone connectors that fetch external aircraft feeds and push batches into t
 `POST /api/v1/ingest/adsb/batch`
 
 Available connectors:
+- `adsb_hckt_connector.py` -> `ADSB-HCKT`
 - `adsbx_connector.py` -> `ADSBX-SNAPSHOT`
 - `fr24_connector.py` -> `FR24-GLOBAL`
 - `radarbox_connector.py` -> `RADARBOX-GLOBAL`
@@ -52,6 +53,7 @@ Optional shared env:
 ## Run
 
 ```bash
+python3 connectors/adsb_hckt_connector.py
 python3 connectors/fr24_connector.py
 python3 connectors/radarbox_connector.py
 python3 connectors/adsbx_connector.py
@@ -63,6 +65,7 @@ Runtime compose file:
 - [docker-compose-connectors.yml](/mnt/c/Users/NamP7/Documents/workspace/2026/tracking-2026/infrastructure/docker-compose-connectors.yml)
 
 Default env files:
+- [hckt.env](/mnt/c/Users/NamP7/Documents/workspace/2026/tracking-2026/connectors/env/hckt.env)
 - [adsbx.env](/mnt/c/Users/NamP7/Documents/workspace/2026/tracking-2026/connectors/env/adsbx.env)
 - [fr24.env](/mnt/c/Users/NamP7/Documents/workspace/2026/tracking-2026/connectors/env/fr24.env)
 - [radarbox.env](/mnt/c/Users/NamP7/Documents/workspace/2026/tracking-2026/connectors/env/radarbox.env)
@@ -99,6 +102,12 @@ Source-specific envs:
 - `ADSBX_CHROME_BINARY` optional
 - `ADSBX_HEADLESS` default `true`
 - `ADSBX_INCLUDE_DERIVED_SPEED_HEADING` default `true`
+
+### ADSB-HCKT
+- `ADSB_HCKT_URL` default `http://100.100.24.4/tar1090/data/aircraft.json`
+- `ADSB_HCKT_REFRESH_INTERVAL_SECONDS` default `3`
+- `ADSB_HCKT_TIMEOUT_SECONDS` default `10`
+- `ADSB_HCKT_MAX_SEEN_SECONDS` default `15`
 
 ### FR24
 - `FR24_REFRESH_INTERVAL_SECONDS` default `60`

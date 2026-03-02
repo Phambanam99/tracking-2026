@@ -32,6 +32,8 @@ export type AircraftActions = {
   clearTrail: () => void;
   /** Remove aircraft whose lastSeen is older than maxAgeMs. */
   pruneStale: (maxAgeMs: number) => void;
+  /** Keep only aircraft whose ICAO is in the given set; prune the rest. */
+  retainOnly: (icaos: Set<string>) => void;
 };
 
 export type AircraftStore = AircraftState & AircraftActions;
@@ -134,6 +136,28 @@ export const useAircraftStore = create<AircraftStore>((set) => ({
         }
       }
       // If the selected aircraft was pruned, deselect it.
+      const selectedIcao =
+        state.selectedIcao !== null && !(state.selectedIcao in next)
+          ? null
+          : state.selectedIcao;
+      const shouldClearTrail =
+        state.trailIcao !== null && !(state.trailIcao in next);
+      return {
+        aircraft: next,
+        selectedIcao,
+        trailIcao: shouldClearTrail ? null : state.trailIcao,
+        trailPositions: shouldClearTrail ? [] : state.trailPositions,
+      };
+    }),
+
+  retainOnly: (icaos) =>
+    set((state) => {
+      const next: Record<string, Aircraft> = {};
+      for (const [icao, ac] of Object.entries(state.aircraft)) {
+        if (icaos.has(icao.toLowerCase())) {
+          next[icao] = ac;
+        }
+      }
       const selectedIcao =
         state.selectedIcao !== null && !(state.selectedIcao in next)
           ? null

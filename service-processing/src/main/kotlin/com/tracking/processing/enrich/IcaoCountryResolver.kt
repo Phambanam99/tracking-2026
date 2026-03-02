@@ -20,6 +20,9 @@ public class IcaoCountryResolver(
     }
 
     public fun imageUrlFor(icao: String): String? {
+        if (imageUrlTemplate.isBlank()) {
+            return null
+        }
         val normalized = normalizeHex(icao) ?: return null
         return imageUrlTemplate.replace(ICAO_TEMPLATE_KEY, normalized)
     }

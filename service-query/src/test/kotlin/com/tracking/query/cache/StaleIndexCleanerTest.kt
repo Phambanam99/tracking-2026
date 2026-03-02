@@ -66,4 +66,12 @@ class StaleIndexCleanerTest {
     }
 
     @Test
-   
+    fun `returns when index members is null`() {
+        whenever(setOps.members("aircraft:index")).thenReturn(null)
+
+        // Should not throw
+        cleaner.cleanupStaleEntries()
+
+        verify(setOps, never()).remove(any(), any())
+    }
+}

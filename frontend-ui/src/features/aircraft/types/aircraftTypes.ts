@@ -25,6 +25,8 @@ export type Aircraft = {
   eventTime?: number | null;
   /** Unix timestamp (ms) of last received position */
   lastSeen: number;
+  /** Whether this aircraft belongs to a known military ICAO hex address */
+  isMilitary: boolean;
 };
 
 /**
@@ -37,6 +39,7 @@ export type WireAircraftMetadata = {
   country_code?: string | null;
   country_flag_url?: string | null;
   image_url?: string | null;
+  is_military?: boolean;
 };
 
 /**
@@ -78,5 +81,6 @@ export function toAircraft(flight: AircraftFlight): Aircraft {
     sourceId: flight.source_id,
     eventTime: flight.event_time,
     lastSeen: Date.now(),
+    isMilitary: meta?.is_military ?? false,
   };
 }

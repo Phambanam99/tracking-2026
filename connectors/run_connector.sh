@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <adsbx|fr24|radarbox>" >&2
+  echo "Usage: $0 <adsbx|adsb-hckt|fr24|radarbox>" >&2
   exit 1
 fi
 
@@ -12,6 +12,9 @@ PYTHON_BIN="${PYTHON_BIN:-python3}"
 case "$CONNECTOR_NAME" in
   adsbx)
     SCRIPT="connectors/adsbx_connector.py"
+    ;;
+  adsb-hckt)
+    SCRIPT="connectors/adsb_hckt_connector.py"
     ;;
   fr24)
     SCRIPT="connectors/fr24_connector.py"

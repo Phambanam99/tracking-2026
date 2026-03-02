@@ -15,4 +15,5 @@ public data class SearchResult(
     val registration: String? = null,
     val aircraftType: String? = null,
     val operator: String? = null,
+    val isMilitary: Boolean = false,
 )

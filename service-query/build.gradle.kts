@@ -15,6 +15,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.apache.commons:commons-pool2")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.kafka:spring-kafka")
@@ -34,4 +35,10 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("com.h2database:h2")
     testImplementation("io.kotest:kotest-assertions-core:5.9.1")
+}
+
+tasks.processResources {
+    from(project(":service-processing").file("src/main/resources/db/aircraft.csv")) {
+        into("db")
+    }
 }

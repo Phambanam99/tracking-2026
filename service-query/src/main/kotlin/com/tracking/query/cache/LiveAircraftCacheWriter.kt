@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component
  * ```
  * KEY:  aircraft:<ICAO>   (TTL = ttlSeconds)
  * HASH: icao, lat, lon, altitude, speed, heading, event_time,
- *       source_id, registration, aircraft_type, operator, country_code
+ *       source_id, registration, aircraft_type, operator, country_code, is_military
  *
  * SET:  aircraft:index    (all active ICAO codes, no TTL — cleaned by StaleIndexCleaner)
  * ```
@@ -61,6 +61,9 @@ public class LiveAircraftCacheWriter(
                 meta.aircraftType?.let { fields["aircraft_type"] = it }
                 meta.operator?.let { fields["operator"] = it }
                 meta.countryCode?.let { fields["country_code"] = it }
+                if (meta.isMilitary) {
+                    fields["is_military"] = true.toString()
+                }
             }
 
             // Pipeline: HSET + EXPIRE + SADD — one round-trip
@@ -73,4 +76,17 @@ public class LiveAircraftCacheWriter(
                 connection.keyCommands().expire(keyBytes, ttlSeconds)
                 connection.setCommands().sAdd(indexKey.toByteArray(), flight.icao.toByteArray())
                 connection.geoCommands().geoAdd(
-                    geoKey.toByteArray()
+                    geoKey.toByteArray(),
+                    RedisGeoCommands.GeoLocation(
+                        flight.icao.toByteArray(),
+                        Point(flight.lon, flight.lat),
+                    ),
+                )
+                null
+            }
+            aircraftPhotoCacheService.enqueueWarmup(flight.icao)
+        } catch (ex: Exception) {
+            log.error("Failed to cache live flight from offset {}: {}", record.offset(), ex.message, ex)
+        }
+    }
+}
