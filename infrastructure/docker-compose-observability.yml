@@ -16,6 +16,7 @@ services:
       SERVICE_BROADCASTER_METRICS_TARGET: ${SERVICE_BROADCASTER_METRICS_TARGET:-host.docker.internal:8083}
       SERVICE_STORAGE_METRICS_TARGET: ${SERVICE_STORAGE_METRICS_TARGET:-host.docker.internal:8084}
       SERVICE_PROCESSING_METRICS_TARGET: ${SERVICE_PROCESSING_METRICS_TARGET:-host.docker.internal:8085}
+      SERVICE_QUERY_METRICS_TARGET: ${SERVICE_QUERY_METRICS_TARGET:-host.docker.internal:8086}
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
@@ -40,12 +41,18 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_FEATURE_TOGGLES_ENABLE: "lokiLogsDataplane"
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     volumes:
       - grafana-data:/var/lib/grafana
       - ../observability/grafana:/var/lib/grafana/dashboards:ro
       - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      loki:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null 2>&1" ]
       interval: 10s
@@ -139,6 +146,39 @@ services:
       timeout: 5s
       retries: 5
 
+  loki:
+    image: grafana/loki:2.9.10
+    container_name: tracking-loki
+    restart: unless-stopped
+    command: [ "-config.file=/etc/loki/loki-config.yml" ]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ../observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:3100/ready >/dev/null 2>&1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tracking-net
+
+  promtail:
+    image: grafana/promtail:2.9.10
+    container_name: tracking-promtail
+    restart: unless-stopped
+    command: [ "-config.file=/etc/promtail/promtail-config.yml" ]
+    volumes:
+      - ../observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - tracking-net
+
 networks:
   tracking-net:
     name: tracking-net
@@ -146,3 +186,4 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  loki-data:

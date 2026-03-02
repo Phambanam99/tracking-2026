@@ -7,7 +7,7 @@ services:
     build: ../service-query
     container_name: tracking-service-query
     ports:
-      - "8085:8085"
+      - "8086:8085"
     environment:
       SPRING_PROFILES_ACTIVE: local
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092

@@ -29,6 +29,11 @@ spring:
 server:
   shutdown: graceful
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 management:
   endpoints:
     web:

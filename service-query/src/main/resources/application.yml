@@ -59,6 +59,11 @@ tracking:
     jwks-uri: ${AUTH_JWKS_URI:http://service-auth:8081/api/v1/auth/.well-known/jwks.json}
     jwks-cache-ttl-seconds: 300
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 management:
   endpoints:
     web:

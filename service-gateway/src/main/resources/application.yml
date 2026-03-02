@@ -24,7 +24,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayIpKeyResolver}'
+                key-resolver: "#{@gatewayIpKeyResolver}"
                 redis-rate-limiter.replenishRate: 5
                 redis-rate-limiter.burstCapacity: 10
           metadata:
@@ -37,7 +37,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayIpKeyResolver}'
+                key-resolver: "#{@gatewayIpKeyResolver}"
                 redis-rate-limiter.replenishRate: 200
                 redis-rate-limiter.burstCapacity: 400
           metadata:
@@ -50,7 +50,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayApiKeyKeyResolver}'
+                key-resolver: "#{@gatewayApiKeyKeyResolver}"
                 redis-rate-limiter.replenishRate: 100000
                 redis-rate-limiter.burstCapacity: 120000
           metadata:
@@ -63,7 +63,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayUserKeyResolver}'
+                key-resolver: "#{@gatewayUserKeyResolver}"
                 redis-rate-limiter.replenishRate: 20
                 redis-rate-limiter.burstCapacity: 40
         - id: watchlist-route
@@ -73,7 +73,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayUserKeyResolver}'
+                key-resolver: "#{@gatewayUserKeyResolver}"
                 redis-rate-limiter.replenishRate: 30
                 redis-rate-limiter.burstCapacity: 60
           metadata:
@@ -87,7 +87,7 @@ spring:
           filters:
             - name: RequestRateLimiter
               args:
-                key-resolver: '#{@gatewayUserKeyResolver}'
+                key-resolver: "#{@gatewayUserKeyResolver}"
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
           metadata:
@@ -177,6 +177,11 @@ tracking:
         "/api/v1/auth/**": 65536
         "/api/v1/watchlist/**": 65536
         "/api/v1/aircraft/**": 65536
+
+logging:
+  structured:
+    format:
+      console: logstash
 
 management:
   endpoints:

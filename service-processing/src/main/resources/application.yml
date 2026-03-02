@@ -24,6 +24,11 @@ spring:
         max.block.ms: 1000
         request.timeout.ms: 800
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 management:
   endpoints:
     web:

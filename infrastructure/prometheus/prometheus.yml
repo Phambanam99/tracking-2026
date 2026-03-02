@@ -41,6 +41,11 @@ scrape_configs:
     static_configs:
       - targets: ["host.docker.internal:8084"]
 
+  - job_name: service-query
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["host.docker.internal:8086"]
+
   - job_name: otel-collector
     static_configs:
       - targets: ["otel-collector:8888"]

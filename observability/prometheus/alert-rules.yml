@@ -72,3 +72,127 @@ groups:
         annotations:
           summary: "Broadcaster JWT rejects are spiking"
           description: "WebSocket JWT rejects are sustained above 1 session/s."
+  - name: tracking-query
+    rules:
+      - alert: QueryServiceDown
+        expr: up{job="service-query"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "service-query is down"
+          description: "Prometheus cannot scrape service-query for at least 2 minutes."
+
+      - alert: QueryHighP95Latency
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job="service-query"}[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Query service p95 latency > 500ms"
+          description: "Query service has been responding slowly (p95 > 500ms) for 5 minutes."
+
+  - name: tracking-infrastructure
+    rules:
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumergroup_lag > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag > 10000 for {{ $labels.consumergroup }}"
+          description: "Consumer group {{ $labels.consumergroup }} on topic {{ $labels.topic }} has lag above 10000 for 5 minutes."
+
+      - alert: KafkaConsumerLagCritical
+        expr: kafka_consumergroup_lag > 100000
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka consumer lag CRITICAL (>100k) for {{ $labels.consumergroup }}"
+          description: "Consumer group {{ $labels.consumergroup }} has lag above 100000 — data processing is severely behind."
+
+      - alert: PostgresConnectionPoolExhausted
+        expr: pg_stat_activity_count{datname="tracking"} > 80
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Postgres connection count > 80"
+          description: "Postgres has more than 80 active connections for 5 minutes — pool may be exhausted."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / clamp_min(redis_memory_max_bytes, 1) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage > 80%"
+          description: "Redis is using more than 80% of its max memory for 10 minutes — eviction may begin soon."
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis exporter cannot reach Redis for at least 1 minute."
+
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "Postgres exporter cannot reach PostgreSQL for at least 1 minute."
+
+      - alert: KafkaDown
+        expr: up{job="kafka"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Kafka is down"
+          description: "Kafka exporter cannot reach Kafka for at least 2 minutes."
+
+  - name: tracking-auth
+    rules:
+      - alert: AuthHigh401Rate
+        expr: sum(rate(http_server_requests_seconds_count{job="service-auth",status="401"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Auth service 401 rate > 10/s"
+          description: "Authentication failures are sustained above 10 per second — possible credential stuffing or misconfiguration."
+
+      - alert: AuthHigh5xxRate
+        expr: sum(rate(http_server_requests_seconds_count{job="service-auth",status=~"5.."}[5m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job="service-auth"}[5m])), 1) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Auth service 5xx rate > 1%"
+          description: "Auth service is failing more than 1% of requests continuously."
+
+  - name: tracking-jvm
+    rules:
+      - alert: JvmHeapUsageHigh
+        expr: sum(jvm_memory_used_bytes{area="heap"}) by (application) / sum(jvm_memory_max_bytes{area="heap"}) by (application) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM heap > 85% for {{ $labels.application }}"
+          description: "{{ $labels.application }} has been using more than 85% of its heap for 5 minutes — possible memory leak."
+
+      - alert: JvmHeapUsageCritical
+        expr: sum(jvm_memory_used_bytes{area="heap"}) by (application) / sum(jvm_memory_max_bytes{area="heap"}) by (application) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM heap CRITICAL (>95%) for {{ $labels.application }}"
+          description: "{{ $labels.application }} heap is above 95% — OutOfMemoryError imminent."

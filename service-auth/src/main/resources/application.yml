@@ -2,6 +2,11 @@ spring:
   application:
     name: service-auth
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 management:
   endpoints:
     web:
