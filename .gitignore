@@ -11,3 +11,12 @@ node_modules/
 .DS_Store
 *.log
 perf/.generated/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
