@@ -12,6 +12,9 @@ node_modules/
 *.log
 perf/.generated/
 
+# Temp directories
+.tmp/
+
 # Python virtual environments
 .venv/
 venv/
