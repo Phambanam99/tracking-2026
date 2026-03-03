@@ -4,15 +4,54 @@
 
 :root {
   color: #e2e8f0;
-  background: radial-gradient(circle at 20% 10%, #13213c 0%, #050a14 55%, #03060d 100%);
+  background:
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 24%),
+    linear-gradient(180deg, #06101f 0%, #040814 55%, #02050d 100%);
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  background: transparent;
 }
 
 #root {
   min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: rgba(148, 163, 184, 0.28);
+  background-clip: content-box;
+}
+
+.glass-panel {
+  background: rgba(10, 18, 32, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(18px);
+}
+
+.glass-panel-strong {
+  background: rgba(8, 15, 28, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(22px);
 }

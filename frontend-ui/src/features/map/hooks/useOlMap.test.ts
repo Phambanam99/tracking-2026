@@ -3,10 +3,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // ─── Hoist shared spy functions so vi.mock blocks can reference them ──────────
 
-const { mockSetTarget, mockOn, mockUn } = vi.hoisted(() => ({
+const { mockSetTarget, mockOn, mockUn, mockSetAt, mockCreateBaseLayer } = vi.hoisted(() => ({
   mockSetTarget: vi.fn(),
   mockOn: vi.fn(),
   mockUn: vi.fn(),
+  mockSetAt: vi.fn(),
+  mockCreateBaseLayer: vi.fn().mockReturnValue({ type: "mock-base-layer" }),
 }));
 
 // ─── Mock OpenLayers modules (canvas/WebGL not available in jsdom) ────────────
@@ -18,6 +20,9 @@ vi.mock("ol/Map", () => ({
     on = mockOn;
     un = mockUn;
     constructor(_opts: unknown) {} // eslint-disable-line @typescript-eslint/no-unused-vars
+    getLayers() {
+      return { setAt: mockSetAt };
+    }
     getView() {
       return { getZoom: () => 6, calculateExtent: () => [0, 0, 1, 1] };
     }
@@ -35,7 +40,7 @@ vi.mock("ol/proj", () => ({
 }));
 
 vi.mock("../layers/baseLayer", () => ({
-  createBaseLayer: vi.fn().mockReturnValue({ type: "mock-base-layer" }),
+  createBaseLayer: mockCreateBaseLayer,
 }));
 
 // ─── Import code under test AFTER mocks are declared ─────────────────────────
@@ -55,6 +60,7 @@ function makeContainerRef(): React.RefObject<HTMLDivElement | null> {
 describe("useOlMap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateBaseLayer.mockReturnValue({ type: "mock-base-layer" });
   });
 
   afterEach(() => {
@@ -94,5 +100,19 @@ describe("useOlMap", () => {
     rerender();
     // setTarget(undefined) = cleanup; must not have been called yet
     expect(mockSetTarget).not.toHaveBeenCalledWith(undefined);
+  });
+
+  test("replaces the base layer when the selected layer type changes", () => {
+    const containerRef = makeContainerRef();
+    const { rerender } = renderHook(
+      ({ baseLayerType }: { baseLayerType?: "osm" | "satellite" }) =>
+        useOlMap(containerRef, { baseLayerType }),
+      { initialProps: { baseLayerType: "osm" as const } },
+    );
+
+    rerender({ baseLayerType: "satellite" as const });
+
+    expect(mockSetAt).toHaveBeenCalledWith(0, { type: "mock-base-layer" });
+    expect(mockCreateBaseLayer).toHaveBeenCalledWith("satellite");
   });
 });

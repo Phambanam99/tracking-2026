@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { clearAuthSession, setAuthTokens } from "../../auth/store/useAuthStore";
 import { useAircraftPhoto } from "./useAircraftPhoto";
@@ -9,13 +9,17 @@ describe("useAircraftPhoto", () => {
   const originalRevokeObjectUrl = URL.revokeObjectURL;
 
   beforeEach(() => {
-    setAuthTokens("test-token", "refresh-token");
+    act(() => {
+      setAuthTokens("test-token", "refresh-token");
+    });
     URL.createObjectURL = vi.fn(() => "blob:local-photo");
     URL.revokeObjectURL = vi.fn();
   });
 
   afterEach(() => {
-    clearAuthSession();
+    act(() => {
+      clearAuthSession();
+    });
     global.fetch = originalFetch;
     URL.createObjectURL = originalCreateObjectUrl;
     URL.revokeObjectURL = originalRevokeObjectUrl;

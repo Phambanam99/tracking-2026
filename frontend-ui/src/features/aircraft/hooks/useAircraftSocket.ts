@@ -26,6 +26,7 @@ export function useAircraftSocket(
   viewport: BoundingBox,
   icaoFilter?: Set<string> | null,
   aircraftFilter?: ((aircraft: Aircraft) => boolean) | null,
+  enabled = true,
 ): void {
   const upsertAircraft = useAircraftStore((s) => s.upsertAircraft);
   const pruneStale = useAircraftStore((s) => s.pruneStale);
@@ -70,14 +71,20 @@ export function useAircraftSocket(
     [],
   );
 
-  useFlightSocket(token, viewport, stableHandlers);
+  useFlightSocket(enabled ? token : null, viewport, stableHandlers);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     viewportChangedAtRef.current = Date.now();
-  }, [viewport.east, viewport.north, viewport.south, viewport.west]);
+  }, [enabled, viewport.east, viewport.north, viewport.south, viewport.west]);
 
   // Prune stale aircraft periodically.
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const id = setInterval(() => {
       if (Date.now() - viewportChangedAtRef.current < VIEWPORT_PRUNE_GRACE_MS) {
         return;
@@ -85,5 +92,5 @@ export function useAircraftSocket(
       pruneStale(MAX_AGE_MS);
     }, PRUNE_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [pruneStale]);
+  }, [enabled, pruneStale]);
 }

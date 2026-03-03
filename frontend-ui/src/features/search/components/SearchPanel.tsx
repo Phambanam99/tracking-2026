@@ -1,106 +1,123 @@
-import { useSearchStore } from "../store/useSearchStore";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
+import { OverlayPanel } from "../../../shared/components/OverlayPanel";
 import { useSearchAircraft } from "../hooks/useSearchAircraft";
+import { useSearchStore } from "../store/useSearchStore";
 import { AdvancedSearchForm } from "./AdvancedSearchForm";
 import { SearchBar } from "./SearchBar";
+import { SearchHighlightLayer } from "./SearchHighlightLayer";
 import { SearchResultList } from "./SearchResultList";
 
 type SearchPanelProps = {
   onClose: () => void;
+  dockClassName?: string;
+  animationClassName?: string;
+  enableSwipeClose?: boolean;
 };
 
-export function SearchPanel({ onClose }: SearchPanelProps): JSX.Element {
-  // Drive viewport search on every aircraft/query change.
+export function SearchPanel({
+  onClose,
+  dockClassName,
+  animationClassName,
+  enableSwipeClose = false,
+}: SearchPanelProps): JSX.Element {
   useSearchAircraft();
+  const { t } = useI18n();
 
   const results = useSearchStore((s) => s.results);
   const isSearching = useSearchStore((s) => s.isSearching);
   const error = useSearchStore((s) => s.error);
-  const mode = useSearchStore((s) => s.filters.mode);
-  const query = useSearchStore((s) => s.filters.query);
+  const filters = useSearchStore((s) => s.filters);
+  const mode = filters.mode;
+  const query = filters.query;
+  const hasHistoryCriteria = Boolean(
+    filters.query.trim()
+      || filters.icao
+      || filters.callsign
+      || filters.registration
+      || filters.aircraftType
+      || filters.timeFrom
+      || filters.timeTo
+      || filters.altitudeMin != null
+      || filters.altitudeMax != null
+      || filters.speedMin != null
+      || filters.speedMax != null
+      || filters.sourceId
+      || filters.boundingBox,
+  );
+  const showViewportHint = !isSearching && !error && mode === "viewport" && query.length < 2;
+  const showGlobalHint = !isSearching && !error && mode === "global" && query.length < 2;
+  const showHistoryHint = !isSearching && !error && mode === "history" && !hasHistoryCriteria;
+  const showResults = !isSearching && !error && !showViewportHint && !showGlobalHint && !showHistoryHint;
 
   return (
-    <div
-      aria-label="Search panel"
-      className="absolute bottom-0 left-0 top-0 z-30 flex w-72 flex-col border-r border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur-sm"
-    >
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-700 px-4 py-3">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-100">Search</h2>
-          <p className="text-[10px] text-slate-400">Find aircraft on the map</p>
+    <>
+      <SearchHighlightLayer />
+      <OverlayPanel
+        ariaLabel="Search panel"
+        animationClassName={animationClassName}
+        closeLabel={t("search.close")}
+        description={t("search.description")}
+        dockClassName={dockClassName}
+        enableSwipeClose={enableSwipeClose}
+        onClose={onClose}
+        title={t("search.title")}
+      >
+        <SearchBar />
+        {mode === "history" ? <AdvancedSearchForm /> : null}
+
+        <div className="flex-1 overflow-y-auto">
+          {isSearching ? (
+            <p className="px-4 py-4 text-center text-xs text-slate-500">{t("search.searching")}</p>
+          ) : null}
+
+          {!isSearching && error ? (
+            <div className="mx-3 mt-2 rounded border border-red-800 bg-red-900/30 px-3 py-2 text-xs text-red-400">
+              {error}
+            </div>
+          ) : null}
+
+          {showResults ? (
+            <>
+              {(mode === "history" ? hasHistoryCriteria : query.length >= 2) ? (
+                <div className="border-b border-slate-700/50 px-4 py-1.5">
+                  <span className="text-[10px] text-slate-500">
+                    {results.length === 0
+                      ? t("search.noResults")
+                      : results.length === 50
+                        ? t("search.resultSummaryFirst50", {
+                            count: results.length,
+                            suffix: results.length !== 1 ? "s" : "",
+                          })
+                        : t("search.resultSummary", {
+                            count: results.length,
+                            suffix: results.length !== 1 ? "s" : "",
+                          })}
+                  </span>
+                </div>
+              ) : null}
+              <SearchResultList results={results} />
+            </>
+          ) : null}
+
+          {showViewportHint ? (
+            <div className="mt-8 px-4 text-center">
+              <p className="text-xs text-slate-500">{t("search.viewportHint")}</p>
+            </div>
+          ) : null}
+
+          {showGlobalHint ? (
+            <div className="mt-8 px-4 text-center">
+              <p className="text-xs text-slate-500">{t("search.globalHint")}</p>
+            </div>
+          ) : null}
+
+          {showHistoryHint ? (
+            <div className="mt-8 px-4 text-center">
+              <p className="text-xs text-slate-500">{t("search.historyHint")}</p>
+            </div>
+          ) : null}
         </div>
-        <button
-          aria-label="Close search"
-          className="rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white"
-          onClick={onClose}
-          type="button"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <SearchBar />
-
-      {/* Advanced form for history mode */}
-      {mode === "history" && <AdvancedSearchForm />}
-
-      {/* Results area */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Loading */}
-        {isSearching && (
-          <p className="px-4 py-4 text-center text-xs text-slate-500">Searching…</p>
-        )}
-
-        {/* Error */}
-        {!isSearching && error && (
-          <div className="mx-3 mt-2 rounded border border-red-800 bg-red-900/30 px-3 py-2 text-xs text-red-400">
-            {error}
-          </div>
-        )}
-
-        {/* Results */}
-        {!isSearching && !error && (
-          <>
-            {query.length >= 2 && (
-              <div className="border-b border-slate-700/50 px-4 py-1.5">
-                <span className="text-[10px] text-slate-500">
-                  {results.length === 0
-                    ? "No results"
-                    : `${results.length} result${results.length !== 1 ? "s" : ""}${results.length === 50 ? " (showing first 50)" : ""}`}
-                </span>
-              </div>
-            )}
-            <SearchResultList results={results} />
-          </>
-        )}
-
-        {/* Initial state */}
-        {!isSearching && !error && query.length < 2 && mode === "viewport" && (
-          <div className="mt-8 px-4 text-center">
-            <p className="text-xs text-slate-500">
-              Search aircraft currently visible on the map by ICAO, callsign, registration, or type.
-            </p>
-          </div>
-        )}
-
-        {/* Global/History not available yet */}
-        {!isSearching && query.length >= 2 && mode !== "viewport" && results.length === 0 && !error && (
-          <div className="mx-3 mt-3 rounded border border-amber-800/50 bg-amber-900/20 px-3 py-2 text-xs text-amber-400">
-            {mode === "global"
-              ? "Global search requires service-query to be running. Available in next release."
-              : "History search requires service-query. Available in next release."}
-          </div>
-        )}
-      </div>
-    </div>
+      </OverlayPanel>
+    </>
   );
 }

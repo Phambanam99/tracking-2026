@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useWatchlistStore } from "../store/useWatchlistStore";
 import type { WatchlistGroup } from "../types/watchlistTypes";
 import { WatchlistAircraftRow } from "./WatchlistAircraftRow";
@@ -8,13 +9,14 @@ type WatchlistGroupCardProps = {
 };
 
 export function WatchlistGroupCard({ group }: WatchlistGroupCardProps): JSX.Element {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const toggleGroupVisibility = useWatchlistStore((state) => state.toggleGroupVisibility);
   const deleteGroup = useWatchlistStore((state) => state.deleteGroup);
 
   async function handleDelete() {
-    if (!confirm(`Delete group "${group.name}"?`)) return;
+    if (!confirm(t("watchlist.deleteGroupConfirm", { name: group.name }))) return;
     setDeleting(true);
     try {
       await deleteGroup(group.id);
@@ -33,7 +35,7 @@ export function WatchlistGroupCard({ group }: WatchlistGroupCardProps): JSX.Elem
         <span
           className="h-3 w-3 shrink-0 rounded-full border border-slate-500"
           style={{ backgroundColor: group.color }}
-          title="Group color"
+          title={t("watchlist.groupColor")}
         />
 
         {/* Name + count — expands sub-list */}
@@ -59,7 +61,7 @@ export function WatchlistGroupCard({ group }: WatchlistGroupCardProps): JSX.Elem
 
         {/* Eye (visibility) toggle */}
         <button
-          aria-label={group.visibleOnMap ? "Hide on map" : "Show on map"}
+          aria-label={group.visibleOnMap ? t("watchlist.hideOnMap") : t("watchlist.showOnMap")}
           className={`shrink-0 rounded p-1 ${
             group.visibleOnMap
               ? "text-cyan-400 hover:bg-slate-600"
@@ -82,7 +84,7 @@ export function WatchlistGroupCard({ group }: WatchlistGroupCardProps): JSX.Elem
 
         {/* Delete */}
         <button
-          aria-label={`Delete group ${group.name}`}
+          aria-label={t("watchlist.deleteGroupAria", { name: group.name })}
           className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-600 hover:text-red-400 disabled:opacity-40"
           disabled={deleting}
           onClick={() => void handleDelete()}
@@ -98,7 +100,7 @@ export function WatchlistGroupCard({ group }: WatchlistGroupCardProps): JSX.Elem
       {expanded && (
         <div className="border-t border-slate-600 px-1 py-1">
           {entryCount === 0 ? (
-            <p className="px-2 py-1.5 text-xs text-slate-500">No aircraft tracked yet.</p>
+            <p className="px-2 py-1.5 text-xs text-slate-500">{t("watchlist.noAircraftTracked")}</p>
           ) : (
             (group.entries ?? []).map((entry) => (
               <WatchlistAircraftRow entry={entry} groupId={group.id} key={entry.icao} />

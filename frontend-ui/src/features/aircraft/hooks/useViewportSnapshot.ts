@@ -19,6 +19,7 @@ export function useViewportSnapshot(
   viewport: BoundingBox,
   icaoFilter?: Set<string> | null,
   aircraftFilter?: ((aircraft: Aircraft) => boolean) | null,
+  enabled = true,
 ): void {
   const upsertAircraftBatch = useAircraftStore((state) => state.upsertAircraftBatch);
   const requestIdRef = useRef(0);
@@ -30,7 +31,7 @@ export function useViewportSnapshot(
   }, [aircraftFilter]);
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !enabled) {
       firstLoadRef.current = true;
       return;
     }
@@ -75,5 +76,6 @@ export function useViewportSnapshot(
     viewport.west,
     icaoFilter,
     aircraftFilter,
+    enabled,
   ]);
 }

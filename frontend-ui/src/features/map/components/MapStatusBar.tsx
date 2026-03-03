@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type MapBrowserEvent from "ol/MapBrowserEvent";
 import { toLonLat } from "ol/proj";
 import { useMapContext } from "../context/MapContext";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 /**
  * MapStatusBar – thin footer below the map canvas showing current mouse
@@ -9,6 +10,7 @@ import { useMapContext } from "../context/MapContext";
  */
 export function MapStatusBar(): JSX.Element {
   const { map } = useMapContext();
+  const { t } = useI18n();
   const [coords, setCoords] = useState<[number, number] | null>(null);
   const [zoom, setZoom] = useState<number | null>(null);
 
@@ -50,12 +52,23 @@ export function MapStatusBar(): JSX.Element {
       : "";
 
   return (
-    <div className="flex items-center gap-4 border-t border-slate-700 bg-slate-900/95 px-3 py-1 font-mono text-xs text-slate-400">
-      <span>
-        {latStr}
-        {lonStr ? ` / ${lonStr}` : ""}
-      </span>
-      {zoom != null && <span>Zoom: {zoom.toFixed(1)}</span>}
+    <div className="glass-panel pointer-events-none absolute bottom-4 right-4 z-30 flex items-center gap-2 rounded-full px-2.5 py-2 text-[11px] text-slate-300 shadow-xl">
+      <TelemetryPill label={t("status.cursor")} value={lonStr ? `${latStr} / ${lonStr}` : latStr} />
+      {zoom != null ? <TelemetryPill label={t("status.zoom")} value={zoom.toFixed(1)} /> : null}
     </div>
+  );
+}
+
+type TelemetryPillProps = {
+  label: string;
+  value: string;
+};
+
+function TelemetryPill({ label, value }: TelemetryPillProps): JSX.Element {
+  return (
+    <span className="rounded-full border border-slate-700/80 bg-slate-950/70 px-2.5 py-1 font-mono">
+      <span className="mr-1 uppercase tracking-[0.2em] text-slate-500">{label}</span>
+      <span className="text-slate-100">{value}</span>
+    </span>
   );
 }

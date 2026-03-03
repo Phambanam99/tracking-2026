@@ -5,6 +5,7 @@ const originalFetch = global.fetch;
 
 describe("fetchLiveAircraftInViewport", () => {
   beforeEach(() => {
+    vi.spyOn(Date, "now").mockReturnValue(1708941600999);
     global.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       expect(url).toContain("/api/v1/aircraft/live?");
@@ -15,7 +16,7 @@ describe("fetchLiveAircraftInViewport", () => {
       return new Response(
         JSON.stringify([
           {
-            icao: "ABC123",
+            icao: "A00001",
             lat: 21.02,
             lon: 105.81,
             altitude: 35000,
@@ -23,7 +24,7 @@ describe("fetchLiveAircraftInViewport", () => {
             heading: 125,
             eventTime: 1708941600000,
             sourceId: "RADARBOX",
-            registration: "VN-A321",
+            registration: null,
             aircraftType: "A321",
             operator: "Vietnam Airlines",
           },
@@ -51,7 +52,7 @@ describe("fetchLiveAircraftInViewport", () => {
 
     expect(aircraft).toEqual([
       {
-        icao: "ABC123",
+        icao: "A00001",
         lat: 21.02,
         lon: 105.81,
         altitude: 35000,
@@ -59,12 +60,13 @@ describe("fetchLiveAircraftInViewport", () => {
         heading: 125,
         eventTime: 1708941600000,
         sourceId: "RADARBOX",
-        registration: "VN-A321",
+        registration: "N1",
         aircraftType: "A321",
         operator: "Vietnam Airlines",
-        countryCode: null,
-        countryFlagUrl: null,
-        lastSeen: expect.any(Number),
+        countryCode: "US",
+        countryFlagUrl: "https://flagcdn.com/h80/us.png",
+        lastSeen: 1708941600999,
+        isMilitary: false,
       },
     ]);
   });

@@ -5,3 +5,9 @@ export type TrailPosition = {
   heading: number | null;
   eventTime: number;
 };
+
+export type TrailRoute = {
+  icao: string;
+  positions: TrailPosition[];
+  color: string;
+};

@@ -1,3 +1,7 @@
+import { lookupAircraftDbEntry } from "../db/aircraftDb";
+import { buildCountryFlagUrl, findIcaoCountry } from "../db/icaoRanges";
+import { resolveRegistrationFromHex } from "../db/registrations";
+
 /**
  * Represents a tracked aircraft with enriched metadata from the backend.
  */
@@ -60,10 +64,55 @@ export type AircraftFlight = {
   metadata?: WireAircraftMetadata | null;
 };
 
+type AircraftEnrichment = Pick<
+  Aircraft,
+  "registration" | "aircraftType" | "operator" | "countryCode" | "countryFlagUrl" | "isMilitary"
+>;
+
+export function resolveAircraftEnrichment(input: {
+  icao: string;
+  registration?: string | null;
+  aircraftType?: string | null;
+  operator?: string | null;
+  countryCode?: string | null;
+  countryFlagUrl?: string | null;
+  isMilitary?: boolean | null;
+}): AircraftEnrichment {
+  const dbEntry = lookupAircraftDbEntry(input.icao);
+  const resolvedCountry = findIcaoCountry(input.icao);
+  const countryCode = input.countryCode
+    ?? dbEntry?.countryCode
+    ?? resolvedCountry?.countryCode
+    ?? null;
+
+  return {
+    registration: input.registration
+      ?? dbEntry?.registration
+      ?? resolveRegistrationFromHex(input.icao)
+      ?? null,
+    aircraftType: input.aircraftType ?? dbEntry?.aircraftType ?? null,
+    operator: input.operator ?? dbEntry?.operator ?? null,
+    countryCode,
+    countryFlagUrl: input.countryFlagUrl
+      ?? dbEntry?.countryFlagUrl
+      ?? (countryCode ? buildCountryFlagUrl(countryCode) : null),
+    isMilitary: input.isMilitary ?? false,
+  };
+}
+
 /** Converts an AircraftFlight (WebSocket payload, snake_case) to an Aircraft store entry. */
 export function toAircraft(flight: AircraftFlight): Aircraft {
   const meta = flight.metadata;
-  const countryCode = meta?.country_code ?? null;
+  const enrichment = resolveAircraftEnrichment({
+    icao: flight.icao,
+    registration: meta?.registration,
+    aircraftType: meta?.aircraft_type,
+    operator: meta?.operator,
+    countryCode: meta?.country_code,
+    countryFlagUrl: meta?.country_flag_url,
+    isMilitary: meta?.is_military,
+  });
+
   return {
     icao: flight.icao,
     callsign: flight.callsign ?? null,
@@ -72,15 +121,14 @@ export function toAircraft(flight: AircraftFlight): Aircraft {
     heading: flight.heading ?? null,
     speed: flight.speed ?? null,
     altitude: flight.altitude ?? null,
-    registration: meta?.registration ?? null,
-    aircraftType: meta?.aircraft_type ?? null,
-    operator: meta?.operator ?? null,
-    countryCode,
-    countryFlagUrl: meta?.country_flag_url
-      ?? (countryCode ? `https://flagcdn.com/h80/${countryCode.toLowerCase()}.png` : null),
+    registration: enrichment.registration,
+    aircraftType: enrichment.aircraftType,
+    operator: enrichment.operator,
+    countryCode: enrichment.countryCode,
+    countryFlagUrl: enrichment.countryFlagUrl,
     sourceId: flight.source_id,
     eventTime: flight.event_time,
     lastSeen: Date.now(),
-    isMilitary: meta?.is_military ?? false,
+    isMilitary: enrichment.isMilitary,
   };
 }

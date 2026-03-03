@@ -1,52 +1,19 @@
 import { useEffect, useRef } from "react";
 import { Feature } from "ol";
-import { Circle as CircleStyle, Fill, Stroke, Style } from "ol/style";
-import { LineString, MultiPoint } from "ol/geom";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import { fromLonLat } from "ol/proj";
 import type Geometry from "ol/geom/Geometry";
+import { LineString, Point } from "ol/geom";
+import VectorLayer from "ol/layer/Vector";
+import { fromLonLat } from "ol/proj";
+import VectorSource from "ol/source/Vector";
 import { useMapContext } from "../../map/context/MapContext";
+import {
+  createRouteActiveStyle,
+  createRouteBaseStyle,
+  createRouteCurrentPointStyle,
+} from "../render/routeStyle";
 import { useAircraftStore } from "../store/useAircraftStore";
 
 const TRAIL_LAYER_Z_INDEX = 9;
-const TRAIL_LINE_ID = "history-trail-line";
-
-function createTrailStyle(): Style[] {
-  return [
-    new Style({
-      stroke: new Stroke({
-        color: "#22d3ee",
-        width: 2,
-        lineDash: [4, 3],
-      }),
-    }),
-    new Style({
-      geometry: (feature) => {
-        const geometry = feature.getGeometry();
-        if (!(geometry instanceof LineString)) {
-          return null;
-        }
-
-        const coordinates = geometry.getCoordinates();
-        if (coordinates.length === 0) {
-          return null;
-        }
-
-        const endpoints =
-          coordinates.length === 1
-            ? [coordinates[0]]
-            : [coordinates[0], coordinates[coordinates.length - 1]];
-        return new MultiPoint(endpoints);
-      },
-      image: new CircleStyle({
-        radius: 3,
-        fill: new Fill({ color: "#22d3ee" }),
-        stroke: new Stroke({ color: "#083344", width: 1 }),
-      }),
-    }),
-  ];
-}
 
 type HistoryTrailLayerProps = {
   visible?: boolean;
@@ -57,7 +24,9 @@ export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): n
   const layerRef = useRef<VectorLayer<VectorSource<Feature<Geometry>>> | null>(null);
   const sourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
   const trailIcao = useAircraftStore((state) => state.trailIcao);
-  const trailPositions = useAircraftStore((state) => state.trailPositions);
+  const trailPlaybackIndex = useAircraftStore((state) => state.trailPlaybackIndex);
+  const trailRouteOrder = useAircraftStore((state) => state.trailRouteOrder);
+  const trailRoutes = useAircraftStore((state) => state.trailRoutes);
 
   useEffect(() => {
     if (!map) {
@@ -68,7 +37,6 @@ export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): n
     const layer = new VectorLayer({
       source,
       zIndex: TRAIL_LAYER_Z_INDEX,
-      style: createTrailStyle(),
       visible,
     });
 
@@ -94,25 +62,38 @@ export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): n
       return;
     }
 
-    if (!trailIcao || trailPositions.length === 0) {
-      source.clear();
-      return;
+    source.clear();
+
+    for (const icao of trailRouteOrder) {
+      const route = trailRoutes[icao];
+      if (!route || route.positions.length === 0) {
+        continue;
+      }
+
+      const coordinates = route.positions.map((position) => fromLonLat([position.lon, position.lat]));
+      if (icao !== trailIcao) {
+        const baseLineFeature = new Feature(new LineString(coordinates));
+        baseLineFeature.setId(`history-trail-${icao}-base`);
+        baseLineFeature.setStyle(createRouteBaseStyle(route.color));
+        source.addFeature(baseLineFeature as Feature<Geometry>);
+        continue;
+      }
+
+      const playbackIndex = Math.max(0, Math.min(trailPlaybackIndex, coordinates.length - 1));
+      const activeCoordinates = coordinates.slice(0, playbackIndex + 1);
+      const currentCoordinate = coordinates[playbackIndex];
+
+      const activeLineFeature = new Feature(new LineString(activeCoordinates));
+      activeLineFeature.setId(`history-trail-${icao}-active`);
+      activeLineFeature.setStyle(createRouteActiveStyle(route.color));
+      source.addFeature(activeLineFeature as Feature<Geometry>);
+
+      const currentPointFeature = new Feature(new Point(currentCoordinate));
+      currentPointFeature.setId(`history-trail-${icao}-current`);
+      currentPointFeature.setStyle(createRouteCurrentPointStyle(route.color));
+      source.addFeature(currentPointFeature as Feature<Geometry>);
     }
-
-    const coordinates = trailPositions.map((position) =>
-      fromLonLat([position.lon, position.lat]),
-    );
-
-    let lineFeature = source.getFeatureById(TRAIL_LINE_ID) as Feature<LineString> | null;
-    if (!lineFeature) {
-      lineFeature = new Feature(new LineString(coordinates));
-      lineFeature.setId(TRAIL_LINE_ID);
-      source.addFeature(lineFeature as Feature<Geometry>);
-    } else {
-      lineFeature.getGeometry()?.setCoordinates(coordinates);
-    }
-
-  }, [trailIcao, trailPositions]);
+  }, [trailIcao, trailPlaybackIndex, trailRouteOrder, trailRoutes]);
 
   return null;
 }

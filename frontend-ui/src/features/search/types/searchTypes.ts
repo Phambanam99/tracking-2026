@@ -6,6 +6,7 @@ export interface SearchFilters {
   // Advanced filters (history mode only)
   icao?: string;
   callsign?: string;
+  registration?: string;
   aircraftType?: string;
   timeFrom?: string;
   timeTo?: string;

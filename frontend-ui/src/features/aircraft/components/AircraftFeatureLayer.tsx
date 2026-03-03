@@ -4,6 +4,8 @@ import { useLayerStore } from "../../map/store/useLayerStore";
 import { useMapViewport } from "../../map/hooks/useMapViewport";
 import type { BoundingBox } from "../../map/render/flightLayer";
 import { useWatchlistStore } from "../../watchlist/store/useWatchlistStore";
+import { usePlaybackStore } from "../../playback/store/usePlaybackStore";
+import { PlaybackMapLayer } from "../../playback/components/PlaybackMapLayer";
 import { useAircraftSocket } from "../hooks/useAircraftSocket";
 import { useAircraftStore } from "../store/useAircraftStore";
 import { useViewportSnapshot } from "../hooks/useViewportSnapshot";
@@ -37,6 +39,8 @@ export function AircraftFeatureLayer(): JSX.Element {
   const token = useAuthStore((state) => state.accessToken);
   const layerVisibility = useLayerStore((state) => state.visible);
   const aircraftFilter = useLayerStore((state) => state.aircraftFilter);
+  const playbackBarVisible = usePlaybackStore((state) => state.isBarVisible);
+  const playbackStatus = usePlaybackStore((state) => state.status);
   const rawViewport = useMapViewport();
   const viewport: BoundingBox = rawViewport ?? DEFAULT_VIEWPORT;
   const watchlistGroups = useWatchlistStore((state) => state.groups);
@@ -56,13 +60,15 @@ export function AircraftFeatureLayer(): JSX.Element {
   }, [watchlistGroups]);
 
   const isMilitaryOnlyMode = layerVisibility.military;
+  const isPlaybackReady = playbackBarVisible && playbackStatus === "ready";
+  const liveDataEnabled = !(playbackBarVisible && playbackStatus === "ready");
   // Keep the phase-2 optimization for watchlist mode unless military-only mode is active.
   const shouldRestrictToWatchlist = aircraftFilter === "watchlist" && !isMilitaryOnlyMode;
   const icaoFilter = shouldRestrictToWatchlist ? watchlistIcaos : null;
   const aircraftPredicate = isMilitaryOnlyMode ? (aircraft: { isMilitary: boolean }) => aircraft.isMilitary : null;
 
-  useViewportSnapshot(token, viewport, icaoFilter, aircraftPredicate);
-  useAircraftSocket(token, viewport, icaoFilter, aircraftPredicate);
+  useViewportSnapshot(token, viewport, icaoFilter, aircraftPredicate, liveDataEnabled);
+  useAircraftSocket(token, viewport, icaoFilter, aircraftPredicate, liveDataEnabled);
 
   // Prune store to match the active data restriction mode.
   useEffect(() => {
@@ -85,19 +91,23 @@ export function AircraftFeatureLayer(): JSX.Element {
   return (
     <>
       <HistoryTrailLayer visible={layerVisibility.trail} />
-      <AircraftMapLayer filter={aircraftFilter} visible={layerVisibility.live && !isMilitaryOnlyMode} />
+      <AircraftMapLayer
+        filter={aircraftFilter}
+        visible={layerVisibility.live && !isMilitaryOnlyMode && !isPlaybackReady}
+      />
       <AircraftMapLayer
         filter="watchlist"
         interactive={false}
         variant="watchlist"
-        visible={layerVisibility.watchlist && !isMilitaryOnlyMode}
+        visible={layerVisibility.watchlist && !isMilitaryOnlyMode && !isPlaybackReady}
       />
       <AircraftMapLayer
         filter="military"
         interactive={true}
         variant="military"
-        visible={isMilitaryOnlyMode}
+        visible={isMilitaryOnlyMode && !isPlaybackReady}
       />
+      <PlaybackMapLayer />
       <AircraftPopup />
       <AircraftDetailPanel />
     </>

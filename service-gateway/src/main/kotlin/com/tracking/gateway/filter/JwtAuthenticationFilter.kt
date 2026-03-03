@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter(
         }
 
         val path = request.path.value()
-        if (!routesConfig.requiresJwt(path)) {
+        if (!routesConfig.requiresJwt(request.method, path)) {
             return chain.filter(exchange)
         }
 

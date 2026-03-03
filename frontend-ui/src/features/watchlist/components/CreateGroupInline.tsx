@@ -1,15 +1,16 @@
 import { useState } from "react";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useWatchlistStore } from "../store/useWatchlistStore";
 
 const PRESET_COLORS = [
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#06b6d4", // cyan
-  "#3b82f6", // blue
-  "#a855f7", // purple
-  "#ec4899", // pink
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#06b6d4",
+  "#3b82f6",
+  "#a855f7",
+  "#ec4899",
 ];
 
 type CreateGroupInlineProps = {
@@ -17,6 +18,7 @@ type CreateGroupInlineProps = {
 };
 
 export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Element {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +28,9 @@ export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Eleme
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -35,7 +39,7 @@ export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Eleme
       await createGroup(trimmed, color);
       onDone();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create group");
+      setError(err instanceof Error ? err.message : t("watchlist.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -47,14 +51,14 @@ export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Eleme
       className="rounded-md border border-slate-600 bg-slate-700/60 p-3"
       onSubmit={(e) => void handleSubmit(e)}
     >
-      <p className="mb-2 text-xs font-semibold text-slate-300">New Group</p>
+      <p className="mb-2 text-xs font-semibold text-slate-300">{t("watchlist.newGroup")}</p>
 
       <input
         autoFocus
         className="mb-2 w-full rounded border border-slate-500 bg-slate-800 px-2 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
         maxLength={50}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Group name"
+        placeholder={t("watchlist.groupName")}
         type="text"
         value={name}
       />
@@ -74,7 +78,7 @@ export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Eleme
         ))}
       </div>
 
-      {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+      {error ? <p className="mb-2 text-xs text-red-400">{error}</p> : null}
 
       <div className="flex gap-2">
         <button
@@ -82,14 +86,14 @@ export function CreateGroupInline({ onDone }: CreateGroupInlineProps): JSX.Eleme
           disabled={submitting || !name.trim()}
           type="submit"
         >
-          {submitting ? "Saving…" : "Save"}
+          {submitting ? t("watchlist.saving") : t("watchlist.save")}
         </button>
         <button
           className="rounded border border-slate-500 px-2 py-1 text-xs text-slate-300 hover:bg-slate-600"
           onClick={onDone}
           type="button"
         >
-          Cancel
+          {t("watchlist.cancel")}
         </button>
       </div>
     </form>

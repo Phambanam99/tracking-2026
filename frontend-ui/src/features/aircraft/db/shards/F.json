@@ -1,0 +1,16 @@
+{
+  "F00DBA": {
+    "registration": "N42DB",
+    "aircraftType": "A21N",
+    "operator": "Seed Demo Air",
+    "countryCode": "US",
+    "countryFlagUrl": "https://flagcdn.com/h80/us.png"
+  },
+  "F00DBB": {
+    "registration": "C-GDBG",
+    "aircraftType": "B38M",
+    "operator": "Seed Northern",
+    "countryCode": "CA",
+    "countryFlagUrl": "https://flagcdn.com/h80/ca.png"
+  }
+}

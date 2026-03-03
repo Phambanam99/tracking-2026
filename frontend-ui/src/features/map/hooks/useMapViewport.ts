@@ -3,11 +3,12 @@ import { toLonLat } from "ol/proj";
 import type { Extent } from "ol/extent";
 import { useMapContext } from "../context/MapContext";
 import type { LonLatExtent } from "../types/mapTypes";
+import { normalizeBoundingBox } from "../render/flightLayer";
 
 function extentToLonLat(extent: Extent): LonLatExtent {
   const [west, south] = toLonLat([extent[0], extent[1]]);
   const [east, north] = toLonLat([extent[2], extent[3]]);
-  return { west, south, east, north };
+  return normalizeBoundingBox({ west, south, east, north });
 }
 
 /**

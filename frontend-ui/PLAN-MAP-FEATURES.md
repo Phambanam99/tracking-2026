@@ -5,6 +5,101 @@
 > **Map library:** OpenLayers (ol) – sẽ thêm mới  
 > **State management:** Zustand (lightweight, đã dùng pattern tương tự trong useAuthStore)
 
+## Implementation Review Snapshot (2026-03-02)
+
+> Review này đối chiếu plan với code hiện có trong `frontend-ui/src`.
+
+### Overall Status
+
+- **Frontend progress:** khoảng **62% task hoàn thành** nếu chỉ tính task done
+- **Frontend progress incl. partial:** khoảng **72%**
+- **Test status:** `36/36` test file pass, `217/217` test pass
+
+### Phase Summary
+
+| Phase | Status | Notes |
+| --- | --- | --- |
+| Phase 0 – Foundation | Done | Map core, context, OL init, status bar, tests, và base layer switch OSM/Satellite đã hoàn tất |
+| Phase 1 – Aircraft Layer | Mostly done | Live aircraft layer, store, socket, icon resolver, offline enrichment fallback, hover interaction, popup metadata, trail inspection đã có; còn thiếu polish popup/detail và DB coverage thật từ dataset đầy đủ |
+| Phase 2 – Drawing Tools | Missing | Chưa có module `drawing/` |
+| Phase 3 – Measure Tool | Missing | Chưa có module `measure` hoặc `drawing` liên quan đo khoảng cách |
+| Phase 4 – Monitoring Zones | Missing | Chưa có module `monitoring/` |
+| Phase 5 – Search | Mostly done | Viewport/global/history search, zoom-to, result highlight, advanced filters chính đã có; còn thiếu validation/polish và area selection trực tiếp trên map |
+| Phase 6 – Watchlist | Partially done | CRUD nhóm, add/remove aircraft, panel, sync backend đã có; chưa đủ hết các UX/task trong plan |
+| Phase 7 – Route History / Viewport Playback | Done | Viewport playback cấp map đã hoàn chỉnh: playback panel, timeline slider, speed, bbox/time query, playback layer, inspect popup với frame context, focus selected, ghost trail, và live/playback handoff |
+| Phase 8 – Polish & Advanced | Partial | Có layer control panel, lazy loading, vendor chunk splitting; phần còn lại vẫn còn nhiều |
+
+### Current Gaps Worth Prioritizing
+
+- Hoàn thiện `AircraftPopup` / detail panel để khớp spec hơn nữa
+- Bổ sung `Drawing`, `Measure`, `Monitoring`
+- Chốt `Search` với validation/polish và area selection trực tiếp trên map nếu cần
+- Tiếp tục `Watchlist` và `Phase 8` polish/perf
+
+### Phase 7 Revision - Viewport Playback Strategy (2026-03-02)
+
+> Playback không nên nằm trong `AircraftPopup`. Nó phải là một mode cấp map, chạy theo `viewport + time range + timeline` chung.
+
+**Direction**
+
+- Tách `Viewport Playback` khỏi `Aircraft Trail`
+- `Aircraft Trail` chỉ còn là inspection feature cho từng aircraft
+- `Viewport Playback` là map-level feature riêng, có store và panel riêng
+- Nút `Playback` đặt trên map, phía trên button `Layers`
+
+**Original scope**
+
+1. Remove playback controls khỏi `AircraftPopup`
+2. Thêm `playback/` feature folder
+3. Tạo `usePlaybackStore` riêng
+4. Thêm floating `Playback` button + `PlaybackPanel`
+5. Capture `viewport hiện tại` khi mở playback panel
+6. Cho user chọn `from / to`, `currentTime`, `speed`, `freeze viewport`
+7. Về sau mới nối API bbox/time và `PlaybackMapLayer`
+
+**Suggested files**
+
+- `src/features/playback/types/playbackTypes.ts`
+- `src/features/playback/store/usePlaybackStore.ts`
+- `src/features/playback/components/PlaybackPanel.tsx`
+- `src/features/playback/components/PlaybackPanel.test.tsx`
+
+**State model**
+
+- `isOpen`
+- `mode: "viewport"`
+- `queryViewport`
+- `freezeViewport`
+- `timeFrom`
+- `timeTo`
+- `currentTime`
+- `speedMs`
+- `isPlaying`
+- `status: idle | loading | ready | error`
+
+**Execution order**
+
+1. Remove popup playback UI
+2. Add map-level playback entry point
+3. Build playback store and skeleton panel
+4. Add viewport capture and timeline controls
+5. Later: wire backend history query by bbox/time
+
+**Implementation status (updated 2026-03-02)**
+
+- Done: remove playback UI khỏi `AircraftPopup`
+- Done: thêm `playback/` feature folder, `usePlaybackStore`, `PlaybackPanel`
+- Done: query history theo `bbox + time range`
+- Done: build playback frames client-side với enrichment metadata bất đồng bộ
+- Done: `PlaybackMapLayer` render snapshot aircraft theo frame hiện tại
+- Done: timeline slider, `Prev/Next`, play/pause, speed control
+- Done: disable live socket/snapshot khi playback active
+- Done: click aircraft trong playback để inspect qua popup hiện có
+- Done: short ghost trail cho aircraft đang inspect trong playback
+- Done: popup frame context + focus selected aircraft trên map
+- Done: tối ưu bundle bằng lazy loading và manual vendor chunking
+- Remaining: chuẩn hóa lại section Phase 7 gốc bên dưới khi dọn encoding của file plan
+
 ---
 
 ## Tổng quan kiến trúc

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import OlMap from "ol/Map";
 import View from "ol/View";
 import { fromLonLat } from "ol/proj";
-import { createBaseLayer, type BaseLayerType } from "../layers/baseLayer";
+import { createBaseLayer, type BaseLayer, type BaseLayerType } from "../layers/baseLayer";
 import { DEFAULT_VIEWPORT, type MapViewport } from "../types/mapTypes";
 
 export type UseOlMapOptions = {
@@ -26,10 +26,10 @@ export type UseOlMapOptions = {
 export function useOlMap(
   containerRef: React.RefObject<HTMLDivElement | null>,
   options: UseOlMapOptions = {},
-): OlMap | null {
-  const [map, setMap] = useState<OlMap | null>(null);
+): OlMap<BaseLayer> | null {
+  const [map, setMap] = useState<OlMap<BaseLayer> | null>(null);
   // Keep a stable ref so tear-down can access the same instance even after unmount.
-  const mapRef = useRef<OlMap | null>(null);
+  const mapRef = useRef<OlMap<BaseLayer> | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -39,7 +39,7 @@ export function useOlMap(
     const center = options.initialViewport?.center ?? DEFAULT_VIEWPORT.center;
     const zoom = options.initialViewport?.zoom ?? DEFAULT_VIEWPORT.zoom;
 
-    const olMap = new OlMap({
+    const olMap = new OlMap<BaseLayer>({
       target: containerRef.current,
       layers: [createBaseLayer(options.baseLayerType)],
       view: new View({
@@ -61,6 +61,15 @@ export function useOlMap(
     // Intentionally omit options from deps: viewport changes are handled externally.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerRef]);
+
+  useEffect(() => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    const baseLayer = createBaseLayer(options.baseLayerType);
+    mapRef.current.getLayers().setAt(0, baseLayer);
+  }, [options.baseLayerType]);
 
   return map;
 }

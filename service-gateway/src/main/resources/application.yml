@@ -128,6 +128,8 @@ tracking:
         - /api/v1/watchlist/**
         - /api/v1/aircraft/**
         - /ws/live/**
+      public-jwt-bypass-paths:
+        - GET:/api/v1/aircraft/live
       api-key-protected-paths:
         - /api/v1/ingest/**
       public-auth-paths:

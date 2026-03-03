@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { I18nProvider } from "../../../shared/i18n/I18nProvider";
 import { useAircraftStore } from "../store/useAircraftStore";
 import type { Aircraft } from "../types/aircraftTypes";
 
@@ -48,7 +49,23 @@ function makeAircraft(overrides: Partial<Aircraft> = {}): Aircraft {
 
 describe("AircraftDetailPanel", () => {
   beforeEach(() => {
-    useAircraftStore.setState({ aircraft: {}, selectedIcao: null, detailIcao: null });
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    act(() => {
+      useAircraftStore.setState({ aircraft: {}, selectedIcao: null, detailIcao: null });
+    });
     vi.clearAllMocks();
     mockUseAircraftPhoto.mockReturnValue({
       imageUrl: "blob:aircraft-photo",
@@ -69,18 +86,26 @@ describe("AircraftDetailPanel", () => {
   });
 
   afterEach(() => {
-    useAircraftStore.setState({ aircraft: {}, selectedIcao: null, detailIcao: null });
+    act(() => {
+      useAircraftStore.setState({ aircraft: {}, selectedIcao: null, detailIcao: null });
+    });
   });
 
   test("renders cache badge and debug links", () => {
     const aircraft = makeAircraft();
-    useAircraftStore.setState({
-      aircraft: { VN1234: aircraft },
-      selectedIcao: "VN1234",
-      detailIcao: "VN1234",
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
     });
 
-    render(<AircraftDetailPanel />);
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
 
     expect(screen.getByText("Local cache hit")).toBeDefined();
     expect(screen.getByRole("link", { name: "Open local photo" })).toHaveAttribute(
@@ -106,13 +131,19 @@ describe("AircraftDetailPanel", () => {
       },
       isLoading: false,
     });
-    useAircraftStore.setState({
-      aircraft: { VN1234: aircraft },
-      selectedIcao: "VN1234",
-      detailIcao: "VN1234",
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
     });
 
-    render(<AircraftDetailPanel />);
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
 
     expect(screen.getByText("Cache warming")).toBeDefined();
     expect(screen.queryByRole("link", { name: "Open local photo" })).toBeNull();
@@ -120,13 +151,19 @@ describe("AircraftDetailPanel", () => {
 
   test("renders the full country name instead of ISO code", () => {
     const aircraft = makeAircraft({ countryCode: "CN" });
-    useAircraftStore.setState({
-      aircraft: { VN1234: aircraft },
-      selectedIcao: "VN1234",
-      detailIcao: "VN1234",
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
     });
 
-    render(<AircraftDetailPanel />);
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
 
     expect(screen.getByText("China")).toBeDefined();
     expect(screen.queryByText("CN")).toBeNull();
@@ -134,15 +171,97 @@ describe("AircraftDetailPanel", () => {
 
   test("renders military badge and class field for military aircraft", () => {
     const aircraft = makeAircraft({ isMilitary: true });
-    useAircraftStore.setState({
-      aircraft: { VN1234: aircraft },
-      selectedIcao: "VN1234",
-      detailIcao: "VN1234",
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
     });
 
-    render(<AircraftDetailPanel />);
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
 
     expect(screen.getAllByText("Military").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Class")).toBeDefined();
+  });
+
+  test("uses bottom-sheet layout on mobile", () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
+    const aircraft = makeAircraft();
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
+    });
+
+    const { container } = render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
+
+    expect(container.firstChild).toHaveClass("bottom-20");
+    expect(screen.getByText("Aircraft Detail").closest("section")).toHaveClass("animate-slide-in-up");
+  });
+
+  test("closes the mobile detail sheet on swipe-down", () => {
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
+    const aircraft = makeAircraft();
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+      });
+    });
+
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
+
+    fireEvent.touchStart(screen.getByText("Aircraft Detail").closest("section")!, {
+      touches: [{ clientX: 20, clientY: 40 }],
+    });
+    fireEvent.touchEnd(screen.getByText("Aircraft Detail").closest("section")!, {
+      changedTouches: [{ clientX: 24, clientY: 140 }],
+    });
+
+    expect(useAircraftStore.getState().detailIcao).toBeNull();
   });
 });

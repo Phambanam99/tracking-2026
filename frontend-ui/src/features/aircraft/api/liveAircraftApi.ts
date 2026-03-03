@@ -1,6 +1,6 @@
 import { httpRequest } from "../../../shared/api/httpClient";
 import type { BoundingBox } from "../../map/render/flightLayer";
-import type { Aircraft } from "../types/aircraftTypes";
+import { resolveAircraftEnrichment, type Aircraft } from "../types/aircraftTypes";
 
 type LiveAircraftDto = {
   icao: string;
@@ -19,7 +19,7 @@ type LiveAircraftDto = {
 
 export async function fetchLiveAircraftInViewport(
   viewport: BoundingBox,
-  limit = 5000,
+  limit = 15000,
 ): Promise<Aircraft[]> {
   const params = new URLSearchParams({
     north: String(viewport.north),
@@ -34,21 +34,31 @@ export async function fetchLiveAircraftInViewport(
     method: "GET",
   });
 
-  return data.map((flight) => ({
-    icao: flight.icao,
-    lat: flight.lat,
-    lon: flight.lon,
-    altitude: flight.altitude,
-    speed: flight.speed,
-    heading: flight.heading,
-    eventTime: flight.eventTime,
-    sourceId: flight.sourceId,
-    registration: flight.registration,
-    aircraftType: flight.aircraftType,
-    operator: flight.operator,
-    countryCode: null,
-    countryFlagUrl: null,
-    lastSeen: Date.now(),
-    isMilitary: flight.isMilitary ?? false,
-  }));
+  return data.map((flight) => {
+    const enrichment = resolveAircraftEnrichment({
+      icao: flight.icao,
+      registration: flight.registration,
+      aircraftType: flight.aircraftType,
+      operator: flight.operator,
+      isMilitary: flight.isMilitary,
+    });
+
+    return {
+      icao: flight.icao,
+      lat: flight.lat,
+      lon: flight.lon,
+      altitude: flight.altitude,
+      speed: flight.speed,
+      heading: flight.heading,
+      eventTime: flight.eventTime,
+      sourceId: flight.sourceId,
+      registration: enrichment.registration,
+      aircraftType: enrichment.aircraftType,
+      operator: enrichment.operator,
+      countryCode: enrichment.countryCode,
+      countryFlagUrl: enrichment.countryFlagUrl,
+      lastSeen: Date.now(),
+      isMilitary: enrichment.isMilitary,
+    };
+  });
 }

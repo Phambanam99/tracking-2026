@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { toAircraft, type AircraftFlight } from "./aircraftTypes";
+import { resolveAircraftEnrichment, toAircraft, type AircraftFlight } from "./aircraftTypes";
 
 describe("toAircraft", () => {
   test("should map backend snake_case payload and nested metadata", () => {
@@ -42,11 +42,11 @@ describe("toAircraft", () => {
     });
   });
 
-  test("should handle flights without metadata, defaulting enriched fields to null", () => {
+  test("should derive fallback country and registration when metadata is missing", () => {
     vi.spyOn(Date, "now").mockReturnValue(1700000000999);
 
     const flight: AircraftFlight = {
-      icao: "D4E5F6",
+      icao: "A00001",
       lat: 11.1,
       lon: 108.2,
       event_time: 1700000000888,
@@ -57,10 +57,11 @@ describe("toAircraft", () => {
 
     expect(aircraft.eventTime).toBe(1700000000888);
     expect(aircraft.sourceId).toBe("FR24-GLOBAL");
-    expect(aircraft.registration).toBeNull();
+    expect(aircraft.registration).toBe("N1");
     expect(aircraft.aircraftType).toBeNull();
     expect(aircraft.operator).toBeNull();
-    expect(aircraft.countryCode).toBeNull();
+    expect(aircraft.countryCode).toBe("US");
+    expect(aircraft.countryFlagUrl).toBe("https://flagcdn.com/h80/us.png");
     expect(aircraft.lastSeen).toBe(1700000000999);
     expect(aircraft.isMilitary).toBe(false);
   });
@@ -114,6 +115,27 @@ describe("toAircraft", () => {
       icao: "AE292B",
       isMilitary: true,
       lastSeen: 1700000002666,
+    });
+  });
+
+  test("should preserve backend metadata over fallback enrichment", () => {
+    const enrichment = resolveAircraftEnrichment({
+      icao: "A00001",
+      registration: "CUSTOM-REG",
+      aircraftType: "B738",
+      operator: "Custom Air",
+      countryCode: "CA",
+      countryFlagUrl: "https://flagcdn.com/h80/ca.png",
+      isMilitary: true,
+    });
+
+    expect(enrichment).toEqual({
+      registration: "CUSTOM-REG",
+      aircraftType: "B738",
+      operator: "Custom Air",
+      countryCode: "CA",
+      countryFlagUrl: "https://flagcdn.com/h80/ca.png",
+      isMilitary: true,
     });
   });
 });

@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { clearAuthSession, setAuthTokens } from "../../auth/store/useAuthStore";
 import { useAircraftPhotoMetadata } from "./useAircraftPhotoMetadata";
@@ -7,11 +7,16 @@ describe("useAircraftPhotoMetadata", () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
-    setAuthTokens("test-token", "refresh-token");
+    act(() => {
+      setAuthTokens("test-token", "refresh-token");
+    });
   });
 
   afterEach(() => {
-    clearAuthSession();
+    cleanup();
+    act(() => {
+      clearAuthSession();
+    });
     global.fetch = originalFetch;
     vi.restoreAllMocks();
   });
@@ -47,6 +52,9 @@ describe("useAircraftPhotoMetadata", () => {
 
     const { result } = renderHook(() => useAircraftPhotoMetadata("ABC123"));
 
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(true);
+    });
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });

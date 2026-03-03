@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { toFlightLayerData } from "./flightLayer";
+import { normalizeBoundingBox, toFlightLayerData } from "./flightLayer";
 
 describe("toFlightLayerData", () => {
   test("should filter invalid coordinates and map fields", () => {
@@ -34,5 +34,21 @@ describe("toFlightLayerData", () => {
     );
 
     expect(points.map((point) => point.id)).toEqual(["IN"]);
+  });
+
+  test("normalizes degenerate wrapped viewports to full-world longitude span", () => {
+    expect(
+      normalizeBoundingBox({
+        north: 82.77132794649589,
+        south: -69.01640694710034,
+        east: 166.05639720766808,
+        west: 166.05639720766817,
+      }),
+    ).toEqual({
+      north: 82.77132794649589,
+      south: -69.01640694710034,
+      east: 180,
+      west: -180,
+    });
   });
 });

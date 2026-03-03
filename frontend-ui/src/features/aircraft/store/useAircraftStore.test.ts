@@ -22,6 +22,11 @@ describe("useAircraftStore", () => {
       detailIcao: null,
       trailIcao: null,
       trailPositions: [],
+      trailPlaybackIndex: 0,
+      isTrailPlaying: false,
+      trailPlaybackSpeedMs: 600,
+      trailRoutes: {},
+      trailRouteOrder: [],
     });
   });
 
@@ -85,6 +90,7 @@ describe("useAircraftStore", () => {
           eventTime: now,
         },
       ]);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
     });
 
     test("should not append trail positions for non-active aircraft", () => {
@@ -117,17 +123,22 @@ describe("useAircraftStore", () => {
 
       expect(useAircraftStore.getState().trailIcao).toBeNull();
       expect(useAircraftStore.getState().trailPositions).toEqual([]);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
     });
 
-    test("should clear the previous trail when selecting another aircraft", () => {
+    test("should keep loaded trail routes when selecting another aircraft", () => {
       useAircraftStore.getState().setTrail("ABC123", [
         { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
       ]);
 
       useAircraftStore.getState().selectAircraft("DIFF99");
 
-      expect(useAircraftStore.getState().trailIcao).toBeNull();
-      expect(useAircraftStore.getState().trailPositions).toEqual([]);
+      expect(useAircraftStore.getState().trailIcao).toBe("ABC123");
+      expect(useAircraftStore.getState().trailPositions).toEqual([
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+      expect(useAircraftStore.getState().trailRouteOrder).toEqual(["ABC123"]);
     });
   });
 
@@ -145,6 +156,10 @@ describe("useAircraftStore", () => {
 
       expect(useAircraftStore.getState().trailIcao).toBe("XYZ999");
       expect(useAircraftStore.getState().trailPositions).toEqual(replacement);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(1);
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
+      expect(useAircraftStore.getState().trailRouteOrder).toEqual(["ABC123", "XYZ999"]);
+      expect(useAircraftStore.getState().trailRoutes["ABC123"]?.positions).toHaveLength(1);
     });
 
     test("should clear trail state", () => {
@@ -156,6 +171,94 @@ describe("useAircraftStore", () => {
 
       expect(useAircraftStore.getState().trailIcao).toBeNull();
       expect(useAircraftStore.getState().trailPositions).toEqual([]);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
+    });
+
+    test("should clamp playback index to the valid trail range", () => {
+      useAircraftStore.getState().setTrail("ABC123", [
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+        { lat: 3, lon: 4, altitude: null, heading: null, eventTime: 456 },
+      ]);
+
+      useAircraftStore.getState().setTrailPlaybackIndex(99);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(1);
+
+      useAircraftStore.getState().setTrailPlaybackIndex(-10);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
+    });
+
+    test("should toggle playback state only when the trail has enough points", () => {
+      useAircraftStore.getState().setTrail("ABC123", [
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+        { lat: 3, lon: 4, altitude: null, heading: null, eventTime: 456 },
+      ]);
+
+      useAircraftStore.getState().playTrail();
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(true);
+
+      useAircraftStore.getState().pauseTrail();
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
+
+      useAircraftStore.getState().toggleTrailPlayback();
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(true);
+    });
+
+    test("should not start playback when there are fewer than two trail points", () => {
+      useAircraftStore.getState().setTrail("ABC123", [
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+
+      useAircraftStore.getState().playTrail();
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
+    });
+
+    test("should allow focusing a previously loaded trail route", () => {
+      useAircraftStore.getState().setTrail("ABC123", [
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+      useAircraftStore.getState().setTrail("XYZ999", [
+        { lat: 3, lon: 4, altitude: null, heading: null, eventTime: 456 },
+        { lat: 5, lon: 6, altitude: null, heading: null, eventTime: 789 },
+      ]);
+
+      useAircraftStore.getState().setActiveTrail("ABC123");
+
+      expect(useAircraftStore.getState().trailIcao).toBe("ABC123");
+      expect(useAircraftStore.getState().trailPositions).toEqual([
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
+    });
+
+    test("should clear only the active trail route when multiple routes are loaded", () => {
+      useAircraftStore.getState().setTrail("ABC123", [
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+      useAircraftStore.getState().setTrail("XYZ999", [
+        { lat: 3, lon: 4, altitude: null, heading: null, eventTime: 456 },
+        { lat: 5, lon: 6, altitude: null, heading: null, eventTime: 789 },
+      ]);
+
+      useAircraftStore.getState().clearTrail();
+
+      expect(useAircraftStore.getState().trailRoutes["XYZ999"]).toBeUndefined();
+      expect(useAircraftStore.getState().trailRoutes["ABC123"]?.positions).toHaveLength(1);
+      expect(useAircraftStore.getState().trailIcao).toBe("ABC123");
+      expect(useAircraftStore.getState().trailPositions).toEqual([
+        { lat: 1, lon: 2, altitude: null, heading: null, eventTime: 123 },
+      ]);
+    });
+
+    test("should update playback speed in bounds", () => {
+      useAircraftStore.getState().setTrailPlaybackSpeedMs(150);
+      expect(useAircraftStore.getState().trailPlaybackSpeedMs).toBe(200);
+
+      useAircraftStore.getState().setTrailPlaybackSpeedMs(1400);
+      expect(useAircraftStore.getState().trailPlaybackSpeedMs).toBe(1400);
+
+      useAircraftStore.getState().setTrailPlaybackSpeedMs(5000);
+      expect(useAircraftStore.getState().trailPlaybackSpeedMs).toBe(2400);
     });
   });
 
@@ -219,6 +322,8 @@ describe("useAircraftStore", () => {
 
       expect(useAircraftStore.getState().trailIcao).toBeNull();
       expect(useAircraftStore.getState().trailPositions).toEqual([]);
+      expect(useAircraftStore.getState().trailPlaybackIndex).toBe(0);
+      expect(useAircraftStore.getState().isTrailPlaying).toBe(false);
     });
 
     test("should keep selectedIcao if the selected aircraft is still fresh", () => {

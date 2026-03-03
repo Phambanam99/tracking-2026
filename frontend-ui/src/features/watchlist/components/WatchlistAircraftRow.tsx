@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useWatchlistStore } from "../store/useWatchlistStore";
 import type { WatchlistEntry } from "../types/watchlistTypes";
 
@@ -11,6 +12,7 @@ export function WatchlistAircraftRow({
   groupId,
   entry,
 }: WatchlistAircraftRowProps): JSX.Element {
+  const { t } = useI18n();
   const groups = useWatchlistStore((state) => state.groups);
   const addAircraft = useWatchlistStore((state) => state.addAircraft);
   const removeAircraft = useWatchlistStore((state) => state.removeAircraft);
@@ -54,7 +56,7 @@ export function WatchlistAircraftRow({
       await removeAircraft(groupId, entry.icao);
       setMoveMenuOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to move aircraft");
+      setError(err instanceof Error ? err.message : t("watchlist.moveFailed"));
     } finally {
       setMovingToGroupId(null);
     }
@@ -75,11 +77,11 @@ export function WatchlistAircraftRow({
             <div className="relative">
               <button
                 aria-expanded={moveMenuOpen}
-                aria-label={`Move ${entry.icao} to another group`}
+                aria-label={t("watchlist.moveAria", { icao: entry.icao })}
                 className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-600 hover:text-sky-300 disabled:opacity-40"
                 disabled={movingToGroupId !== null || removing}
                 onClick={() => setMoveMenuOpen((value) => !value)}
-                title="Move to"
+                title={t("watchlist.moveTo")}
                 type="button"
               >
                 <svg
@@ -110,7 +112,7 @@ export function WatchlistAircraftRow({
                           style={{ backgroundColor: group.color }}
                         />
                         <span className="flex-1 truncate">{group.name}</span>
-                        {isMoving ? <span className="text-slate-400">Moving...</span> : null}
+                        {isMoving ? <span className="text-slate-400">{t("watchlist.moving")}</span> : null}
                       </button>
                     );
                   })}
@@ -120,11 +122,11 @@ export function WatchlistAircraftRow({
           ) : null}
 
           <button
-            aria-label={`Remove ${entry.icao} from watchlist`}
+            aria-label={t("watchlist.removeAria", { icao: entry.icao })}
             className="shrink-0 rounded p-0.5 text-slate-500 hover:bg-slate-600 hover:text-red-400 disabled:opacity-40"
             disabled={removing || movingToGroupId !== null}
             onClick={() => void handleRemove()}
-            title="Remove"
+            title={t("watchlist.remove")}
             type="button"
           >
             <svg

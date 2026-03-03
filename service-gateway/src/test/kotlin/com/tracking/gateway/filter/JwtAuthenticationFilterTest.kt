@@ -46,6 +46,42 @@ public class JwtAuthenticationFilterTest {
     }
 
     @Test
+    public fun `should allow public live aircraft route without jwt`() {
+        val filter = buildFilter(
+            tokenVerifier = FixedTokenVerifier(validPrincipal()),
+            routesConfig = GatewayRoutesConfig(
+                jwtProtectedPaths = listOf("/api/v1/aircraft/**"),
+                publicJwtBypassPaths = listOf("GET:/api/v1/aircraft/live"),
+            ),
+        )
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/aircraft/live").build())
+        val chain = CapturingChain()
+
+        filter.filter(exchange, chain).block()
+
+        assertTrue(chain.invoked)
+        assertEquals(null, exchange.response.statusCode)
+    }
+
+    @Test
+    public fun `should still reject non-public aircraft routes when jwt missing`() {
+        val filter = buildFilter(
+            tokenVerifier = FixedTokenVerifier(validPrincipal()),
+            routesConfig = GatewayRoutesConfig(
+                jwtProtectedPaths = listOf("/api/v1/aircraft/**"),
+                publicJwtBypassPaths = listOf("GET:/api/v1/aircraft/live"),
+            ),
+        )
+        val exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/v1/aircraft/search").build())
+        val chain = CapturingChain()
+
+        filter.filter(exchange, chain).block()
+
+        assertFalse(chain.invoked)
+        assertEquals(401, exchange.response.statusCode?.value())
+    }
+
+    @Test
     public fun `should pass request and attach principal headers when jwt valid`() {
         val filter = buildFilter(tokenVerifier = FixedTokenVerifier(validPrincipal()))
         val exchange = MockServerWebExchange.from(

@@ -89,4 +89,44 @@ describe("SearchPanel", () => {
 
     expect(screen.queryByText("No results")).not.toBeInTheDocument();
   });
+
+  test("shows global search hint instead of next release message", () => {
+    useSearchStore.setState({
+      filters: { query: "", mode: "global" },
+      results: [],
+    });
+
+    render(<SearchPanel onClose={onClose} />);
+
+    expect(screen.getByText(/Search all live aircraft via service-query/)).toBeInTheDocument();
+    expect(screen.queryByText(/Available in next release/)).not.toBeInTheDocument();
+  });
+
+  test("shows history search hint until criteria are provided", () => {
+    useSearchStore.setState({
+      filters: { query: "", mode: "history" },
+      results: [],
+    });
+
+    render(<SearchPanel onClose={onClose} />);
+
+    expect(screen.getByText(/Add one or more history filters above/)).toBeInTheDocument();
+    expect(screen.queryByText("No aircraft found. Try a different query.")).not.toBeInTheDocument();
+  });
+
+  test("shows history result summary when advanced criteria are present", () => {
+    useSearchStore.setState({
+      filters: {
+        query: "",
+        mode: "history",
+        registration: "VN-A321",
+      },
+      results: [],
+    });
+
+    render(<SearchPanel onClose={onClose} />);
+
+    expect(screen.getByText("No results")).toBeInTheDocument();
+    expect(screen.getByText("No aircraft found. Try a different query.")).toBeInTheDocument();
+  });
 });

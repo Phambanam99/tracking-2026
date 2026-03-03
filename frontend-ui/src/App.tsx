@@ -1,107 +1,123 @@
-import { useMemo, useState } from "react";
-import { ApiKeyManagementPage } from "./features/admin/pages/ApiKeyManagementPage";
-import { UserManagementPage } from "./features/admin/pages/UserManagementPage";
-import { LoginPage } from "./features/auth/pages/LoginPage";
-import { RegisterPage } from "./features/auth/pages/RegisterPage";
-import { logout, useAuthStore } from "./features/auth/store/useAuthStore";
-import { AircraftFeatureLayer } from "./features/aircraft/components/AircraftFeatureLayer";
-import { MapContainer } from "./features/map/components/MapContainer";
-import { LayerPanel } from "./features/map/components/LayerPanel";
-import { SearchPanel } from "./features/search/components/SearchPanel";
-import { WatchlistPanel } from "./features/watchlist/components/WatchlistPanel";
-import { useWatchlistSync } from "./features/watchlist/hooks/useWatchlistSync";
+import type { ReactNode } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
+import { useAuthStore } from "./features/auth/store/useAuthStore";
+import { AppShell } from "./layout/AppShell";
+import { I18nProvider, useI18n } from "./shared/i18n/I18nProvider";
+
+const LoginPage = lazy(async () =>
+  import("./features/auth/pages/LoginPage").then((module) => ({ default: module.LoginPage })),
+);
+const RegisterPage = lazy(async () =>
+  import("./features/auth/pages/RegisterPage").then((module) => ({ default: module.RegisterPage })),
+);
+const UserManagementPage = lazy(async () =>
+  import("./features/admin/pages/UserManagementPage").then((module) => ({ default: module.UserManagementPage })),
+);
+const ApiKeyManagementPage = lazy(async () =>
+  import("./features/admin/pages/ApiKeyManagementPage").then((module) => ({ default: module.ApiKeyManagementPage })),
+);
 
 type Page = "map" | "login" | "register" | "admin-users" | "admin-api-keys";
 
 export function App(): JSX.Element {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
+  );
+}
+
+function AppContent(): JSX.Element {
   const auth = useAuthStore((state) => state);
-  useWatchlistSync();
   const [page, setPage] = useState<Page>("map");
-  const [showSearch, setShowSearch] = useState(false);
-  const [showWatchlist, setShowWatchlist] = useState(false);
-
   const isAdmin = useMemo(() => auth.roles.includes("ROLE_ADMIN"), [auth.roles]);
-
   const currentPage = resolvePage(page, auth.isAuthenticated, isAdmin);
+  const { t } = useI18n();
 
   return (
-    // h-screen + flex-col so the map can fill all remaining vertical space
-    <div className="flex h-screen w-full flex-col overflow-hidden bg-slate-950 px-4 py-4 text-ink">
-      <header className="mb-3 flex flex-shrink-0 flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-900/70 px-4 py-3">
-        <div>
-          <h1 className="text-2xl font-bold">Tracking 2026</h1>
-          <p className="text-sm text-slate-300">Live Tracking Dashboard</p>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          {auth.isAuthenticated ? (
-            <>
-              <span className="rounded bg-slate-800 px-2 py-1 text-slate-200">user: {auth.username}</span>
-              <button className="rounded border border-slate-500 px-3 py-1 text-slate-200" onClick={() => void logout()} type="button">
-                Logout
-              </button>
-            </>
-          ) : (
-            <span className="rounded bg-slate-800 px-2 py-1 text-slate-300">anonymous</span>
-          )}
-        </div>
-      </header>
+    <div className="h-screen w-full overflow-hidden bg-slate-950 text-ink">
+      <Suspense fallback={<PageFallback />}>
+        {currentPage === "map" ? (
+          <AppShell
+            isAdmin={isAdmin}
+            onOpenAdminApiKeys={() => setPage("admin-api-keys")}
+            onOpenAdminUsers={() => setPage("admin-users")}
+            onOpenLogin={() => setPage("login")}
+            onOpenRegister={() => setPage("register")}
+          />
+        ) : null}
 
-      <nav className="mb-3 flex flex-shrink-0 flex-wrap gap-2">
-        <NavButton label="Map" onClick={() => setPage("map")} selected={currentPage === "map"} />
-        {auth.isAuthenticated && (
-          <>
-            <NavButton label="Search" onClick={() => setShowSearch((v) => !v)} selected={showSearch} />
-            <NavButton label="Watchlist" onClick={() => setShowWatchlist((v) => !v)} selected={showWatchlist} />
-          </>
-        )}
-        {!auth.isAuthenticated && (
-          <>
-            <NavButton label="Login" onClick={() => setPage("login")} selected={currentPage === "login"} />
-            <NavButton label="Register" onClick={() => setPage("register")} selected={currentPage === "register"} />
-          </>
-        )}
-        {auth.isAuthenticated && isAdmin && (
-          <>
-            <NavButton label="Users" onClick={() => setPage("admin-users")} selected={currentPage === "admin-users"} />
-            <NavButton label="API Keys" onClick={() => setPage("admin-api-keys")} selected={currentPage === "admin-api-keys"} />
-          </>
-        )}
-      </nav>
+        {currentPage === "login" ? (
+          <PageFrame
+            eyebrow={t("app.auth")}
+            onBack={auth.isAuthenticated ? () => setPage("map") : undefined}
+            title={t("app.signInTitle")}
+          >
+            <LoginPage onSwitchToRegister={() => setPage("register")} />
+          </PageFrame>
+        ) : null}
 
-      {/* min-h-0 is required in a flex-col so flex-1 can shrink below content size */}
-      <main className="min-h-0 flex-1 overflow-hidden">
-        {currentPage === "map" && (
-          <MapContainer>
-            <AircraftFeatureLayer />
-            <LayerPanel />
-            {showSearch && <SearchPanel onClose={() => setShowSearch(false)} />}
-            {showWatchlist && <WatchlistPanel onClose={() => setShowWatchlist(false)} />}
-          </MapContainer>
-        )}
-        {currentPage === "login" && <LoginPage onSwitchToRegister={() => setPage("register")} />}
-        {currentPage === "register" && <RegisterPage onSwitchToLogin={() => setPage("login")} />}
-        {currentPage === "admin-users" && <UserManagementPage />}
-        {currentPage === "admin-api-keys" && <ApiKeyManagementPage />}
-      </main>
+        {currentPage === "register" ? (
+          <PageFrame
+            eyebrow={t("app.auth")}
+            onBack={auth.isAuthenticated ? () => setPage("map") : undefined}
+            title={t("app.registerTitle")}
+          >
+            <RegisterPage onSwitchToLogin={() => setPage("login")} />
+          </PageFrame>
+        ) : null}
+
+        {currentPage === "admin-users" ? (
+          <PageFrame eyebrow={t("app.admin")} onBack={() => setPage("map")} title={t("app.userManagementTitle")}>
+            <UserManagementPage />
+          </PageFrame>
+        ) : null}
+
+        {currentPage === "admin-api-keys" ? (
+          <PageFrame eyebrow={t("app.admin")} onBack={() => setPage("map")} title={t("app.apiKeyManagementTitle")}>
+            <ApiKeyManagementPage />
+          </PageFrame>
+        ) : null}
+      </Suspense>
     </div>
   );
 }
 
-type NavButtonProps = {
-  label: string;
-  selected: boolean;
-  onClick: () => void;
+type PageFrameProps = {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+  onBack?: () => void;
 };
 
-function NavButton({ label, selected, onClick }: NavButtonProps): JSX.Element {
+function PageFrame({ eyebrow, title, children, onBack }: PageFrameProps): JSX.Element {
+  const { t } = useI18n();
+
   return (
-    <button
-      className={`rounded px-3 py-1 text-sm ${selected ? "bg-accent text-slate-950" : "bg-slate-800 text-slate-200"}`}
-      onClick={onClick}
-      type="button"
-    >
-      {label}
-    </button>
+    <div className="relative flex h-full items-center justify-center overflow-hidden px-4 py-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_24%),radial-gradient(circle_at_78%_12%,rgba(59,130,246,0.18),transparent_20%),linear-gradient(180deg,rgba(15,23,42,0.82),rgba(2,6,23,0.98))]" />
+      <div className="pointer-events-none absolute inset-y-12 left-[12%] w-40 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-[10%] h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
+      {onBack ? (
+        <button
+          className="glass-panel absolute left-4 top-4 rounded-full px-4 py-2 text-sm text-slate-200 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          onClick={onBack}
+          type="button"
+        >
+          {t("app.backToMap")}
+        </button>
+      ) : null}
+      <div className="relative z-10 flex w-full max-w-6xl flex-col gap-6">
+        <div className="max-w-2xl">
+          <p className="text-xs uppercase tracking-[0.28em] text-cyan-300/80">{eyebrow}</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-100 md:text-5xl">{title}</h1>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-400">
+            {t("app.pageDescription")}
+          </p>
+        </div>
+        <div className="glass-panel-strong rounded-[32px] border border-slate-700/80 p-5 md:p-8">{children}</div>
+      </div>
+    </div>
   );
 }
 
@@ -116,4 +132,10 @@ function resolvePage(page: Page, isAuthenticated: boolean, isAdmin: boolean): Pa
     return "map";
   }
   return page;
+}
+
+function PageFallback(): JSX.Element {
+  const { t } = useI18n();
+
+  return <div className="flex h-full items-center justify-center text-sm text-slate-300">{t("app.loadingWorkspace")}</div>;
 }

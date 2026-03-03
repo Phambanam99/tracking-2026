@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { useWatchlistStore } from "../../watchlist/store/useWatchlistStore";
 import { useLayerStore } from "../store/useLayerStore";
 import { LayerPanel } from "./LayerPanel";
@@ -115,5 +115,20 @@ describe("LayerPanel", () => {
     });
 
     expect(useWatchlistStore.getState().groups[0]?.visibleOnMap).toBe(false);
+  });
+
+  test("closes the panel on swipe-down when mobile sheet closing is enabled", () => {
+    const onOpenChange = vi.fn();
+
+    render(<LayerPanel enableSwipeClose={true} onOpenChange={onOpenChange} open={true} showTrigger={false} />);
+
+    fireEvent.touchStart(screen.getByLabelText("Layer panel"), {
+      touches: [{ clientX: 10, clientY: 20 }],
+    });
+    fireEvent.touchEnd(screen.getByLabelText("Layer panel"), {
+      changedTouches: [{ clientX: 14, clientY: 130 }],
+    });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

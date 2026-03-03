@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FeatureLike } from "ol/Feature";
 import type { MapBrowserEvent } from "ol";
 import { Feature } from "ol";
@@ -20,6 +20,11 @@ type AircraftMapLayerProps = {
   filter?: AircraftLayerFilter;
   variant?: "live" | "watchlist" | "military";
   interactive?: boolean;
+};
+
+type HoverState = {
+  icao: string;
+  pixel: [number, number];
 };
 
 const LIVE_LAYER_Z_INDEX = 10;
@@ -148,10 +153,11 @@ export function AircraftMapLayer({
   filter = "all",
   variant = "live",
   interactive = true,
-}: AircraftMapLayerProps): null {
+}: AircraftMapLayerProps): JSX.Element | null {
   const { map } = useMapContext();
   const layerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const sourceRef = useRef<VectorSource | null>(null);
+  const [hovered, setHovered] = useState<HoverState | null>(null);
   const aircraft = useAircraftStore((state) => state.aircraft);
   const selectedIcao = useAircraftStore((state) => state.selectedIcao);
   const selectAircraft = useAircraftStore((state) => state.selectAircraft);
@@ -201,6 +207,9 @@ export function AircraftMapLayer({
 
   useEffect(() => {
     layerRef.current?.setVisible(visible);
+    if (!visible) {
+      setHovered(null);
+    }
   }, [visible]);
 
   useEffect(() => {
@@ -263,7 +272,78 @@ export function AircraftMapLayer({
     return () => map.un("click", handleClick);
   }, [interactive, visible, map, selectAircraft]);
 
-  return null;
+  useEffect(() => {
+    if (!map || !interactive || !visible) {
+      return;
+    }
+
+    const targetElement = map.getTargetElement?.();
+
+    const handlePointerMove = (event: MapBrowserEvent<PointerEvent> & { dragging?: boolean }): void => {
+      if (event.dragging) {
+        setHovered(null);
+        if (targetElement) {
+          targetElement.style.cursor = "";
+        }
+        return;
+      }
+
+      const hit = map.forEachFeatureAtPixel(
+        event.pixel,
+        (feature: FeatureLike) => feature,
+        { layerFilter: (layer) => layer === layerRef.current },
+      );
+
+      const icao = hit?.get("icao") as string | undefined;
+      if (!icao) {
+        setHovered(null);
+        if (targetElement) {
+          targetElement.style.cursor = "";
+        }
+        return;
+      }
+
+      setHovered({
+        icao,
+        pixel: [event.pixel[0], event.pixel[1]],
+      });
+      if (targetElement) {
+        targetElement.style.cursor = "pointer";
+      }
+    };
+
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
+    map.on("pointermove", handlePointerMove);
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
+    return () => {
+      map.un("pointermove", handlePointerMove);
+      if (targetElement) {
+        targetElement.style.cursor = "";
+      }
+    };
+  }, [interactive, map, visible]);
+
+  const hoveredAircraft = hovered ? aircraft[hovered.icao] ?? null : null;
+
+  if (!interactive || !visible || !hovered || !hoveredAircraft) {
+    return null;
+  }
+
+  return (
+    <div
+      className="pointer-events-none absolute z-[18] min-w-[120px] rounded border border-slate-600 bg-slate-900/95 px-2 py-1 text-xs text-slate-100 shadow-lg"
+      data-testid="aircraft-hover-tooltip"
+      style={{
+        left: `${hovered.pixel[0] + 12}px`,
+        top: `${hovered.pixel[1] + 12}px`,
+      }}
+    >
+      <div className="font-mono font-semibold">{hoveredAircraft.icao.toUpperCase()}</div>
+      {hoveredAircraft.callsign ? (
+        <div className="text-slate-300">{hoveredAircraft.callsign}</div>
+      ) : null}
+    </div>
+  );
 }
 
 function buildWatchlistColorMap(): Map<string, string> {

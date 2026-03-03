@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "ol/ol.css";
 import { MapContext } from "../context/MapContext";
 import { useOlMap, type UseOlMapOptions } from "../hooks/useOlMap";
+import type { BaseLayerType } from "../layers/baseLayer";
 import { MapStatusBar } from "./MapStatusBar";
 import { MapToolbar, type MapToolbarProps } from "./MapToolbar";
 
@@ -10,6 +11,12 @@ export type MapContainerProps = UseOlMapOptions & {
   toolbarProps?: MapToolbarProps;
   /** Additional content to render inside the MapContext (e.g. AircraftMapLayer). */
   children?: React.ReactNode;
+  /** Hide the built-in top toolbar when using an external app shell. */
+  showToolbar?: boolean;
+  /** Hide the built-in status bar when using an external app shell. */
+  showStatusBar?: boolean;
+  /** Optional extra class names for the outer map shell container. */
+  className?: string;
 };
 
 /**
@@ -30,15 +37,38 @@ export function MapContainer({
   baseLayerType,
   toolbarProps,
   children,
+  showToolbar = true,
+  showStatusBar = true,
+  className,
 }: MapContainerProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
-  const map = useOlMap(containerRef, { initialViewport, baseLayerType });
+  const [activeBaseLayerType, setActiveBaseLayerType] = useState<BaseLayerType>(
+    baseLayerType ?? "osm",
+  );
+
+  useEffect(() => {
+    if (baseLayerType) {
+      setActiveBaseLayerType(baseLayerType);
+    }
+  }, [baseLayerType]);
+
+  const map = useOlMap(containerRef, { initialViewport, baseLayerType: activeBaseLayerType });
 
   return (
     <MapContext.Provider value={{ map, mapContainerEl: containerRef.current }}>
       {/* Outer wrapper fills all available height provided by the parent flex container */}
-      <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-lg border border-slate-700">
-        <MapToolbar {...(toolbarProps ?? {})} />
+      <div
+        className={`relative flex h-full min-h-0 w-full flex-col overflow-hidden ${
+          className ?? "rounded-lg border border-slate-700"
+        }`}
+      >
+        {showToolbar ? (
+          <MapToolbar
+            {...(toolbarProps ?? {})}
+            baseLayerType={activeBaseLayerType}
+            onBaseLayerChange={setActiveBaseLayerType}
+          />
+        ) : null}
 
         {/* OL canvas target div – must have an explicit, non-zero height */}
         <div
@@ -50,7 +80,7 @@ export function MapContainer({
         {/* Child components (e.g. AircraftMapLayer, DrawingLayer) live inside MapContext */}
         {children}
 
-        <MapStatusBar />
+        {showStatusBar ? <MapStatusBar /> : null}
       </div>
     </MapContext.Provider>
   );

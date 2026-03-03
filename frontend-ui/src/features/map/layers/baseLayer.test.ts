@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
-import { createBaseLayer, createOsmLayer } from "./baseLayer";
+import XYZ from "ol/source/XYZ";
+import { createBaseLayer, createOsmLayer, createSatelliteLayer } from "./baseLayer";
 
 describe("baseLayer", () => {
   test("createOsmLayer returns a TileLayer instance", () => {
@@ -31,10 +32,16 @@ describe("baseLayer", () => {
     expect(layer.getSource()).toBeInstanceOf(OSM);
   });
 
-  test("createBaseLayer('satellite') falls back to OSM until satellite is implemented", () => {
-    // satellite is not yet implemented – should return an OSM layer as fallback
+  test("createSatelliteLayer returns a TileLayer backed by XYZ imagery", () => {
+    const layer = createSatelliteLayer();
+    expect(layer).toBeInstanceOf(TileLayer);
+    expect(layer.getSource()).toBeInstanceOf(XYZ);
+    expect(layer.getZIndex()).toBe(0);
+  });
+
+  test("createBaseLayer('satellite') returns a TileLayer with XYZ source", () => {
     const layer = createBaseLayer("satellite");
     expect(layer).toBeInstanceOf(TileLayer);
-    expect(layer.getSource()).toBeInstanceOf(OSM);
+    expect(layer.getSource()).toBeInstanceOf(XYZ);
   });
 });

@@ -1,107 +1,92 @@
 import { useState } from "react";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
+import { OverlayPanel } from "../../../shared/components/OverlayPanel";
 import { useWatchlistStore } from "../store/useWatchlistStore";
 import { CreateGroupInline } from "./CreateGroupInline";
 import { WatchlistGroupCard } from "./WatchlistGroupCard";
 
 type WatchlistPanelProps = {
   onClose: () => void;
+  placement?: "left" | "right";
+  dockClassName?: string;
+  animationClassName?: string;
+  enableSwipeClose?: boolean;
 };
 
-export function WatchlistPanel({ onClose }: WatchlistPanelProps): JSX.Element {
+export function WatchlistPanel({
+  onClose,
+  placement = "right",
+  dockClassName,
+  animationClassName,
+  enableSwipeClose = false,
+}: WatchlistPanelProps): JSX.Element {
+  const { t } = useI18n();
   const groups = useWatchlistStore((state) => state.groups);
   const isLoading = useWatchlistStore((state) => state.loading);
   const error = useWatchlistStore((state) => state.error);
   const [showCreate, setShowCreate] = useState(false);
+  const edgeClassName = placement === "left" ? "left-4" : "right-4";
 
   return (
-    <div
-      aria-label="Watchlist panel"
-      className="absolute bottom-0 right-0 top-0 z-30 flex w-72 flex-col border-l border-slate-700 bg-slate-900/95 shadow-2xl backdrop-blur-sm"
+    <OverlayPanel
+      ariaLabel="Watchlist panel"
+      animationClassName={animationClassName}
+      closeLabel={t("watchlist.close")}
+      description={t("watchlist.description")}
+      dockClassName={dockClassName ?? edgeClassName}
+      enableSwipeClose={enableSwipeClose}
+      footer={
+        groups.length > 0 ? (
+          <p className="text-[10px] text-slate-500">
+            {t("watchlist.footer", {
+              groups: groups.length,
+              aircraft: groups.reduce((sum, group) => sum + (group.entries?.length ?? group.entryCount), 0),
+            })}
+          </p>
+        ) : null
+      }
+      onClose={onClose}
+      title={t("watchlist.title")}
     >
-      {/* Panel header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-700 px-4 py-3">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-100">Watchlist</h2>
-          <p className="text-[10px] text-slate-400">Track aircraft groups on the map</p>
-        </div>
-        <div className="flex items-center gap-1">
-          {/* New group button */}
-          <button
-            aria-label="Create new group"
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-cyan-300"
-            onClick={() => setShowCreate((v) => !v)}
-            title="New group"
-            type="button"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {/* Close button */}
-          <button
-            aria-label="Close watchlist"
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+      <div className="flex items-center justify-end px-4 pt-3">
+        <button
+          aria-label="Create new group"
+          className="rounded-full border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-400/50 hover:text-cyan-200"
+          onClick={() => setShowCreate((value) => !value)}
+          type="button"
+        >
+          {t("watchlist.createGroup")}
+        </button>
       </div>
 
-      {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto p-3">
-        {/* Inline create form */}
-        {showCreate && (
+        {showCreate ? (
           <div className="mb-3">
             <CreateGroupInline onDone={() => setShowCreate(false)} />
           </div>
-        )}
+        ) : null}
 
-        {/* Loading */}
-        {isLoading && (
-          <p className="text-center text-xs text-slate-500">Loading…</p>
-        )}
+        {isLoading ? <p className="text-center text-xs text-slate-500">Loading…</p> : null}
 
-        {/* Error */}
-        {!isLoading && error && (
-          <p className="rounded border border-red-800 bg-red-900/30 px-3 py-2 text-xs text-red-400">
-            {error}
-          </p>
-        )}
+        {!isLoading && error ? (
+          <p className="rounded border border-red-800 bg-red-900/30 px-3 py-2 text-xs text-red-400">{error}</p>
+        ) : null}
 
-        {/* Empty state */}
-        {!isLoading && !error && groups.length === 0 && (
+        {!isLoading && !error && groups.length === 0 ? (
           <div className="mt-6 text-center">
-            <p className="text-sm text-slate-400">No groups yet.</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Click <span className="text-slate-300">+</span> to create your first watchlist group.
-            </p>
+            <p className="text-sm text-slate-400">{t("watchlist.empty")}</p>
+            <p className="mt-1 text-xs text-slate-500">{t("watchlist.emptyDescription")}</p>
           </div>
-        )}
+        ) : null}
 
-        {/* Group cards */}
-        {groups.length > 0 && (
+        {groups.length > 0 ? (
           <div className="flex flex-col gap-2">
             {groups.map((group) => (
               <WatchlistGroupCard group={group} key={group.id} />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
-
-      {/* Footer hint */}
-      {groups.length > 0 && (
-        <div className="shrink-0 border-t border-slate-700 px-4 py-2">
-          <p className="text-[10px] text-slate-500">
-            {groups.length} group{groups.length !== 1 ? "s" : ""} ·{" "}
-            {groups.reduce((sum, g) => sum + (g.entries?.length ?? g.entryCount), 0)} aircraft
-          </p>
-        </div>
-      )}
-    </div>
+    </OverlayPanel>
   );
 }

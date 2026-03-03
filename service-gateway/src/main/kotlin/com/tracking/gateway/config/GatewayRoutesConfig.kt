@@ -1,6 +1,7 @@
 package com.tracking.gateway.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.http.HttpMethod
 import org.springframework.http.server.PathContainer
 import org.springframework.stereotype.Component
 import org.springframework.web.util.pattern.PathPattern
@@ -14,6 +15,7 @@ public class GatewayRoutesConfig(
     public var websocketPath: String = "/ws/live/**",
     public var jwtProtectedPaths: List<String> = listOf("/api/v1/auth/**", "/ws/live/**"),
     public var apiKeyProtectedPaths: List<String> = listOf("/api/v1/ingest/**"),
+    public var publicJwtBypassPaths: List<String> = listOf("GET:/api/v1/aircraft/live"),
     public var publicAuthPaths: List<String> = listOf(
         "/api/v1/auth/login",
         "/api/v1/auth/register",
@@ -24,7 +26,15 @@ public class GatewayRoutesConfig(
     private val parser: PathPatternParser = PathPatternParser.defaultInstance
 
     public fun requiresJwt(path: String): Boolean {
+        return requiresJwt(null, path)
+    }
+
+    public fun requiresJwt(method: HttpMethod?, path: String): Boolean {
         if (isPublicAuthPath(path)) {
+            return false
+        }
+
+        if (isPublicJwtBypassPath(method, path)) {
             return false
         }
 
@@ -42,6 +52,21 @@ public class GatewayRoutesConfig(
     public fun isPublicAuthPath(path: String): Boolean {
         return publicAuthPaths.any { pattern ->
             path == pattern || path.startsWith("$pattern/")
+        }
+    }
+
+    public fun isPublicJwtBypassPath(method: HttpMethod?, path: String): Boolean {
+        return publicJwtBypassPaths.any { entry ->
+            val separatorIndex = entry.indexOf(':')
+            if (separatorIndex <= 0 || separatorIndex == entry.lastIndex) {
+                return@any false
+            }
+
+            val configuredMethod = entry.substring(0, separatorIndex).trim().uppercase()
+            val configuredPattern = entry.substring(separatorIndex + 1).trim()
+            val requestMethod = method?.name()?.uppercase() ?: return@any false
+
+            requestMethod == configuredMethod && matches(path, configuredPattern)
         }
     }
 
