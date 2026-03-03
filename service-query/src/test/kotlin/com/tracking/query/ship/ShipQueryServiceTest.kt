@@ -4,6 +4,7 @@ import com.tracking.query.dto.BoundingBoxDto
 import com.tracking.query.dto.ShipHistoryPositionDto
 import com.tracking.query.dto.ShipSearchRequest
 import com.tracking.query.dto.ShipSearchResult
+import java.sql.Timestamp
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.any
@@ -107,7 +108,7 @@ public class ShipQueryServiceTest {
         )
         assertTrue(sqlCaptor.value.contains("FROM storage.ship_positions"))
         assertTrue(sqlCaptor.value.contains("mmsi LIKE ?"))
-        assertTrue(sqlCaptor.value.contains("lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?"))
+        assertTrue(sqlCaptor.value.contains("(lat BETWEEN ? AND ?) AND (lon BETWEEN ? AND ?)"))
         assertTrue(sqlCaptor.value.contains("source_id = ?"))
     }
 
@@ -128,8 +129,8 @@ public class ShipQueryServiceTest {
                 any<String>(),
                 any<RowMapper<ShipHistoryPositionDto>>(),
                 eq("574001230"),
-                eq(1_700_000_000_000L),
-                eq(1_700_000_600_000L),
+                eq(Timestamp(1_700_000_000_000L)),
+                eq(Timestamp(1_700_000_600_000L)),
                 eq(100),
             ),
         ).thenReturn(listOf(sample))
@@ -141,8 +142,8 @@ public class ShipQueryServiceTest {
             sqlCaptor.capture(),
             any<RowMapper<ShipHistoryPositionDto>>(),
             eq("574001230"),
-            eq(1_700_000_000_000L),
-            eq(1_700_000_600_000L),
+            eq(Timestamp(1_700_000_000_000L)),
+            eq(Timestamp(1_700_000_600_000L)),
             eq(100),
         )
         assertTrue(sqlCaptor.value.contains("WHERE mmsi = ?"))
