@@ -4,6 +4,7 @@ import com.tracking.query.dto.ShipHistoryPositionDto
 import com.tracking.query.dto.ShipSearchRequest
 import com.tracking.query.dto.ShipSearchResult
 import java.sql.ResultSet
+import java.sql.Timestamp
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Service
@@ -71,12 +72,12 @@ public class ShipQueryService(
             params.add("%${it.uppercase()}%")
         }
         request.timeFrom?.let {
-            conditions.append(" AND event_time >= to_timestamp(? / 1000.0)")
-            params.add(it)
+            conditions.append(" AND event_time >= ?")
+            params.add(Timestamp(it))
         }
         request.timeTo?.let {
-            conditions.append(" AND event_time <= to_timestamp(? / 1000.0)")
-            params.add(it)
+            conditions.append(" AND event_time <= ?")
+            params.add(Timestamp(it))
         }
         request.speedMin?.let {
             conditions.append(" AND speed >= ?")
@@ -87,7 +88,7 @@ public class ShipQueryService(
             params.add(it)
         }
         request.boundingBox?.let { bb ->
-            conditions.append(" AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?")
+            conditions.append(" AND (lat BETWEEN ? AND ?) AND (lon BETWEEN ? AND ?)")
             params.addAll(listOf(bb.south, bb.north, bb.west, bb.east))
         }
         request.sourceId?.let {
@@ -106,8 +107,8 @@ public class ShipQueryService(
             SELECT mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id
             FROM storage.ship_positions
             WHERE mmsi = ?
-              AND event_time >= to_timestamp(? / 1000.0)
-              AND event_time <= to_timestamp(? / 1000.0)
+              AND event_time >= ?
+              AND event_time <= ?
             ORDER BY event_time DESC
             LIMIT ?
         """.trimIndent()
@@ -126,7 +127,7 @@ public class ShipQueryService(
             )
         }
 
-        return jdbcTemplate.query(sql, mapper, mmsi, from, to, limit)
+        return jdbcTemplate.query(sql, mapper, mmsi, Timestamp(from), Timestamp(to), limit)
     }
 
     private fun shipSearchResultMapper(): RowMapper<ShipSearchResult> =

@@ -3,10 +3,11 @@ package com.tracking.query.search
 import com.tracking.query.cache.LiveAircraftCacheReader
 import com.tracking.query.dto.AdvancedSearchRequest
 import com.tracking.query.dto.SearchResult
+import java.sql.ResultSet
+import java.sql.Timestamp
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Service
-import java.sql.ResultSet
 
 /**
  * Orchestrates live and historical aircraft search.
@@ -67,12 +68,12 @@ public class SearchService(
             params.add(it.uppercase())
         }
         request.timeFrom?.let {
-            conditions.append(" AND event_time >= to_timestamp(? / 1000.0)")
-            params.add(it)
+            conditions.append(" AND event_time >= ?")
+            params.add(Timestamp(it))
         }
         request.timeTo?.let {
-            conditions.append(" AND event_time <= to_timestamp(? / 1000.0)")
-            params.add(it)
+            conditions.append(" AND event_time <= ?")
+            params.add(Timestamp(it))
         }
         request.altitudeMin?.let {
             conditions.append(" AND altitude >= ?")
@@ -91,7 +92,7 @@ public class SearchService(
             params.add(it)
         }
         request.boundingBox?.let { bb ->
-            conditions.append(" AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?")
+            conditions.append(" AND (lat BETWEEN ? AND ?) AND (lon BETWEEN ? AND ?)")
             params.addAll(listOf(bb.south, bb.north, bb.west, bb.east))
         }
         request.sourceId?.let {
