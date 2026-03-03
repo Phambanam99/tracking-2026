@@ -246,8 +246,11 @@ export function PlaybackMapLayer(): JSX.Element | null {
   }, [map]);
 
   useEffect(() => {
-    layerRef.current?.setVisible(isBarVisible && status === "ready");
-    if (!isBarVisible || status !== "ready") {
+    // Keep layer visible during "loading" so features don't flash away.
+    // Only hide when bar is closed or status is idle/error.
+    const shouldShow = isBarVisible && (status === "ready" || status === "loading");
+    layerRef.current?.setVisible(shouldShow);
+    if (!isBarVisible || (status !== "ready" && status !== "loading")) {
       setHovered(null);
     }
   }, [isBarVisible, status]);
@@ -258,8 +261,14 @@ export function PlaybackMapLayer(): JSX.Element | null {
       return;
     }
 
-    if (!isBarVisible || status !== "ready" || !currentFrame) {
+    if (!isBarVisible || status === "idle" || status === "error") {
+      // Bar closed or no session — clear everything.
       source.clear();
+      return;
+    }
+
+    if (status === "loading" || !currentFrame) {
+      // Still loading — keep existing features visible, don't flash.
       return;
     }
 
