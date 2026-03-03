@@ -2,8 +2,12 @@ package com.tracking.query.ship
 
 import com.tracking.query.dto.BoundingBoxDto
 import com.tracking.query.dto.ShipSearchRequest
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import java.sql.Timestamp
-import kotlin.math.roundToLong
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,8 +15,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest
 import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.TestPropertySource
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 @JdbcTest
 @Import(ShipQueryService::class)
@@ -32,9 +34,6 @@ class ShipQueryServiceIntegrationTest {
 
     @BeforeEach
     fun setUp() {
-        jdbcTemplate.execute(
-            "CREATE ALIAS IF NOT EXISTS TO_TIMESTAMP FOR \"com.tracking.query.ship.ShipQueryServiceIntegrationTest.toTimestamp\"",
-        )
         jdbcTemplate.execute("CREATE SCHEMA IF NOT EXISTS storage")
         jdbcTemplate.execute(
             """
@@ -95,11 +94,44 @@ class ShipQueryServiceIntegrationTest {
 
         val results = shipQueryService.search("PACIFIC", 10)
 
-        assertEquals(1, results.size)
-        assertEquals("574001230", results[0].mmsi)
-        assertEquals(10.5, results[0].lat)
-        assertEquals("AIS-NEW", results[0].sourceId)
-        assertTrue(results[0].isMilitary)
+        results shouldHaveSize 1
+        results[0].mmsi shouldBe "574001230"
+        results[0].lat shouldBe 10.5
+        results[0].sourceId shouldBe "AIS-NEW"
+        results[0].isMilitary.shouldBeTrue()
+    }
+
+    @Test
+    fun `search respects limit across distinct mmsi rows`() {
+        insertShipPosition(
+            mmsi = "111111111",
+            lat = 10.0,
+            lon = 100.0,
+            eventTime = 1_700_000_000_000,
+            sourceId = "AIS-1",
+            vesselType = "cargo",
+        )
+        insertShipPosition(
+            mmsi = "222222222",
+            lat = 11.0,
+            lon = 101.0,
+            eventTime = 1_700_000_100_000,
+            sourceId = "AIS-2",
+            vesselType = "cargo",
+        )
+        insertShipPosition(
+            mmsi = "333333333",
+            lat = 12.0,
+            lon = 102.0,
+            eventTime = 1_700_000_200_000,
+            sourceId = "AIS-3",
+            vesselType = "cargo",
+        )
+
+        val results = shipQueryService.search("cargo", 2)
+
+        results shouldHaveSize 2
+        results.map { it.mmsi } shouldContainExactlyInAnyOrder listOf("111111111", "222222222")
     }
 
     @Test
@@ -164,10 +196,108 @@ class ShipQueryServiceIntegrationTest {
 
         val results = shipQueryService.searchHistory(request)
 
-        assertEquals(2, results.size)
-        assertEquals(1_700_000_300_000, results[0].eventTime)
-        assertEquals(1_700_000_000_000, results[1].eventTime)
-        assertTrue(results.all { it.sourceId == "AIS-E2E" })
+        results shouldHaveSize 2
+        results[0].eventTime shouldBe 1_700_000_300_000
+        results[1].eventTime shouldBe 1_700_000_000_000
+        results.all { it.sourceId == "AIS-E2E" }.shouldBeTrue()
+    }
+
+    @Test
+    fun `searchHistory applies speed range source filter and military metadata mapping`() {
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.0,
+            lon = 105.0,
+            speed = 8.0,
+            eventTime = 1_700_000_000_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+            metadata = """{"is_military":false}""",
+        )
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.1,
+            lon = 105.1,
+            speed = 12.5,
+            eventTime = 1_700_000_100_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+            metadata = """{"is_military":true}""",
+        )
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.2,
+            lon = 105.2,
+            speed = 18.0,
+            eventTime = 1_700_000_200_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+            metadata = """{"is_military":false}""",
+        )
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.3,
+            lon = 105.3,
+            speed = 13.0,
+            eventTime = 1_700_000_300_000,
+            sourceId = "AIS-OTHER",
+            vesselName = "PACIFIC TRADER",
+            metadata = """{"is_military":true}""",
+        )
+
+        val results = shipQueryService.searchHistory(
+            ShipSearchRequest(
+                mmsi = "574001230",
+                speedMin = 10.0,
+                speedMax = 15.0,
+                sourceId = "AIS-E2E",
+                limit = 10,
+            ),
+        )
+
+        results shouldHaveSize 1
+        results[0].speed shouldBe 12.5
+        results[0].sourceId shouldBe "AIS-E2E"
+        results[0].isMilitary.shouldBeTrue()
+    }
+
+    @Test
+    fun `searchHistory applies limit after filtering`() {
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.0,
+            lon = 105.0,
+            eventTime = 1_700_000_000_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+        )
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.1,
+            lon = 105.1,
+            eventTime = 1_700_000_100_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+        )
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 20.2,
+            lon = 105.2,
+            eventTime = 1_700_000_200_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+        )
+
+        val results = shipQueryService.searchHistory(
+            ShipSearchRequest(
+                mmsi = "574001230",
+                sourceId = "AIS-E2E",
+                limit = 2,
+            ),
+        )
+
+        results shouldHaveSize 2
+        results.map { it.eventTime } shouldBe listOf(1_700_000_200_000, 1_700_000_100_000)
     }
 
     @Test
@@ -208,9 +338,27 @@ class ShipQueryServiceIntegrationTest {
             10,
         )
 
-        assertEquals(2, results.size)
-        assertEquals(listOf(1_700_000_400_000, 1_700_000_200_000), results.map { it.eventTime })
-        assertTrue(results.all { it.mmsi == "574001230" })
+        results shouldHaveSize 2
+        results.map { it.eventTime } shouldBe listOf(1_700_000_400_000, 1_700_000_200_000)
+        results.all { it.mmsi == "574001230" }.shouldBeTrue()
+    }
+
+    @Test
+    fun `search maps military metadata only when flag is true`() {
+        insertShipPosition(
+            mmsi = "574001230",
+            lat = 10.0,
+            lon = 106.0,
+            eventTime = 1_700_000_000_000,
+            sourceId = "AIS-E2E",
+            vesselName = "PACIFIC TRADER",
+            metadata = """{"is_military":false}""",
+        )
+
+        val results = shipQueryService.search("PACIFIC", 10)
+
+        results shouldHaveSize 1
+        results[0].isMilitary.shouldBeFalse()
     }
 
     private fun insertShipPosition(
@@ -253,15 +401,5 @@ class ShipQueryServiceIntegrationTest {
             destination,
             metadata,
         )
-    }
-
-    companion object {
-        @JvmStatic
-        fun toTimestamp(epochSeconds: Double?): Timestamp? {
-            if (epochSeconds == null) {
-                return null
-            }
-            return Timestamp(epochSeconds.times(1000.0).roundToLong())
-        }
     }
 }
