@@ -16,6 +16,7 @@ public data class StorageFailedRecord(
     val sourceTopic: String,
     val payload: String,
     val icao: String? = null,
+    val recordKey: String? = icao,
     val traceContext: StorageTraceContext = StorageTraceContext(),
     val errorMessage: String? = null,
     val occurredAt: Instant = Instant.now(),

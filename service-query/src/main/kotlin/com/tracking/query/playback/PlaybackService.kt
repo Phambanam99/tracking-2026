@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.sql.ResultSet
 import java.util.Base64
-import kotlin.math.max
 
 @Service
 public class PlaybackService(
@@ -20,24 +19,24 @@ public class PlaybackService(
         val startedAtMs = System.currentTimeMillis()
         val decodedCursor = decodeCursor(request.cursor)
         val bucketSizeMs = resolveBucketSizeMs(request)
-        val stalenessMs = request.stalenessMs ?: max(bucketSizeMs * 3, MIN_STALENESS_MS)
         val effectiveMaxFrames = request.maxFrames.coerceIn(1, MAX_FRAMES_LIMIT)
         val effectiveTimeFrom = decodedCursor?.nextTimeMs ?: request.timeFrom
+        // Cap scan window to exactly the time we need to fill maxFrames buckets.
+        // Without this, a 5-day range with 1-minute buckets forces scanning 7200 buckets
+        // even though the caller only wants 200 — causing multi-second (or timeout) queries.
+        val effectiveTimeTo = minOf(request.timeTo, effectiveTimeFrom + bucketSizeMs * effectiveMaxFrames)
 
         val rows = jdbcTemplate.query(
             PLAYBACK_SQL,
             rowMapper,
-            effectiveTimeFrom,
-            request.timeTo,
-            bucketSizeMs,
-            effectiveMaxFrames,
-            stalenessMs,
-            request.boundingBox.south,
-            request.boundingBox.north,
-            request.boundingBox.west,
-            request.boundingBox.east,
-            decodedCursor?.nextTimeMs,
-            decodedCursor?.offset,
+            bucketSizeMs,                     // 1  time_bucket interval
+            effectiveTimeFrom,                // 2  WHERE event_time >= ?
+            effectiveTimeTo,                  // 3  WHERE event_time <= ?
+            request.boundingBox.south,        // 4  lat BETWEEN south
+            request.boundingBox.north,        // 5             AND north
+            request.boundingBox.west,         // 6  lon BETWEEN west
+            request.boundingBox.east,         // 7             AND east
+            effectiveMaxFrames,               // 8  frame_rank <= maxFrames
         )
 
         val frames = frameAssembler.assemble(rows)
@@ -50,6 +49,10 @@ public class PlaybackService(
             } else {
                 null
             }
+        } else if (effectiveTimeTo < request.timeTo) {
+            // Scan window was capped but there is more data beyond effectiveTimeTo.
+            // Signal to the client that it should page forward.
+            encodeCursor(effectiveTimeTo, 0)
         } else {
             null
         }
@@ -132,7 +135,6 @@ public class PlaybackService(
         private const val MAX_FRAMES_LIMIT = 500
         private const val MIN_BUCKET_MS = 1_000L
         private const val MAX_BUCKET_MS = 300_000L
-        private const val MIN_STALENESS_MS = 60_000L
 
         private const val ONE_HOUR_MS = 60 * 60 * 1000L
         private const val SIX_HOURS_MS = 6 * ONE_HOUR_MS
@@ -140,61 +142,57 @@ public class PlaybackService(
         private const val SEVEN_DAYS_MS = 7 * ONE_DAY_MS
 
         private val PLAYBACK_SQL = """
-            WITH buckets AS (
-                SELECT bucket_time, row_number() OVER (ORDER BY bucket_time) - 1 AS bucket_row
-                FROM generate_series(
-                    to_timestamp(? / 1000.0),
-                    to_timestamp(? / 1000.0),
-                    make_interval(secs => ? / 1000.0)
-                ) AS bucket_time
-                LIMIT ?
-            ),
-            paged_buckets AS (
-                SELECT bucket_time
-                FROM buckets
-                WHERE (? IS NULL OR bucket_time >= to_timestamp(? / 1000.0))
-                  AND (? IS NULL OR bucket_row >= ?)
-            ),
-            ranked AS (
+            WITH candidates AS (
                 SELECT
-                    EXTRACT(EPOCH FROM b.bucket_time) * 1000 AS bucket_time_ms,
+                    time_bucket(make_interval(secs => ? / 1000.0), fp.event_time) AS bucket_time,
+                    fp.event_time,
                     fp.icao,
                     fp.lat,
                     fp.lon,
                     fp.altitude,
                     fp.speed,
                     fp.heading,
-                    EXTRACT(EPOCH FROM fp.event_time) * 1000 AS event_time_ms,
                     fp.source_id,
-                    fp.metadata->>'registration' AS registration,
-                    fp.metadata->>'aircraft_type' AS aircraft_type,
-                    fp.metadata->>'operator' AS operator,
-                    ROW_NUMBER() OVER (
-                        PARTITION BY b.bucket_time, fp.icao
-                        ORDER BY fp.event_time DESC
-                    ) AS rn
-                FROM paged_buckets b
-                JOIN storage.flight_positions fp
-                  ON fp.event_time BETWEEN b.bucket_time - make_interval(secs => ? / 1000.0)
-                                       AND b.bucket_time
-                 AND fp.lat BETWEEN ? AND ?
-                 AND fp.lon BETWEEN ? AND ?
+                    fp.metadata
+                FROM storage.flight_positions fp
+                WHERE fp.event_time BETWEEN to_timestamp(? / 1000.0) AND to_timestamp(? / 1000.0)
+                  AND fp.lat BETWEEN ? AND ?
+                  AND fp.lon BETWEEN ? AND ?
+            ),
+            ranked AS (
+                SELECT
+                    EXTRACT(EPOCH FROM bucket_time) * 1000          AS bucket_time_ms,
+                    icao,
+                    lat,
+                    lon,
+                    altitude,
+                    speed,
+                    heading,
+                    EXTRACT(EPOCH FROM event_time) * 1000           AS event_time_ms,
+                    source_id,
+                    metadata->>'registration'                        AS registration,
+                    metadata->>'aircraft_type'                       AS aircraft_type,
+                    metadata->>'operator'                            AS operator,
+                    ROW_NUMBER()  OVER (PARTITION BY bucket_time, icao ORDER BY event_time DESC) AS rn,
+                    DENSE_RANK()  OVER (ORDER BY bucket_time)                                    AS frame_rank
+                FROM candidates
             )
             SELECT
-                bucket_time_ms::bigint AS bucket_time_ms,
+                bucket_time_ms::bigint  AS bucket_time_ms,
                 icao,
                 lat,
                 lon,
                 altitude,
                 speed,
                 heading,
-                event_time_ms::bigint AS event_time_ms,
+                event_time_ms::bigint   AS event_time_ms,
                 source_id,
                 registration,
                 aircraft_type,
                 operator
             FROM ranked
             WHERE rn = 1
+              AND frame_rank <= ?
             ORDER BY bucket_time_ms, icao
         """.trimIndent()
     }

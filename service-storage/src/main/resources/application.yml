@@ -52,12 +52,19 @@ management:
         tracking.storage.batch.latency: 50ms,100ms,250ms,500ms,1s,2s
 
 tracking:
+  features:
+    ship:
+      enabled: ${TRACKING_FEATURES_SHIP_ENABLED:false}
   kafka:
     topics:
       live: live-adsb
       historical: historical-adsb
+      liveAis: ${TRACKING_KAFKA_TOPICS_LIVE_AIS:live-ais}
+      historicalAis: ${TRACKING_KAFKA_TOPICS_HISTORICAL_AIS:historical-ais}
       storageDlq: storage-dlq
   storage:
+    ship:
+      consumer-enabled: ${TRACKING_STORAGE_SHIP_CONSUMER_ENABLED:false}
     consumer:
       group-id: service-storage-v1
       concurrency: 4

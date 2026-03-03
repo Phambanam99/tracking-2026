@@ -1,3 +1,4 @@
+import type { TrackingMode } from "../features/map/store/useTrackingModeStore";
 import { useI18n } from "../shared/i18n/I18nProvider";
 
 type BottomTabBarProps = {
@@ -5,10 +6,14 @@ type BottomTabBarProps = {
   isWatchlistEnabled: boolean;
   isPlaybackOpen: boolean;
   isLayerPanelOpen: boolean;
+  trackingMode: TrackingMode;
+  isShipTrackingEnabled: boolean;
+  showAircraftControls: boolean;
   onToggleSearch: () => void;
   onToggleWatchlist: () => void;
   onTogglePlayback: () => void;
   onToggleLayerPanel: () => void;
+  onTrackingModeChange: (mode: TrackingMode) => void;
 };
 
 export function BottomTabBar({
@@ -16,49 +21,84 @@ export function BottomTabBar({
   isWatchlistEnabled,
   isPlaybackOpen,
   isLayerPanelOpen,
+  trackingMode,
+  isShipTrackingEnabled,
+  showAircraftControls,
   onToggleSearch,
   onToggleWatchlist,
   onTogglePlayback,
   onToggleLayerPanel,
+  onTrackingModeChange,
 }: BottomTabBarProps): JSX.Element {
   const { t } = useI18n();
 
   return (
     <div className="pointer-events-none absolute bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2 md:hidden">
-      <div className="glass-panel-strong pointer-events-auto grid grid-cols-4 gap-2 rounded-[24px] p-2 shadow-2xl">
-        <TabButton
-          active={activePanel === "search"}
-          ariaLabel={t("toolbar.toggleSearch")}
-          label={t("toolbar.search")}
-          onClick={onToggleSearch}
-        >
-          <SearchIcon />
-        </TabButton>
-        <TabButton
-          active={activePanel === "watchlist"}
-          ariaLabel={t("toolbar.toggleWatchlist")}
-          disabled={!isWatchlistEnabled}
-          label={t("toolbar.watchlist")}
-          onClick={onToggleWatchlist}
-        >
-          <WatchIcon />
-        </TabButton>
-        <TabButton
-          active={isPlaybackOpen}
-          ariaLabel={t("toolbar.togglePlayback")}
-          label={t("toolbar.playback")}
-          onClick={onTogglePlayback}
-        >
-          <PlaybackIcon />
-        </TabButton>
-        <TabButton
-          active={isLayerPanelOpen}
-          ariaLabel={t("toolbar.toggleLayers")}
-          label={t("toolbar.layers")}
-          onClick={onToggleLayerPanel}
-        >
-          <LayerIcon />
-        </TabButton>
+      <div className="glass-panel-strong pointer-events-auto space-y-2 rounded-[24px] p-2 shadow-2xl">
+        {isShipTrackingEnabled ? (
+          <div className="grid grid-cols-2 gap-2">
+            <ModeButton
+              active={trackingMode === "aircraft"}
+              ariaLabel={t("toolbar.modeAircraft")}
+              label={t("toolbar.modeAircraft")}
+              onClick={() => onTrackingModeChange("aircraft")}
+            />
+            <ModeButton
+              active={trackingMode === "ship"}
+              ariaLabel={t("toolbar.modeShip")}
+              label={t("toolbar.modeShip")}
+              onClick={() => onTrackingModeChange("ship")}
+            />
+          </div>
+        ) : null}
+        {showAircraftControls ? (
+          <div className="grid grid-cols-4 gap-2">
+            <TabButton
+              active={activePanel === "search"}
+              ariaLabel={t("toolbar.toggleSearch")}
+              label={t("toolbar.search")}
+              onClick={onToggleSearch}
+            >
+              <SearchIcon />
+            </TabButton>
+            <TabButton
+              active={activePanel === "watchlist"}
+              ariaLabel={t("toolbar.toggleWatchlist")}
+              disabled={!isWatchlistEnabled}
+              label={t("toolbar.watchlist")}
+              onClick={onToggleWatchlist}
+            >
+              <WatchIcon />
+            </TabButton>
+            <TabButton
+              active={isPlaybackOpen}
+              ariaLabel={t("toolbar.togglePlayback")}
+              label={t("toolbar.playback")}
+              onClick={onTogglePlayback}
+            >
+              <PlaybackIcon />
+            </TabButton>
+            <TabButton
+              active={isLayerPanelOpen}
+              ariaLabel={t("toolbar.toggleLayers")}
+              label={t("toolbar.layers")}
+              onClick={onToggleLayerPanel}
+            >
+              <LayerIcon />
+            </TabButton>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-2">
+            <TabButton
+              active={activePanel === "search"}
+              ariaLabel={t("toolbar.toggleSearch")}
+              label={t("toolbar.search")}
+              onClick={onToggleSearch}
+            >
+              <SearchIcon />
+            </TabButton>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -89,6 +129,31 @@ function TabButton({ active, ariaLabel, label, disabled = false, onClick, childr
     >
       <span className="h-5 w-5">{children}</span>
       <span>{label}</span>
+    </button>
+  );
+}
+
+type ModeButtonProps = {
+  active: boolean;
+  ariaLabel: string;
+  label: string;
+  onClick: () => void;
+};
+
+function ModeButton({ active, ariaLabel, label, onClick }: ModeButtonProps): JSX.Element {
+  return (
+    <button
+      aria-label={ariaLabel}
+      aria-pressed={active}
+      className={`min-h-11 rounded-[18px] px-3 py-2 text-xs font-medium transition ${
+        active
+          ? "bg-cyan-300 text-slate-950"
+          : "border border-slate-700 text-slate-200 hover:bg-slate-900/90"
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
     </button>
   );
 }

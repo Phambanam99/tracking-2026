@@ -9,6 +9,9 @@ TOPICS=(
   "raw-adsb"
   "live-adsb"
   "historical-adsb"
+  "raw-ais"
+  "live-ais"
+  "historical-ais"
   "invalid-telemetry-dlq"
   "auth-revocation"
 )

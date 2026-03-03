@@ -128,6 +128,9 @@ ingestion:
   env:
     SPRING_PROFILES_ACTIVE: k8s
     SERVER_PORT: "8082"
+    TRACKING_FEATURES_SHIP_ENABLED: "false"
+    TRACKING_KAFKA_TOPICS_RAW_AIS: "raw-ais"
+    TRACKING_INGESTION_SHIP_INGEST_PATH: "/api/v1/ingest/ais/**"
   resources:
     requests:
       cpu: 500m
@@ -158,6 +161,9 @@ broadcaster:
   env:
     SPRING_PROFILES_ACTIVE: k8s
     SERVER_PORT: "8083"
+    TRACKING_FEATURES_SHIP_ENABLED: "false"
+    TRACKING_BROADCASTER_SHIP_CONSUMER_ENABLED: "false"
+    TRACKING_KAFKA_TOPICS_LIVE_AIS: "live-ais"
   resources:
     requests:
       cpu: 300m
@@ -188,6 +194,13 @@ processing:
   env:
     SPRING_PROFILES_ACTIVE: k8s
     SERVER_PORT: "8085"
+    TRACKING_FEATURES_SHIP_ENABLED: "false"
+    TRACKING_PROCESSING_SHIP_CONSUMER_ENABLED: "false"
+    TRACKING_PROCESSING_SHIP_STRICT_KEY_MATCH: "true"
+    TRACKING_PROCESSING_SHIP_MAX_SPEED_KMH: "120.0"
+    TRACKING_KAFKA_TOPICS_RAW_AIS: "raw-ais"
+    TRACKING_KAFKA_TOPICS_LIVE_AIS: "live-ais"
+    TRACKING_KAFKA_TOPICS_HISTORICAL_AIS: "historical-ais"
   resources:
     requests:
       cpu: 500m
@@ -218,6 +231,10 @@ storage:
   env:
     SPRING_PROFILES_ACTIVE: k8s
     SERVER_PORT: "8084"
+    TRACKING_FEATURES_SHIP_ENABLED: "false"
+    TRACKING_STORAGE_SHIP_CONSUMER_ENABLED: "false"
+    TRACKING_KAFKA_TOPICS_LIVE_AIS: "live-ais"
+    TRACKING_KAFKA_TOPICS_HISTORICAL_AIS: "historical-ais"
   resources:
     requests:
       cpu: 500m

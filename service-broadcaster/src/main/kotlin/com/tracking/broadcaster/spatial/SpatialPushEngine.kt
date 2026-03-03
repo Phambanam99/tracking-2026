@@ -1,6 +1,7 @@
 package com.tracking.broadcaster.spatial
 
 import com.tracking.broadcaster.viewport.ViewportRegistry
+import com.tracking.broadcaster.viewport.TrackingMode
 import com.tracking.broadcaster.ws.SessionFlightPusher
 import com.tracking.common.dto.EnrichedFlight
 import org.springframework.stereotype.Component
@@ -13,7 +14,7 @@ public class SpatialPushEngine(
 ) {
     public fun pushToMatchingSessions(flight: EnrichedFlight): Int {
         var pushedCount = 0
-        val matchingSessions = viewportRegistry.sessionsContaining(flight.lat, flight.lon)
+        val matchingSessions = viewportRegistry.sessionsContaining(flight.lat, flight.lon, TrackingMode.AIRCRAFT)
         matchingSessions.forEach { session ->
             if (boundingBoxMatcher.contains(session.viewport, flight) && sessionFlightPusher.push(session, flight)) {
                 pushedCount += 1

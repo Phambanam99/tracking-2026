@@ -9,6 +9,10 @@ public class ViewportRegistry(
     private val sessions: MutableMap<String, SessionViewportState> = ConcurrentHashMap()
 
     public fun register(sessionId: String, principalName: String, viewport: BoundingBox): Unit {
+        register(sessionId, principalName, viewport, TrackingMode.AIRCRAFT)
+    }
+
+    public fun register(sessionId: String, principalName: String, viewport: BoundingBox, trackingMode: TrackingMode): Unit {
         val normalizedSessionId = sessionId.trim()
         val normalizedPrincipalName = principalName.trim()
         if (normalizedSessionId.isEmpty()) {
@@ -18,6 +22,7 @@ public class ViewportRegistry(
         sessions[normalizedSessionId] = SessionViewportState(
             principalName = normalizedPrincipalName.ifBlank { normalizedSessionId },
             viewport = viewport,
+            trackingMode = trackingMode,
             lastActivityEpochMillis = nowProvider(),
         )
     }
@@ -38,9 +43,14 @@ public class ViewportRegistry(
     }
 
     public fun sessionsContaining(lat: Double, lon: Double): List<ViewportSession> {
+        return sessionsContaining(lat, lon, null)
+    }
+
+    public fun sessionsContaining(lat: Double, lon: Double, trackingMode: TrackingMode?): List<ViewportSession> {
         return sessions.entries
             .asSequence()
             .filter { (_, state) -> state.viewport.contains(lat, lon) }
+            .filter { (_, state) -> trackingMode == null || state.trackingMode == trackingMode }
             .map { (sessionId, state) -> state.toSession(sessionId) }
             .toList()
     }
@@ -67,12 +77,14 @@ public class ViewportRegistry(
     private data class SessionViewportState(
         val principalName: String,
         val viewport: BoundingBox,
+        val trackingMode: TrackingMode,
         val lastActivityEpochMillis: Long,
     ) {
         fun toSession(sessionId: String): ViewportSession = ViewportSession(
             sessionId = sessionId,
             principalName = principalName,
             viewport = viewport,
+            trackingMode = trackingMode,
             lastActivityEpochMillis = lastActivityEpochMillis,
         )
     }
@@ -82,5 +94,6 @@ public data class ViewportSession(
     val sessionId: String,
     val principalName: String,
     val viewport: BoundingBox,
+    val trackingMode: TrackingMode,
     val lastActivityEpochMillis: Long,
 )

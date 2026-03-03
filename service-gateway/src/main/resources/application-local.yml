@@ -15,3 +15,4 @@ GATEWAY_ROUTE_AUTH_URI: http://localhost:8081
 GATEWAY_ROUTE_AUTH_LOGIN_URI: http://localhost:8081
 GATEWAY_ROUTE_INGEST_URI: http://localhost:8082
 GATEWAY_ROUTE_WS_URI: ws://localhost:8083
+GATEWAY_ROUTE_QUERY_URI: http://localhost:8085

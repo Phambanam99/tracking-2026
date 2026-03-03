@@ -121,6 +121,8 @@ public class StorageConsumerWorkerTest {
             return records.size
         }
 
+        override fun writeShipBatch(records: List<com.tracking.storage.model.PersistableShip>): Int = records.size
+
         override fun writeQuarantine(records: List<StorageFailedRecord>): Int {
             quarantineBatches.add(records)
             return records.size

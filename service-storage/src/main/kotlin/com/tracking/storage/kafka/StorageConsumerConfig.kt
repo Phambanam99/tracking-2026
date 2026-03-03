@@ -1,8 +1,10 @@
 package com.tracking.storage.kafka
 
 import com.tracking.storage.buffer.FlightBuffer
+import com.tracking.storage.buffer.ShipBuffer
 import com.tracking.storage.retry.StorageRetryPolicy
 import com.tracking.storage.worker.BatchPersistWorker
+import com.tracking.storage.worker.ShipBatchPersistWorker
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -24,6 +26,12 @@ public class StorageConsumerConfig {
         @Value("\${tracking.storage.buffer.max-capacity:100000}")
         maxCapacity: Int,
     ): FlightBuffer = FlightBuffer(maxCapacity = maxCapacity)
+
+    @Bean
+    public fun shipBuffer(
+        @Value("\${tracking.storage.buffer.max-capacity:100000}")
+        maxCapacity: Int,
+    ): ShipBuffer = ShipBuffer(maxCapacity = maxCapacity)
 
     @Bean
     public fun storageRetryPolicy(
@@ -84,6 +92,38 @@ public class StorageConsumerConfig {
                 partitions: MutableCollection<TopicPartition>,
             ) {
                 batchPersistWorker.flushOnPartitionsRevoked()
+            }
+        })
+
+        return factory
+    }
+
+    @Bean
+    public fun shipStorageKafkaListenerContainerFactory(
+        storageConsumerFactory: ConsumerFactory<String, String>,
+        shipBatchPersistWorker: ShipBatchPersistWorker,
+        @Value("\${tracking.storage.consumer.poll-timeout-millis:5000}")
+        pollTimeoutMillis: Long,
+        @Value("\${tracking.storage.consumer.retry.backoff-millis:1000}")
+        retryBackoffMillis: Long,
+        @Value("\${tracking.storage.consumer.retry.max-attempts:3}")
+        retryMaxAttempts: Long,
+    ): ConcurrentKafkaListenerContainerFactory<String, String> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
+        factory.consumerFactory = storageConsumerFactory
+        factory.setBatchListener(true)
+        factory.containerProperties.ackMode = ContainerProperties.AckMode.MANUAL_IMMEDIATE
+        factory.containerProperties.pollTimeout = pollTimeoutMillis
+
+        val attempts = (retryMaxAttempts - 1).coerceAtLeast(0)
+        factory.setCommonErrorHandler(DefaultErrorHandler(FixedBackOff(retryBackoffMillis, attempts)))
+
+        factory.containerProperties.setConsumerRebalanceListener(object : ConsumerAwareRebalanceListener {
+            override fun onPartitionsRevokedBeforeCommit(
+                consumer: org.apache.kafka.clients.consumer.Consumer<*, *>,
+                partitions: MutableCollection<TopicPartition>,
+            ) {
+                shipBatchPersistWorker.flushOnPartitionsRevoked()
             }
         })
 

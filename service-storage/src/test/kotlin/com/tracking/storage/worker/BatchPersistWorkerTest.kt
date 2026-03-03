@@ -6,6 +6,7 @@ import com.tracking.storage.db.StorageBatchWriter
 import com.tracking.storage.kafka.StorageDlqProducer
 import com.tracking.storage.metrics.StorageMetrics
 import com.tracking.storage.model.PersistableFlight
+import com.tracking.storage.model.PersistableShip
 import com.tracking.storage.model.StorageFailedRecord
 import com.tracking.storage.retry.StorageRetryPolicy
 import com.tracking.storage.tracing.StorageTraceContext
@@ -102,6 +103,8 @@ public class BatchPersistWorkerTest {
             }
             return records.size
         }
+
+        override fun writeShipBatch(records: List<PersistableShip>): Int = records.size
 
         override fun writeQuarantine(records: List<StorageFailedRecord>): Int {
             quarantineBatches.add(records)

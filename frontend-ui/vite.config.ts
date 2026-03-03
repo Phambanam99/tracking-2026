@@ -1,6 +1,9 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+const gatewayHttpTarget = process.env.VITE_DEV_GATEWAY_HTTP_TARGET ?? "http://localhost:18080";
+const gatewayWsTarget = process.env.VITE_DEV_GATEWAY_WS_TARGET ?? "ws://localhost:18080";
+
 export default defineConfig({
   plugins: [react()],
   build: {
@@ -32,11 +35,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:18080",
+        target: gatewayHttpTarget,
         changeOrigin: true,
       },
       "/ws": {
-        target: "ws://localhost:18080",
+        target: gatewayWsTarget,
         ws: true,
         changeOrigin: true,
       },

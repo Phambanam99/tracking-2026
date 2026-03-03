@@ -3,6 +3,7 @@ package com.tracking.ingestion.failure
 import com.tracking.ingestion.any
 import com.tracking.ingestion.api.ProducerUnavailableException
 import com.tracking.ingestion.kafka.RawAdsbProducer
+import com.tracking.ingestion.kafka.RawAisProducer
 import com.tracking.ingestion.tracing.TraceContext
 import com.tracking.ingestion.tracing.TraceContextExtractor
 import org.junit.jupiter.api.Test
@@ -29,6 +30,9 @@ public class ProducerTimeoutIT {
 
     @MockBean
     private lateinit var rawAdsbProducer: RawAdsbProducer
+
+    @MockBean
+    private lateinit var rawAisProducer: RawAisProducer
 
     @MockBean
     private lateinit var traceContextExtractor: TraceContextExtractor

@@ -37,11 +37,17 @@ management:
         ws.push.latency: 5ms,10ms,25ms,50ms,100ms,250ms
 
 tracking:
+  features:
+    ship:
+      enabled: ${TRACKING_FEATURES_SHIP_ENABLED:false}
   kafka:
     topics:
       live: live-adsb
+      liveAis: ${TRACKING_KAFKA_TOPICS_LIVE_AIS:live-ais}
       authRevocation: auth-revocation
   broadcaster:
+    ship:
+      consumer-enabled: ${TRACKING_BROADCASTER_SHIP_CONSUMER_ENABLED:false}
     ws:
       allowed-origin-patterns:
         - ${BROADCASTER_ALLOWED_ORIGIN:http://localhost:5173}

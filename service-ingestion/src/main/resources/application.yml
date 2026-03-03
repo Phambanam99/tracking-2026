@@ -53,14 +53,19 @@ management:
         http.server.requests: 50ms,100ms,250ms,500ms,1s,2s
 
 tracking:
+  features:
+    ship:
+      enabled: ${TRACKING_FEATURES_SHIP_ENABLED:false}
   kafka:
     topics:
       raw: raw-adsb
+      rawAis: ${TRACKING_KAFKA_TOPICS_RAW_AIS:raw-ais}
       authRevocation: auth-revocation
     consumer:
       auth-revocation-group: ${spring.application.name}-${random.uuid}
   ingestion:
     ingest-path: /api/v1/ingest/**
+    ship-ingest-path: ${TRACKING_INGESTION_SHIP_INGEST_PATH:/api/v1/ingest/ais/**}
     batch:
       max-records: 1000
     admission:

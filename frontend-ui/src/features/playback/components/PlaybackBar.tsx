@@ -10,6 +10,7 @@ import { PlaybackZoomSlider } from "./PlaybackZoomSlider";
 import { usePlaybackLoop } from "../hooks/usePlaybackLoop";
 import { usePlaybackDataLoader } from "../hooks/usePlaybackDataLoader";
 import {
+  getPlaybackFrameAtIndex,
   getCurrentPlaybackFrame,
   getPlaybackAircraftByIcao,
   usePlaybackStore,
@@ -52,6 +53,7 @@ export function PlaybackBar(): JSX.Element | null {
     hideBar,
     openDialog,
     setCurrentFrameIndex,
+    requestSeekReload,
     setSpeedMultiplier,
     setTimelineZoomLevel,
     play,
@@ -75,6 +77,7 @@ export function PlaybackBar(): JSX.Element | null {
       hideBar: state.hideBar,
       openDialog: state.openDialog,
       setCurrentFrameIndex: state.setCurrentFrameIndex,
+      requestSeekReload: state.requestSeekReload,
       setSpeedMultiplier: state.setSpeedMultiplier,
       setTimelineZoomLevel: state.setTimelineZoomLevel,
       play: state.play,
@@ -86,7 +89,17 @@ export function PlaybackBar(): JSX.Element | null {
     })),
   );
   const currentFrame = usePlaybackStore(getCurrentPlaybackFrame);
+  const frames = usePlaybackStore((state) => state.frames);
   const selectedPlaybackAircraft = usePlaybackStore((state) => getPlaybackAircraftByIcao(state, selectedIcao));
+
+  function handleSeekFrameIndex(index: number): void {
+    const clampedIndex = Math.max(0, Math.min(index, Math.max(frameCount - 1, 0)));
+    setCurrentFrameIndex(clampedIndex);
+    const targetFrame = getPlaybackFrameAtIndex(frames, clampedIndex);
+    if (targetFrame) {
+      requestSeekReload(targetFrame.timestamp);
+    }
+  }
 
   usePlaybackLoop();
   usePlaybackDataLoader();
@@ -140,7 +153,7 @@ export function PlaybackBar(): JSX.Element | null {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         if (event.shiftKey) {
-          setCurrentFrameIndex(Math.max(currentFrameIndex - skipFrames, 0));
+          handleSeekFrameIndex(Math.max(currentFrameIndex - skipFrames, 0));
         } else {
           stepBackward();
         }
@@ -150,7 +163,7 @@ export function PlaybackBar(): JSX.Element | null {
       if (event.key === "ArrowRight") {
         event.preventDefault();
         if (event.shiftKey) {
-          setCurrentFrameIndex(Math.min(currentFrameIndex + skipFrames, Math.max(frameCount - 1, 0)));
+          handleSeekFrameIndex(Math.min(currentFrameIndex + skipFrames, Math.max(frameCount - 1, 0)));
         } else {
           stepForward();
         }
@@ -159,13 +172,13 @@ export function PlaybackBar(): JSX.Element | null {
 
       if (event.key === "Home") {
         event.preventDefault();
-        jumpToStart();
+        handleSeekFrameIndex(0);
         return;
       }
 
       if (event.key === "End") {
         event.preventDefault();
-        jumpToEnd();
+        handleSeekFrameIndex(Math.max(frameCount - 1, 0));
         return;
       }
 
@@ -215,6 +228,7 @@ export function PlaybackBar(): JSX.Element | null {
     jumpToStart,
     pause,
     play,
+    requestSeekReload,
     setCurrentFrameIndex,
     setSpeedMultiplier,
     setTimelineZoomLevel,
@@ -223,6 +237,7 @@ export function PlaybackBar(): JSX.Element | null {
     stepBackward,
     stepForward,
     timelineZoomLevel,
+    frames,
   ]);
 
   function handleClose(): void {
@@ -279,7 +294,7 @@ export function PlaybackBar(): JSX.Element | null {
           currentFrameIndex={currentFrameIndex}
           currentTimeMs={currentFrame?.timestamp ?? toMs(timeFrom)}
           frameCount={frameCount}
-          onFrameIndexChange={setCurrentFrameIndex}
+          onFrameIndexChange={handleSeekFrameIndex}
           timeFromMs={toMs(timeFrom)}
           timeToMs={toMs(timeTo)}
           zoomLevel={timelineZoomLevel}

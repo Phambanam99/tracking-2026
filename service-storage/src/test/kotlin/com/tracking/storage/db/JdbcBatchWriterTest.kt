@@ -2,8 +2,10 @@ package com.tracking.storage.db
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tracking.common.dto.EnrichedFlight
+import com.tracking.common.dto.EnrichedShip
 import com.tracking.storage.any
 import com.tracking.storage.model.PersistableFlight
+import com.tracking.storage.model.PersistableShip
 import com.tracking.storage.model.StorageFailedRecord
 import com.tracking.storage.tracing.StorageTraceContext
 import java.time.Instant
@@ -66,6 +68,27 @@ public class JdbcBatchWriterTest {
         assertTrue(sql.contains("?::JSONB"))
     }
 
+    @Test
+    public fun `should use upsert sql when writing ship batch`() {
+        @Suppress("UNCHECKED_CAST")
+        val jdbcTemplate = mock(JdbcTemplate::class.java) as JdbcTemplate
+        given(jdbcTemplate.batchUpdate(any<String>(), any<BatchPreparedStatementSetter>()))
+            .willReturn(intArrayOf(1))
+        val writer = JdbcBatchWriter(jdbcTemplate, ObjectMapper())
+
+        writer.writeShipBatch(
+            listOf(
+                persistableShip("574001230", 1_700_000_000_000),
+            ),
+        )
+
+        val sqlCaptor = ArgumentCaptor.forClass(String::class.java)
+        verify(jdbcTemplate).batchUpdate(sqlCaptor.capture(), any<BatchPreparedStatementSetter>())
+        val sql = sqlCaptor.value.uppercase()
+        assertTrue(sql.contains("SHIP_POSITIONS"))
+        assertTrue(sql.contains("ON CONFLICT (MMSI, EVENT_TIME, LAT, LON) DO NOTHING"))
+    }
+
     private fun persistableFlight(icao: String, eventTime: Long): PersistableFlight {
         return PersistableFlight(
             flight = EnrichedFlight(
@@ -80,6 +103,27 @@ public class JdbcBatchWriterTest {
             rawPayload = """{"icao":"$icao"}""",
             traceContext = StorageTraceContext(
                 requestId = "req-$icao",
+                traceparent = "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01",
+            ),
+        )
+    }
+
+    private fun persistableShip(mmsi: String, eventTime: Long): PersistableShip {
+        return PersistableShip(
+            ship = EnrichedShip(
+                mmsi = mmsi,
+                lat = 21.0285,
+                lon = 105.8542,
+                vesselName = "PACIFIC TRADER",
+                vesselType = "cargo",
+                eventTime = eventTime,
+                sourceId = "ais-1",
+                isHistorical = false,
+            ),
+            sourceTopic = "live-ais",
+            rawPayload = """{"mmsi":"$mmsi"}""",
+            traceContext = StorageTraceContext(
+                requestId = "req-$mmsi",
                 traceparent = "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01",
             ),
         )

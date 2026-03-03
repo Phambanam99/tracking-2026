@@ -180,7 +180,7 @@ public class JwksKeyProvider(
     }
 
     private fun toKeyPair(entity: JwtSigningKeyEntity): KeyPair {
-        val publicBytes = Base64.getDecoder().decode(entity.publicKeyDerBase64)
+        val publicBytes = decodeBase64Flexible(entity.publicKeyDerBase64)
 
         val decryptedPrivateKeyBase64 =
                 try {
@@ -190,7 +190,7 @@ public class JwksKeyProvider(
                     // migration)
                     entity.privateKeyDerBase64
                 }
-        val privateBytes = Base64.getDecoder().decode(decryptedPrivateKeyBase64)
+        val privateBytes = decodeBase64Flexible(decryptedPrivateKeyBase64)
 
         val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicBytes))
         val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateBytes))
@@ -200,5 +200,13 @@ public class JwksKeyProvider(
     private fun toBase64Url(value: BigInteger): String {
         val bytes = value.toByteArray().dropWhile { it == 0.toByte() }.toByteArray()
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
+    private fun decodeBase64Flexible(value: String): ByteArray {
+        return try {
+            Base64.getDecoder().decode(value)
+        } catch (_: IllegalArgumentException) {
+            Base64.getUrlDecoder().decode(value)
+        }
     }
 }

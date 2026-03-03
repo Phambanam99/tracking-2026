@@ -23,3 +23,8 @@ __pycache__/
 *.pyc
 *.pyo
 
+
+# Gradle user home cache (Lock files - permission denied)
+.gradle-user-home/
+.gradle-common-dto/
+

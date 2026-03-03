@@ -21,6 +21,7 @@ public data class StorageDlqMessage(
     val sourceTopic: String,
     val payload: String,
     val icao: String? = null,
+    val recordKey: String? = icao,
     val errorMessage: String? = null,
     val occurredAt: String = Instant.now().toString(),
 )
@@ -46,11 +47,12 @@ public class KafkaStorageDlqProducer(
                 sourceTopic = record.sourceTopic,
                 payload = record.payload,
                 icao = record.icao,
+                recordKey = record.recordKey ?: record.icao,
                 errorMessage = record.errorMessage,
                 occurredAt = record.occurredAt.toString(),
             )
             val payload = objectMapper.writeValueAsString(message)
-            val key = record.icao ?: "unknown"
+            val key = record.recordKey ?: record.icao ?: "unknown"
             val kafkaRecord = ProducerRecord(storageDlqTopic, key, payload)
             addHeader(kafkaRecord, "x-request-id", record.traceContext.requestId)
             addHeader(kafkaRecord, "traceparent", record.traceContext.traceparent)

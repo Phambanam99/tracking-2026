@@ -1,4 +1,5 @@
 import type { BaseLayerType } from "../features/map/layers/baseLayer";
+import type { TrackingMode } from "../features/map/store/useTrackingModeStore";
 import { IconButton } from "../shared/components/IconButton";
 import { useI18n } from "../shared/i18n/I18nProvider";
 
@@ -8,12 +9,16 @@ type ToolBarProps = {
   isLayerPanelOpen: boolean;
   isPlaybackOpen: boolean;
   baseLayerType: BaseLayerType;
+  trackingMode: TrackingMode;
+  isShipTrackingEnabled: boolean;
+  showAircraftControls: boolean;
   className?: string;
   onToggleSearch: () => void;
   onToggleWatchlist: () => void;
   onToggleLayerPanel: () => void;
   onTogglePlayback: () => void;
   onBaseLayerChange: (type: BaseLayerType) => void;
+  onTrackingModeChange: (mode: TrackingMode) => void;
 };
 
 export function ToolBar({
@@ -22,12 +27,16 @@ export function ToolBar({
   isLayerPanelOpen,
   isPlaybackOpen,
   baseLayerType,
+  trackingMode,
+  isShipTrackingEnabled,
+  showAircraftControls,
   className,
   onToggleSearch,
   onToggleWatchlist,
   onToggleLayerPanel,
   onTogglePlayback,
   onBaseLayerChange,
+  onTrackingModeChange,
 }: ToolBarProps): JSX.Element {
   const { t } = useI18n();
 
@@ -37,33 +46,57 @@ export function ToolBar({
         <IconButton ariaLabel={t("toolbar.toggleSearch")} active={activePanel === "search"} onClick={onToggleSearch} tooltip={t("toolbar.search")}>
           <SearchIcon />
         </IconButton>
-        <IconButton
-          ariaLabel={t("toolbar.toggleWatchlist")}
-          active={activePanel === "watchlist"}
-          disabled={!isWatchlistEnabled}
-          onClick={onToggleWatchlist}
-          tooltip={isWatchlistEnabled ? t("toolbar.watchlist") : t("toolbar.watchlistAuth")}
-        >
-          <WatchIcon />
-        </IconButton>
-        <IconButton
-          ariaLabel={t("toolbar.togglePlayback")}
-          active={isPlaybackOpen}
-          onClick={onTogglePlayback}
-          tooltip={t("toolbar.playback")}
-        >
-          <PlaybackIcon />
-        </IconButton>
-        <IconButton
-          ariaLabel={t("toolbar.toggleLayers")}
-          active={isLayerPanelOpen}
-          onClick={onToggleLayerPanel}
-          tooltip={t("toolbar.layers")}
-        >
-          <LayerIcon />
-        </IconButton>
+
+        {showAircraftControls ? (
+          <>
+            <IconButton
+              ariaLabel={t("toolbar.toggleWatchlist")}
+              active={activePanel === "watchlist"}
+              disabled={!isWatchlistEnabled}
+              onClick={onToggleWatchlist}
+              tooltip={isWatchlistEnabled ? t("toolbar.watchlist") : t("toolbar.watchlistAuth")}
+            >
+              <WatchIcon />
+            </IconButton>
+            <IconButton
+              ariaLabel={t("toolbar.togglePlayback")}
+              active={isPlaybackOpen}
+              onClick={onTogglePlayback}
+              tooltip={t("toolbar.playback")}
+            >
+              <PlaybackIcon />
+            </IconButton>
+            <IconButton
+              ariaLabel={t("toolbar.toggleLayers")}
+              active={isLayerPanelOpen}
+              onClick={onToggleLayerPanel}
+              tooltip={t("toolbar.layers")}
+            >
+              <LayerIcon />
+            </IconButton>
+          </>
+        ) : null}
 
         <div className="mx-1 h-8 w-px bg-slate-700/80" />
+
+        {isShipTrackingEnabled ? (
+          <>
+            <div className="flex items-center gap-1 rounded-full border border-slate-700/80 bg-slate-950/75 p-1">
+              <ModeButton
+                isActive={trackingMode === "aircraft"}
+                label={t("toolbar.modeAircraft")}
+                onClick={() => onTrackingModeChange("aircraft")}
+              />
+              <ModeButton
+                isActive={trackingMode === "ship"}
+                label={t("toolbar.modeShip")}
+                onClick={() => onTrackingModeChange("ship")}
+              />
+            </div>
+
+            <div className="mx-1 h-8 w-px bg-slate-700/80" />
+          </>
+        ) : null}
 
         <div className="flex items-center gap-1 rounded-full border border-slate-700/80 bg-slate-950/75 p-1">
           <BaseLayerButton
@@ -89,6 +122,10 @@ type BaseLayerButtonProps = {
 };
 
 function BaseLayerButton({ label, isActive, onClick }: BaseLayerButtonProps): JSX.Element {
+  return <ModeButton isActive={isActive} label={label} onClick={onClick} />;
+}
+
+function ModeButton({ label, isActive, onClick }: BaseLayerButtonProps): JSX.Element {
   return (
     <button
       aria-pressed={isActive}

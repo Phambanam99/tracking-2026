@@ -5,9 +5,12 @@ import { AltitudeLegend } from "../features/map/components/AltitudeLegend";
 import { LayerPanel } from "../features/map/components/LayerPanel";
 import { MapContainer } from "../features/map/components/MapContainer";
 import type { BaseLayerType } from "../features/map/layers/baseLayer";
+import { useTrackingModeStore, type TrackingMode } from "../features/map/store/useTrackingModeStore";
 import { PlaybackBar } from "../features/playback/components/PlaybackBar";
 import { PlaybackDialog } from "../features/playback/components/PlaybackDialog";
 import { usePlaybackStore } from "../features/playback/store/usePlaybackStore";
+import { ShipFeatureLayer } from "../features/ship/components/ShipFeatureLayer";
+import { ShipSearchPanel } from "../features/ship/components/ShipSearchPanel";
 import { SearchPanel } from "../features/search/components/SearchPanel";
 import { WatchlistPanel } from "../features/watchlist/components/WatchlistPanel";
 import { useWatchlistSync } from "../features/watchlist/hooks/useWatchlistSync";
@@ -39,10 +42,15 @@ export function AppShell({
   const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
   const [isLayerPanelOpen, setIsLayerPanelOpen] = useState(false);
   const [baseLayerType, setBaseLayerType] = useState<BaseLayerType>("osm");
+  const trackingMode = useTrackingModeStore((state) => state.mode);
+  const setTrackingMode = useTrackingModeStore((state) => state.setMode);
   const isPlaybackOpen = usePlaybackStore((state) => state.isOpen);
   const openPlaybackDialog = usePlaybackStore((state) => state.openDialog);
   const closePlayback = usePlaybackStore((state) => state.close);
   const isMobile = useMediaQuery("(max-width: 767px)");
+  const isShipTrackingEnabled = import.meta.env.VITE_SHIP_TRACKING_ENABLED === "true";
+  const activeTrackingMode: TrackingMode = isShipTrackingEnabled ? trackingMode : "aircraft";
+  const showAircraftControls = activeTrackingMode === "aircraft";
 
   useWatchlistSync();
 
@@ -51,6 +59,14 @@ export function AppShell({
       setActivePanel(null);
     }
   }, [activePanel, isAuthenticated]);
+
+  useEffect(() => {
+    if (activeTrackingMode === "ship") {
+      setIsLayerPanelOpen(false);
+      closePlayback();
+      setActivePanel((current) => (current === "watchlist" ? null : current));
+    }
+  }, [activeTrackingMode, closePlayback]);
 
   useKeyboardShortcuts([
     {
@@ -120,25 +136,34 @@ export function AppShell({
     }
   }
 
+  function handleTrackingModeChange(mode: TrackingMode): void {
+    if (!isShipTrackingEnabled) {
+      return;
+    }
+    setTrackingMode(mode);
+  }
+
   return (
     <div className="relative h-screen w-full overflow-hidden bg-slate-950 text-ink">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_24%),radial-gradient(circle_at_85%_15%,rgba(59,130,246,0.16),transparent_20%)]" />
 
       <MapContainer baseLayerType={baseLayerType} className="border-0 rounded-none" showToolbar={false}>
-        <AircraftFeatureLayer />
-        <AltitudeLegend />
-        <LayerPanel
-          animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
-          className={isMobile ? "absolute inset-x-0 bottom-0 z-30" : undefined}
-          dockClassName={isMobile ? mobileLayerDockClassName : desktopLayerDockClassName}
-          enableSwipeClose={isMobile}
-          onOpenChange={setIsLayerPanelOpen}
-          open={isLayerPanelOpen}
-          showTrigger={false}
-          widthClassName={isMobile ? "w-[calc(100vw-1.5rem)]" : "w-80"}
-        />
-        <PlaybackDialog />
-        <PlaybackBar />
+        {activeTrackingMode === "aircraft" ? <AircraftFeatureLayer /> : <ShipFeatureLayer />}
+        {showAircraftControls ? <AltitudeLegend /> : null}
+        {showAircraftControls ? (
+          <LayerPanel
+            animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
+            className={isMobile ? "absolute inset-x-0 bottom-0 z-30" : undefined}
+            dockClassName={isMobile ? mobileLayerDockClassName : desktopLayerDockClassName}
+            enableSwipeClose={isMobile}
+            onOpenChange={setIsLayerPanelOpen}
+            open={isLayerPanelOpen}
+            showTrigger={false}
+            widthClassName={isMobile ? "w-[calc(100vw-1.5rem)]" : "w-80"}
+          />
+        ) : null}
+        {showAircraftControls ? <PlaybackDialog /> : null}
+        {showAircraftControls ? <PlaybackBar /> : null}
         <CommandBar
           isAdmin={isAdmin}
           isAuthenticated={isAuthenticated}
@@ -158,6 +183,7 @@ export function AppShell({
             setIsCommandBarOpen(false);
           }}
           onOpenWatchlistPanel={() => {
+            handleTrackingModeChange("aircraft");
             setActivePanel("watchlist");
             if (isMobile) {
               setIsLayerPanelOpen(false);
@@ -166,7 +192,7 @@ export function AppShell({
             setIsCommandBarOpen(false);
           }}
         />
-        {activePanel === "search" ? (
+        {activePanel === "search" && activeTrackingMode === "aircraft" ? (
           <SearchPanel
             animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
             dockClassName={isMobile ? mobileSearchDockClassName : desktopSearchDockClassName}
@@ -174,7 +200,15 @@ export function AppShell({
             onClose={() => setActivePanel(null)}
           />
         ) : null}
-        {activePanel === "watchlist" && isAuthenticated ? (
+        {activePanel === "search" && activeTrackingMode === "ship" ? (
+          <ShipSearchPanel
+            animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
+            dockClassName={isMobile ? mobileSearchDockClassName : desktopSearchDockClassName}
+            enableSwipeClose={isMobile}
+            onClose={() => setActivePanel(null)}
+          />
+        ) : null}
+        {showAircraftControls && activePanel === "watchlist" && isAuthenticated ? (
           <WatchlistPanel
             animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
             dockClassName={isMobile ? mobileWatchlistDockClassName : desktopWatchlistDockClassName}
@@ -189,8 +223,10 @@ export function AppShell({
           className="hidden md:block"
           isLayerPanelOpen={isLayerPanelOpen}
           isPlaybackOpen={isPlaybackOpen}
+          isShipTrackingEnabled={isShipTrackingEnabled}
           isWatchlistEnabled={isAuthenticated}
           onBaseLayerChange={setBaseLayerType}
+          onTrackingModeChange={handleTrackingModeChange}
           onToggleLayerPanel={toggleLayerPanel}
           onTogglePlayback={togglePlaybackPanel}
           onToggleSearch={toggleSearchPanel}
@@ -201,12 +237,16 @@ export function AppShell({
             }
             toggleWatchlistPanel();
           }}
+          showAircraftControls={showAircraftControls}
+          trackingMode={activeTrackingMode}
         />
         <BottomTabBar
           activePanel={activePanel}
           isLayerPanelOpen={isLayerPanelOpen}
           isPlaybackOpen={isPlaybackOpen}
+          isShipTrackingEnabled={isShipTrackingEnabled}
           isWatchlistEnabled={isAuthenticated}
+          onTrackingModeChange={handleTrackingModeChange}
           onToggleLayerPanel={toggleLayerPanel}
           onTogglePlayback={togglePlaybackPanel}
           onToggleSearch={toggleSearchPanel}
@@ -217,6 +257,8 @@ export function AppShell({
             }
             toggleWatchlistPanel();
           }}
+          showAircraftControls={showAircraftControls}
+          trackingMode={activeTrackingMode}
         />
       </MapContainer>
 
@@ -229,7 +271,12 @@ export function AppShell({
         onOpenAdminUsers={onOpenAdminUsers}
         onOpenLogin={onOpenLogin}
         onOpenRegister={onOpenRegister}
-        onSelectPanel={setActivePanel}
+        onSelectPanel={(panel) => {
+          if (panel === "watchlist") {
+            handleTrackingModeChange("aircraft");
+          }
+          setActivePanel(panel);
+        }}
         onShowMap={() => setActivePanel(null)}
         username={username}
       />

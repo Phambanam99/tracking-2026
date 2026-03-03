@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "tracking.ingestion")
 public class IngestionProperties(
     public var ingestPath: String = "/api/v1/ingest/**",
+    public var shipIngestPath: String = "/api/v1/ingest/ais/**",
     public var batch: BatchProperties = BatchProperties(),
     public var admission: AdmissionProperties = AdmissionProperties(),
     public var security: SecurityProperties = SecurityProperties(),

@@ -33,7 +33,7 @@ public class ViewportMessageHandler(
             .map { value -> value.name }
             .filter { value -> value.isNotBlank() }
             .orElse(sessionId)
-        viewportRegistry.register(sessionId, principalName, viewport)
+        viewportRegistry.register(sessionId, principalName, viewport, TrackingMode.AIRCRAFT)
         broadcasterMetrics.incrementViewportUpdates()
     }
 

@@ -13,7 +13,7 @@ spring:
     gateway:
       httpclient:
         connect-timeout: 750
-        response-timeout: 1500ms
+        response-timeout: 30000ms
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
       routes:
@@ -83,7 +83,7 @@ spring:
         - id: query-route
           uri: ${GATEWAY_ROUTE_QUERY_URI:http://service-query:8085}
           predicates:
-            - Path=/api/v1/aircraft/**
+            - Path=/api/v1/aircraft/**,/api/v1/ships/**,/api/v1/playback/**
           filters:
             - name: RequestRateLimiter
               args:
@@ -91,8 +91,8 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
           metadata:
-            connect-timeout: 1000
-            response-timeout: 3000
+            connect-timeout: 2000
+            response-timeout: 30000
 
 resilience4j:
   circuitbreaker:
@@ -127,6 +127,8 @@ tracking:
         - /api/v1/auth/**
         - /api/v1/watchlist/**
         - /api/v1/aircraft/**
+        - /api/v1/ships/**
+        - /api/v1/playback/**
         - /ws/live/**
       public-jwt-bypass-paths:
         - GET:/api/v1/aircraft/live
@@ -179,6 +181,8 @@ tracking:
         "/api/v1/auth/**": 65536
         "/api/v1/watchlist/**": 65536
         "/api/v1/aircraft/**": 65536
+        "/api/v1/ships/**": 65536
+        "/api/v1/playback/**": 65536
 
 logging:
   structured:

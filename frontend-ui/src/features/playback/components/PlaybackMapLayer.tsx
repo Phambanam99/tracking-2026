@@ -51,6 +51,12 @@ function buildPlaybackAircraftFeature(
   return feature;
 }
 
+const FEATURE_PROP_LAT = "_lat";
+const FEATURE_PROP_LON = "_lon";
+const FEATURE_PROP_HEADING = "_heading";
+const FEATURE_PROP_ALTITUDE = "_altitude";
+const FEATURE_PROP_SELECTED = "_isSelected";
+
 function syncPlaybackAircraftFeatures(
   source: VectorSource,
   aircraftList: Aircraft[],
@@ -74,20 +80,46 @@ function syncPlaybackAircraftFeatures(
   for (const aircraft of aircraftList) {
     const existing = source.getFeatureById(aircraft.icao) as Feature<Point> | null;
     if (existing) {
-      existing.getGeometry()?.setCoordinates(fromLonLat([aircraft.lon, aircraft.lat]));
-      const { shape, scale } = resolveShape(aircraft.aircraftType);
-      existing.setStyle(
-        createAircraftStyle({
-          shape,
-          scale,
-          heading: aircraft.heading,
-          altitude: aircraft.altitude,
-          opacity: 0.95,
-          isSelected: aircraft.icao === selectedIcao,
-        }),
-      );
+      const prevLat = existing.get(FEATURE_PROP_LAT) as number | undefined;
+      const prevLon = existing.get(FEATURE_PROP_LON) as number | undefined;
+      if (prevLat !== aircraft.lat || prevLon !== aircraft.lon) {
+        existing.getGeometry()?.setCoordinates(fromLonLat([aircraft.lon, aircraft.lat]));
+        existing.set(FEATURE_PROP_LAT, aircraft.lat, true);
+        existing.set(FEATURE_PROP_LON, aircraft.lon, true);
+      }
+
+      const isSelected = aircraft.icao === selectedIcao;
+      const prevHeading = existing.get(FEATURE_PROP_HEADING) as number | undefined;
+      const prevAltitude = existing.get(FEATURE_PROP_ALTITUDE) as number | undefined;
+      const prevSelected = existing.get(FEATURE_PROP_SELECTED) as boolean | undefined;
+      if (
+        prevHeading !== aircraft.heading
+        || prevAltitude !== aircraft.altitude
+        || prevSelected !== isSelected
+      ) {
+        const { shape, scale } = resolveShape(aircraft.aircraftType);
+        existing.setStyle(
+          createAircraftStyle({
+            shape,
+            scale,
+            heading: aircraft.heading,
+            altitude: aircraft.altitude,
+            opacity: 0.95,
+            isSelected,
+          }),
+        );
+        existing.set(FEATURE_PROP_HEADING, aircraft.heading, true);
+        existing.set(FEATURE_PROP_ALTITUDE, aircraft.altitude, true);
+        existing.set(FEATURE_PROP_SELECTED, isSelected, true);
+      }
     } else {
-      source.addFeature(buildPlaybackAircraftFeature(aircraft, aircraft.icao === selectedIcao));
+      const feature = buildPlaybackAircraftFeature(aircraft, aircraft.icao === selectedIcao);
+      feature.set(FEATURE_PROP_LAT, aircraft.lat, true);
+      feature.set(FEATURE_PROP_LON, aircraft.lon, true);
+      feature.set(FEATURE_PROP_HEADING, aircraft.heading, true);
+      feature.set(FEATURE_PROP_ALTITUDE, aircraft.altitude, true);
+      feature.set(FEATURE_PROP_SELECTED, aircraft.icao === selectedIcao, true);
+      source.addFeature(feature);
     }
   }
 }
@@ -177,6 +209,7 @@ export function PlaybackMapLayer(): JSX.Element | null {
   const selectAircraft = useAircraftStore((state) => state.selectAircraft);
   const isBarVisible = usePlaybackStore((state) => state.isBarVisible);
   const status = usePlaybackStore((state) => state.status);
+  const isPreFetching = usePlaybackStore((state) => state.isPreFetching);
   const frames = usePlaybackStore((state) => state.frames);
   const currentFrameIndex = usePlaybackStore((state) => state.currentFrameIndex);
   const currentFrame = usePlaybackStore(getCurrentPlaybackFrame);
@@ -307,24 +340,36 @@ export function PlaybackMapLayer(): JSX.Element | null {
     };
   }, [isBarVisible, map, status]);
 
-  if (!isBarVisible || status !== "ready" || !hovered || !hoveredAircraft) {
+  if (!isBarVisible || status !== "ready") {
     return null;
   }
 
   return (
-    <div
-      className="pointer-events-none absolute z-[18] min-w-[120px] rounded border border-amber-500/60 bg-slate-950/95 px-2 py-1 text-xs text-slate-100 shadow-lg"
-      data-testid="playback-hover-tooltip"
-      style={{
-        left: `${hovered.pixel[0] + 12}px`,
-        top: `${hovered.pixel[1] + 12}px`,
-      }}
-    >
-      <div className="font-mono font-semibold">{hoveredAircraft.icao.toUpperCase()}</div>
-      {hoveredAircraft.callsign ? (
-        <div className="text-slate-300">{hoveredAircraft.callsign}</div>
+    <>
+      {isPreFetching ? (
+        <div className="pointer-events-none absolute left-1/2 top-4 z-[19] -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-slate-950/80 px-3 py-1 text-xs text-amber-300 shadow-lg backdrop-blur-sm">
+            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-amber-300 border-t-transparent" />
+            <span>Đang tải dữ liệu...</span>
+          </div>
+        </div>
       ) : null}
-      <div className="text-[10px] text-amber-300">{t("aircraft.popup.playbackSnapshot")}</div>
-    </div>
+      {hovered && hoveredAircraft ? (
+        <div
+          className="pointer-events-none absolute z-[18] min-w-[120px] rounded border border-amber-500/60 bg-slate-950/95 px-2 py-1 text-xs text-slate-100 shadow-lg"
+          data-testid="playback-hover-tooltip"
+          style={{
+            left: `${hovered.pixel[0] + 12}px`,
+            top: `${hovered.pixel[1] + 12}px`,
+          }}
+        >
+          <div className="font-mono font-semibold">{hoveredAircraft.icao.toUpperCase()}</div>
+          {hoveredAircraft.callsign ? (
+            <div className="text-slate-300">{hoveredAircraft.callsign}</div>
+          ) : null}
+          <div className="text-[10px] text-amber-300">{t("aircraft.popup.playbackSnapshot")}</div>
+        </div>
+      ) : null}
+    </>
   );
 }

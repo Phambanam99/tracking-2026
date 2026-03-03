@@ -52,13 +52,25 @@ management:
         tracking.processing.kafka.publish.latency: 5ms,10ms,25ms,50ms,100ms,250ms
 
 tracking:
+  features:
+    ship:
+      enabled: ${TRACKING_FEATURES_SHIP_ENABLED:false}
   kafka:
     topics:
       raw: raw-adsb
       live: live-adsb
       historical: historical-adsb
+      rawAis: ${TRACKING_KAFKA_TOPICS_RAW_AIS:raw-ais}
+      liveAis: ${TRACKING_KAFKA_TOPICS_LIVE_AIS:live-ais}
+      historicalAis: ${TRACKING_KAFKA_TOPICS_HISTORICAL_AIS:historical-ais}
       invalidDlq: invalid-telemetry-dlq
   processing:
+    ship:
+      consumer-enabled: ${TRACKING_PROCESSING_SHIP_CONSUMER_ENABLED:false}
+      strict-key-match: ${TRACKING_PROCESSING_SHIP_STRICT_KEY_MATCH:true}
+      dedup-ttl-seconds: ${TRACKING_PROCESSING_SHIP_DEDUP_TTL_SECONDS:2}
+      state-ttl-hours: ${TRACKING_PROCESSING_SHIP_STATE_TTL_HOURS:2}
+      max-speed-kmh: ${TRACKING_PROCESSING_SHIP_MAX_SPEED_KMH:120.0}
     consumer:
       group-id: service-processing-v1
       concurrency: 8

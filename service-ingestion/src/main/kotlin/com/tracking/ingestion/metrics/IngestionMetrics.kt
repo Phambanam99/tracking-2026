@@ -1,6 +1,7 @@
 package com.tracking.ingestion.metrics
 
 import com.tracking.common.dto.CanonicalFlight
+import com.tracking.common.dto.CanonicalShip
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import java.util.concurrent.ConcurrentHashMap
@@ -30,6 +31,13 @@ public class IngestionMetrics(
     public fun incrementAcceptedBatch(flights: List<CanonicalFlight>): Unit {
         acceptedBatchRecordsCounter.increment(flights.size.toDouble())
         flights.groupingBy { normalizeSourceId(it.sourceId) }.eachCount().forEach { (sourceId, count) ->
+            acceptedCounterFor(sourceId).increment(count.toDouble())
+        }
+    }
+
+    public fun incrementAcceptedBatchForShips(ships: List<CanonicalShip>): Unit {
+        acceptedBatchRecordsCounter.increment(ships.size.toDouble())
+        ships.groupingBy { normalizeSourceId(it.sourceId) }.eachCount().forEach { (sourceId, count) ->
             acceptedCounterFor(sourceId).increment(count.toDouble())
         }
     }

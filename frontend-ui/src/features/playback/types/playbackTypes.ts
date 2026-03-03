@@ -28,6 +28,7 @@ export type PlaybackState = {
   hasMore: boolean;
   nextCursor: string | null;
   isPreFetching: boolean;
+  pendingSeekTimeMs: number | null;
 };
 
 export type PlaybackFrame = {

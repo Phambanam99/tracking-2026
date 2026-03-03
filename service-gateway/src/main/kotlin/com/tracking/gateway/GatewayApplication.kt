@@ -8,4 +8,6 @@ import org.springframework.boot.runApplication
 @ConfigurationPropertiesScan
 public class GatewayApplication
 
-public fun main(args: Array<String>) = runApplication<GatewayApplication>(*args)
+public fun main(args: Array<String>) {
+	runApplication<GatewayApplication>(*args)
+}

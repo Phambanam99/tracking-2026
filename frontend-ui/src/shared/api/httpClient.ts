@@ -7,6 +7,7 @@ export type HttpRequestOptions = {
   headers?: Record<string, string>;
   skipAuth?: boolean;
   retryOnUnauthorized?: boolean;
+  signal?: AbortSignal;
 };
 
 export class HttpError extends Error {
@@ -74,6 +75,7 @@ async function send(options: HttpRequestOptions): Promise<Response> {
     headers,
     credentials: "include",
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    signal: options.signal,
   });
 }
 

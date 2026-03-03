@@ -14,6 +14,10 @@ vi.mock("../../map/context/MapContext", () => ({
   }),
 }));
 
+vi.mock("../../map/hooks/useMapViewport", () => ({
+  useMapViewport: () => null,
+}));
+
 import { PlaybackBar } from "./PlaybackBar";
 
 describe("PlaybackBar keyboard shortcuts", () => {

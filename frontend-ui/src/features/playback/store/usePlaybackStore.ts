@@ -121,6 +121,8 @@ type PlaybackActions = {
   appendFrames: (frames: PlaybackFrame[]) => void;
   setBatchInfo: (input: { hasMore: boolean; nextCursor: string | null; totalFrames?: number }) => void;
   setPreFetching: (isPreFetching: boolean) => void;
+  requestSeekReload: (timeMs: number) => void;
+  clearSeekReload: () => void;
   stepForward: () => void;
   stepBackward: () => void;
   jumpToStart: () => void;
@@ -151,6 +153,7 @@ export const usePlaybackStore = create<PlaybackStore>((set) => ({
   hasMore: false,
   nextCursor: null,
   isPreFetching: false,
+  pendingSeekTimeMs: null,
 
   open: () =>
     set({
@@ -350,6 +353,16 @@ export const usePlaybackStore = create<PlaybackStore>((set) => ({
   setPreFetching: (isPreFetching) =>
     set({
       isPreFetching,
+    }),
+
+  requestSeekReload: (timeMs) =>
+    set({
+      pendingSeekTimeMs: Number.isFinite(timeMs) ? timeMs : null,
+    }),
+
+  clearSeekReload: () =>
+    set({
+      pendingSeekTimeMs: null,
     }),
 
   stepForward: () =>

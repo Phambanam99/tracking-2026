@@ -1,0 +1,1 @@
+const r={registration:"N42DB",aircraftType:"A21N",operator:"Seed Demo Air",countryCode:"US",countryFlagUrl:"https://flagcdn.com/h80/us.png"},t={registration:"C-GDBG",aircraftType:"B38M",operator:"Seed Northern",countryCode:"CA",countryFlagUrl:"https://flagcdn.com/h80/ca.png"},o={F00DBA:r,F00DBB:t};export{r as F00DBA,t as F00DBB,o as default};

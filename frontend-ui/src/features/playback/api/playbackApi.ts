@@ -46,11 +46,15 @@ export type PlaybackFramesResponse = {
   };
 };
 
-export async function fetchPlaybackFrames(request: PlaybackFramesRequest): Promise<PlaybackFramesResponse> {
+export async function fetchPlaybackFrames(
+  request: PlaybackFramesRequest,
+  signal?: AbortSignal,
+): Promise<PlaybackFramesResponse> {
   return httpRequest<PlaybackFramesResponse>({
     method: "POST",
     path: "/api/v1/playback/frames",
     body: request,
+    signal,
   });
 }
 

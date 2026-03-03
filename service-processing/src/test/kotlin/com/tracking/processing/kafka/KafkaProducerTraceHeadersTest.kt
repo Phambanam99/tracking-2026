@@ -2,7 +2,9 @@ package com.tracking.processing.kafka
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.tracking.common.dto.CanonicalFlight
+import com.tracking.common.dto.CanonicalShip
 import com.tracking.common.dto.EnrichedFlight
+import com.tracking.common.dto.EnrichedShip
 import com.tracking.processing.any
 import com.tracking.processing.metrics.ProcessingMetrics
 import com.tracking.processing.tracing.ProcessingTraceContext
@@ -144,6 +146,92 @@ public class KafkaProducerTraceHeadersTest {
         }
     }
 
+    @Test
+    public fun `should propagate trace headers on processed ship topic publish`() {
+        @Suppress("UNCHECKED_CAST")
+        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
+        @Suppress("UNCHECKED_CAST")
+        val sendResult = mock(SendResult::class.java) as SendResult<String, String>
+        given(kafkaTemplate.send(any<ProducerRecord<String, String>>()))
+            .willReturn(CompletableFuture.completedFuture(sendResult))
+
+        val producer = KafkaShipProcessingProducer(
+            kafkaTemplate = kafkaTemplate,
+            objectMapper = ObjectMapper(),
+            processingMetrics = ProcessingMetrics(SimpleMeterRegistry()),
+        )
+
+        TraceContextHolder.withContext(
+            ProcessingTraceContext(
+                requestId = "req-processing-ship-1",
+                traceparent = "00-cccccccccccccccccccccccccccccccc-dddddddddddddddd-01",
+            ),
+        ) {
+            producer.publish("live-ais", validEnrichedShip())
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val captor =
+            ArgumentCaptor.forClass(ProducerRecord::class.java)
+                as ArgumentCaptor<ProducerRecord<String, String>>
+        verify(kafkaTemplate).send(captor.capture())
+        val record = captor.value
+
+        assertEquals("live-ais", record.topic())
+        assertEquals("574001230", record.key())
+
+        val requestIdHeader = record.headers().lastHeader(ProcessingTraceHeaders.REQUEST_ID)
+        val traceparentHeader = record.headers().lastHeader(ProcessingTraceHeaders.TRACEPARENT)
+        assertNotNull(requestIdHeader)
+        assertNotNull(traceparentHeader)
+        assertEquals("req-processing-ship-1", String(requestIdHeader.value(), StandardCharsets.UTF_8))
+        assertEquals(
+            "00-cccccccccccccccccccccccccccccccc-dddddddddddddddd-01",
+            String(traceparentHeader.value(), StandardCharsets.UTF_8),
+        )
+    }
+
+    @Test
+    public fun `should propagate trace headers on ship dlq publish`() {
+        @Suppress("UNCHECKED_CAST")
+        val kafkaTemplate = mock(KafkaTemplate::class.java) as KafkaTemplate<String, String>
+        @Suppress("UNCHECKED_CAST")
+        val sendResult = mock(SendResult::class.java) as SendResult<String, String>
+        given(kafkaTemplate.send(any<ProducerRecord<String, String>>()))
+            .willReturn(CompletableFuture.completedFuture(sendResult))
+
+        val producer = KafkaShipInvalidRecordDlqProducer(
+            kafkaTemplate = kafkaTemplate,
+            objectMapper = ObjectMapper(),
+            processingMetrics = ProcessingMetrics(SimpleMeterRegistry()),
+            invalidDlqTopic = "invalid-telemetry-dlq",
+        )
+
+        TraceContextHolder.withContext(
+            ProcessingTraceContext(
+                requestId = "req-processing-ship-dlq-1",
+                traceparent = "00-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee-ffffffffffffffff-01",
+            ),
+        ) {
+            producer.publish(
+                InvalidShipRecord(
+                    reason = "KEY_MMSI_MISMATCH",
+                    ship = validCanonicalShip(),
+                ),
+            )
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val captor =
+            ArgumentCaptor.forClass(ProducerRecord::class.java)
+                as ArgumentCaptor<ProducerRecord<String, String>>
+        verify(kafkaTemplate, org.mockito.Mockito.atLeastOnce()).send(captor.capture())
+        val shipRecord = captor.allValues.last()
+
+        assertEquals("invalid-telemetry-dlq", shipRecord.topic())
+        assertEquals("574001230", shipRecord.key())
+    }
+
     private fun validEnrichedFlight(): EnrichedFlight =
         EnrichedFlight(
             icao = "ABC123",
@@ -161,5 +249,24 @@ public class KafkaProducerTraceHeadersTest {
             lon = 105.8542,
             eventTime = 1_700_000_000_000,
             sourceId = "radar-1",
+        )
+
+    private fun validEnrichedShip(): EnrichedShip =
+        EnrichedShip(
+            mmsi = "574001230",
+            lat = 10.7769,
+            lon = 106.7009,
+            eventTime = 1_700_000_000_000,
+            sourceId = "ais-1",
+            isHistorical = false,
+        )
+
+    private fun validCanonicalShip(): CanonicalShip =
+        CanonicalShip(
+            mmsi = "574001230",
+            lat = 10.7769,
+            lon = 106.7009,
+            eventTime = 1_700_000_000_000,
+            sourceId = "ais-1",
         )
 }
