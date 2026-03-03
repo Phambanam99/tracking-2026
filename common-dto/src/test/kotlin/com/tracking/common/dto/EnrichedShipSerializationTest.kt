@@ -24,8 +24,8 @@ public class EnrichedShipSerializationTest {
               "source_id": "ais_primary",
               "is_historical": false,
               "metadata": {
-                "flagCountry": "Vietnam",
-                "shipTypeName": "Cargo Vessel"
+                "flag_country": "Vietnam",
+                "ship_type_name": "Cargo Vessel"
               }
             }
             """.trimIndent()

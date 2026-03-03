@@ -25,9 +25,9 @@ public class EnrichedFlightSerializationTest {
               "is_historical": false,
               "metadata": {
                 "registration": "VN-A123",
-                "aircraftType": "A321",
+                "aircraft_type": "A321",
                 "operator": "Vietnam Airlines",
-                "countryCode": "VN"
+                "country_code": "VN"
               }
             }
             """.trimIndent()
