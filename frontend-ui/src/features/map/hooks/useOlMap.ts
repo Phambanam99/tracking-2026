@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import OlMap from "ol/Map";
 import View from "ol/View";
 import { fromLonLat } from "ol/proj";
-import { createBaseLayer, type BaseLayer, type BaseLayerType } from "../layers/baseLayer";
+import {
+  createBaseLayer,
+  createBaseLayerByProviderId,
+  type BaseLayer,
+  type BaseLayerType,
+} from "../layers/baseLayer";
 import { DEFAULT_VIEWPORT, type MapViewport } from "../types/mapTypes";
 
 export type UseOlMapOptions = {
@@ -10,7 +15,16 @@ export type UseOlMapOptions = {
   initialViewport?: Partial<MapViewport>;
   /** Base layer type; defaults to "osm". */
   baseLayerType?: BaseLayerType;
+  /** Active provider id. When present, this takes precedence over legacy baseLayerType. */
+  activeProviderId?: string;
 };
+
+function createEffectiveBaseLayer(options: UseOlMapOptions): BaseLayer {
+  if (options.activeProviderId) {
+    return createBaseLayerByProviderId(options.activeProviderId);
+  }
+  return createBaseLayer(options.baseLayerType);
+}
 
 /**
  * Initialises an OpenLayers Map on the provided container ref.
@@ -41,7 +55,7 @@ export function useOlMap(
 
     const olMap = new OlMap<BaseLayer>({
       target: containerRef.current,
-      layers: [createBaseLayer(options.baseLayerType)],
+      layers: [createEffectiveBaseLayer(options)],
       view: new View({
         center: fromLonLat(center),
         zoom,
@@ -67,9 +81,9 @@ export function useOlMap(
       return;
     }
 
-    const baseLayer = createBaseLayer(options.baseLayerType);
+    const baseLayer = createEffectiveBaseLayer(options);
     mapRef.current.getLayers().setAt(0, baseLayer);
-  }, [options.baseLayerType]);
+  }, [options.activeProviderId, options.baseLayerType]);
 
   return map;
 }

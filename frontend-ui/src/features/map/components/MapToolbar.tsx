@@ -1,4 +1,5 @@
-import type { BaseLayerType } from "../layers/baseLayer";
+import { list } from "../providers/registry";
+import { useI18n } from "../../../shared/i18n/I18nProvider";
 
 /**
  * MapToolbar – top bar inside the map viewport.
@@ -10,32 +11,43 @@ import type { BaseLayerType } from "../layers/baseLayer";
 export type MapToolbarProps = {
   /** Optional flight / vessel count to display in the toolbar. */
   trackedCount?: number;
-  /** Active base layer so the toolbar can expose the foundation map switcher. */
-  baseLayerType?: BaseLayerType;
-  /** Callback for switching between available base layers. */
-  onBaseLayerChange?: (type: BaseLayerType) => void;
+  /** Active map provider id so the toolbar can expose the foundation map switcher. */
+  activeProviderId?: string;
+  /** Callback for switching between available providers. */
+  onProviderChange?: (providerId: string) => void;
 };
 
 export function MapToolbar({
   trackedCount,
-  baseLayerType = "osm",
-  onBaseLayerChange,
+  activeProviderId,
+  onProviderChange,
 }: MapToolbarProps): JSX.Element {
+  const { t } = useI18n();
+  const providers = list();
+  const selectedProviderId = activeProviderId ?? providers[0]?.id;
+
+  function getProviderLabel(fallbackName: string, labelKey?: string): string {
+    if (!labelKey) {
+      return fallbackName;
+    }
+
+    const translated = t(labelKey);
+    return translated === labelKey ? fallbackName : translated;
+  }
+
   return (
     <div className="flex items-center justify-between gap-2 border-b border-slate-700 bg-slate-900/95 px-3 py-2 text-sm">
       <div className="flex items-center gap-3">
         <span className="font-semibold text-slate-200">Live Map</span>
         <div className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950/60 p-1">
-          <BaseLayerButton
-            isActive={baseLayerType === "osm"}
-            label="OSM"
-            onClick={() => onBaseLayerChange?.("osm")}
-          />
-          <BaseLayerButton
-            isActive={baseLayerType === "satellite"}
-            label="Satellite"
-            onClick={() => onBaseLayerChange?.("satellite")}
-          />
+          {providers.map((provider) => (
+            <BaseLayerButton
+              key={provider.id}
+              isActive={selectedProviderId === provider.id}
+              label={getProviderLabel(provider.name, provider.labelKey)}
+              onClick={() => onProviderChange?.(provider.id)}
+            />
+          ))}
         </div>
       </div>
       {trackedCount != null && (

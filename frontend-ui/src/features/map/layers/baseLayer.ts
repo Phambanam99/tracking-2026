@@ -1,51 +1,75 @@
-import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
-import XYZ from "ol/source/XYZ";
+import type TileLayer from "ol/layer/Tile";
+import type VectorTileLayer from "ol/layer/VectorTile";
+import type OSM from "ol/source/OSM";
+import type TileWMS from "ol/source/TileWMS";
+import type VectorTileSource from "ol/source/VectorTile";
+import type WMTS from "ol/source/WMTS";
+import type XYZ from "ol/source/XYZ";
+import { initializeMapProviders } from "../providers/initProviders";
+import { createTileLayer } from "../providers/createTileLayer";
+import { getOrDefault } from "../providers/registry";
 
 export type BaseLayerType = "osm" | "satellite";
-export type BaseLayer = TileLayer<OSM | XYZ>;
+export type BaseLayer =
+  | TileLayer<OSM | XYZ | TileWMS | WMTS>
+  | VectorTileLayer<VectorTileSource>;
+
+export const LEGACY_BASE_LAYER_TO_PROVIDER_ID: Record<BaseLayerType, string> = {
+  osm: "osm",
+  satellite: "esri-satellite",
+};
+
+initializeMapProviders();
+
+export function resolveProviderIdFromLegacyBaseLayerType(type?: BaseLayerType): string {
+  if (!type) {
+    return LEGACY_BASE_LAYER_TO_PROVIDER_ID.osm;
+  }
+  return LEGACY_BASE_LAYER_TO_PROVIDER_ID[type] ?? LEGACY_BASE_LAYER_TO_PROVIDER_ID.osm;
+}
 
 /**
  * Creates the default OSM raster tile layer.
  */
 export function createOsmLayer(): TileLayer<OSM> {
-  return new TileLayer({
-    source: new OSM({
-      attributions: [
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      ],
-    }),
-    zIndex: 0,
-    preload: 4,
-  });
+  return createBaseLayer("osm") as TileLayer<OSM>;
 }
 
 /**
  * Creates a raster satellite imagery layer backed by Esri World Imagery tiles.
  */
 export function createSatelliteLayer(): TileLayer<XYZ> {
-  return new TileLayer({
-    source: new XYZ({
-      attributions:
-        "Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      maxZoom: 19,
-      crossOrigin: "anonymous",
-    }),
-    zIndex: 0,
-    preload: 2,
-  });
+  return createBaseLayer("satellite") as TileLayer<XYZ>;
 }
 
 /**
  * Returns a base layer by type.
  */
 export function createBaseLayer(type: BaseLayerType = "osm"): BaseLayer {
-  switch (type) {
-    case "satellite":
-      return createSatelliteLayer();
-    case "osm":
-    default:
-      return createOsmLayer();
+  const providerId = LEGACY_BASE_LAYER_TO_PROVIDER_ID[type] ?? LEGACY_BASE_LAYER_TO_PROVIDER_ID.osm;
+  const selectedProvider = getOrDefault(providerId);
+
+  try {
+    return createTileLayer(selectedProvider);
+  } catch (error) {
+    console.warn(
+      `[map/providers] Failed creating base layer for provider \"${selectedProvider.id}\". Falling back to default provider.`,
+      error,
+    );
+    const fallbackProvider = getOrDefault();
+    return createTileLayer(fallbackProvider);
+  }
+}
+
+export function createBaseLayerByProviderId(providerId?: string): BaseLayer {
+  const provider = getOrDefault(providerId);
+  try {
+    return createTileLayer(provider);
+  } catch (error) {
+    console.warn(
+      `[map/providers] Failed creating layer for provider \"${provider.id}\". Falling back to default provider.`,
+      error,
+    );
+    return createTileLayer(getOrDefault());
   }
 }

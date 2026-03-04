@@ -190,6 +190,12 @@ export const MESSAGES: Record<AppLanguage, Record<string, string>> = {
     "layers.watchlistOnly": "Watchlist only",
     "layers.noWatchlistGroups": "No watchlist groups yet",
 
+    "map.provider.osm": "OpenStreetMap",
+    "map.provider.esriSatellite": "Esri Satellite",
+    "map.provider.esriTopo": "Esri Topo",
+    "map.provider.cartoDark": "Carto Dark",
+    "map.provider.cartoLight": "Carto Light",
+
     "playback.title": "Playback",
     "playback.description": "Timeline playback across the captured map viewport and selected time window.",
     "playback.dialogTitle": "Select playback time",
@@ -666,6 +672,12 @@ export const MESSAGES: Record<AppLanguage, Record<string, string>> = {
     "layers.allAircraft": "Tất cả aircraft",
     "layers.watchlistOnly": "Chỉ watchlist",
     "layers.noWatchlistGroups": "Chưa có nhóm watchlist nào",
+
+    "map.provider.osm": "OpenStreetMap",
+    "map.provider.esriSatellite": "Esri Ảnh vệ tinh",
+    "map.provider.esriTopo": "Esri Địa hình",
+    "map.provider.cartoDark": "Carto Tối",
+    "map.provider.cartoLight": "Carto Sáng",
 
     "playback.title": "Playback",
     "playback.description": "Phát lại timeline trên viewport đã chụp và khoảng thời gian được chọn.",

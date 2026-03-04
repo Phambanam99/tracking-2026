@@ -3,12 +3,20 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // ─── Hoist shared spy functions so vi.mock blocks can reference them ──────────
 
-const { mockSetTarget, mockOn, mockUn, mockSetAt, mockCreateBaseLayer } = vi.hoisted(() => ({
+const {
+  mockSetTarget,
+  mockOn,
+  mockUn,
+  mockSetAt,
+  mockCreateBaseLayer,
+  mockCreateBaseLayerByProviderId,
+} = vi.hoisted(() => ({
   mockSetTarget: vi.fn(),
   mockOn: vi.fn(),
   mockUn: vi.fn(),
   mockSetAt: vi.fn(),
   mockCreateBaseLayer: vi.fn().mockReturnValue({ type: "mock-base-layer" }),
+  mockCreateBaseLayerByProviderId: vi.fn().mockReturnValue({ type: "mock-provider-base-layer" }),
 }));
 
 // ─── Mock OpenLayers modules (canvas/WebGL not available in jsdom) ────────────
@@ -41,6 +49,7 @@ vi.mock("ol/proj", () => ({
 
 vi.mock("../layers/baseLayer", () => ({
   createBaseLayer: mockCreateBaseLayer,
+  createBaseLayerByProviderId: mockCreateBaseLayerByProviderId,
 }));
 
 // ─── Import code under test AFTER mocks are declared ─────────────────────────
@@ -61,6 +70,7 @@ describe("useOlMap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCreateBaseLayer.mockReturnValue({ type: "mock-base-layer" });
+    mockCreateBaseLayerByProviderId.mockReturnValue({ type: "mock-provider-base-layer" });
   });
 
   afterEach(() => {
@@ -114,5 +124,19 @@ describe("useOlMap", () => {
 
     expect(mockSetAt).toHaveBeenCalledWith(0, { type: "mock-base-layer" });
     expect(mockCreateBaseLayer).toHaveBeenCalledWith("satellite");
+  });
+
+  test("replaces the base layer when active provider id changes", () => {
+    const containerRef = makeContainerRef();
+    const { rerender } = renderHook(
+      ({ activeProviderId }: { activeProviderId?: string }) =>
+        useOlMap(containerRef, { activeProviderId }),
+      { initialProps: { activeProviderId: "osm" } },
+    );
+
+    rerender({ activeProviderId: "esri-satellite" });
+
+    expect(mockSetAt).toHaveBeenCalledWith(0, { type: "mock-provider-base-layer" });
+    expect(mockCreateBaseLayerByProviderId).toHaveBeenCalledWith("esri-satellite");
   });
 });

@@ -43,7 +43,9 @@ describe("LayerPanel", () => {
     expect(screen.getByText("Live Aircraft")).toBeInTheDocument();
     expect(screen.getByText("Military Aircraft")).toBeInTheDocument();
     expect(screen.getByText("History Trail")).toBeInTheDocument();
-    expect(screen.getByText("When enabled, only active backend-tagged military aircraft stay on the map.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Restrict map attention to backend-tagged military aircraft only."),
+    ).toBeInTheDocument();
   });
 
   test("checkbox toggles layer visibility in the store", () => {

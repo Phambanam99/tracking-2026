@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import "ol/ol.css";
 import { MapContext } from "../context/MapContext";
 import { useOlMap, type UseOlMapOptions } from "../hooks/useOlMap";
-import type { BaseLayerType } from "../layers/baseLayer";
+import {
+  resolveProviderIdFromLegacyBaseLayerType,
+  type BaseLayerType,
+} from "../layers/baseLayer";
+import { useBaseLayerStore } from "../providers/useBaseLayerStore";
 import { MapStatusBar } from "./MapStatusBar";
 import { MapToolbar, type MapToolbarProps } from "./MapToolbar";
 
@@ -42,17 +46,20 @@ export function MapContainer({
   className,
 }: MapContainerProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeBaseLayerType, setActiveBaseLayerType] = useState<BaseLayerType>(
-    baseLayerType ?? "osm",
-  );
+  const activeProviderId = useBaseLayerStore((state) => state.activeProviderId);
+  const setProvider = useBaseLayerStore((state) => state.setProvider);
 
   useEffect(() => {
     if (baseLayerType) {
-      setActiveBaseLayerType(baseLayerType);
+      setProvider(resolveProviderIdFromLegacyBaseLayerType(baseLayerType));
     }
-  }, [baseLayerType]);
+  }, [baseLayerType, setProvider]);
 
-  const map = useOlMap(containerRef, { initialViewport, baseLayerType: activeBaseLayerType });
+  const map = useOlMap(containerRef, {
+    initialViewport,
+    baseLayerType,
+    activeProviderId,
+  });
 
   return (
     <MapContext.Provider value={{ map, mapContainerEl: containerRef.current }}>
@@ -65,8 +72,8 @@ export function MapContainer({
         {showToolbar ? (
           <MapToolbar
             {...(toolbarProps ?? {})}
-            baseLayerType={activeBaseLayerType}
-            onBaseLayerChange={setActiveBaseLayerType}
+            activeProviderId={activeProviderId}
+            onProviderChange={setProvider}
           />
         ) : null}
 

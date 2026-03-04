@@ -2,7 +2,12 @@ import { describe, expect, test } from "vitest";
 import TileLayer from "ol/layer/Tile";
 import OSM from "ol/source/OSM";
 import XYZ from "ol/source/XYZ";
-import { createBaseLayer, createOsmLayer, createSatelliteLayer } from "./baseLayer";
+import {
+  createBaseLayer,
+  createBaseLayerByProviderId,
+  createOsmLayer,
+  createSatelliteLayer,
+} from "./baseLayer";
 
 describe("baseLayer", () => {
   test("createOsmLayer returns a TileLayer instance", () => {
@@ -43,5 +48,17 @@ describe("baseLayer", () => {
     const layer = createBaseLayer("satellite");
     expect(layer).toBeInstanceOf(TileLayer);
     expect(layer.getSource()).toBeInstanceOf(XYZ);
+  });
+
+  test("createBaseLayerByProviderId('esri-satellite') returns XYZ source", () => {
+    const layer = createBaseLayerByProviderId("esri-satellite");
+    expect(layer).toBeInstanceOf(TileLayer);
+    expect(layer.getSource()).toBeInstanceOf(XYZ);
+  });
+
+  test("createBaseLayerByProviderId falls back to default when provider id is unknown", () => {
+    const layer = createBaseLayerByProviderId("unknown-provider-id");
+    expect(layer).toBeInstanceOf(TileLayer);
+    expect(layer.getSource()).toBeInstanceOf(OSM);
   });
 });
