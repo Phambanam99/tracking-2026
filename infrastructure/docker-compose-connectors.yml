@@ -58,6 +58,48 @@ services:
     networks:
       - tracking-net
 
+  chinaport-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-chinaport-connector
+    restart: unless-stopped
+    command: [ "chinaport" ]
+    env_file:
+      - ../connectors/env/chinaport.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
+  aisstream-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-aisstream-connector
+    restart: unless-stopped
+    command: [ "aisstream" ]
+    env_file:
+      - ../connectors/env/aisstream.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
+  ais-signalr-connector:
+    build:
+      context: ..
+      dockerfile: connectors/Dockerfile
+    container_name: tracking-ais-signalr-connector
+    restart: unless-stopped
+    command: [ "signalr" ]
+    env_file:
+      - ../connectors/env/ais_signalr.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tracking-net
+
 networks:
   tracking-net:
     name: tracking-net

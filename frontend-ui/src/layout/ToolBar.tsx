@@ -4,8 +4,9 @@ import { IconButton } from "../shared/components/IconButton";
 import { useI18n } from "../shared/i18n/I18nProvider";
 
 type ToolBarProps = {
-  activePanel: "search" | "watchlist" | null;
+  activePanel: "search" | "watchlist" | "tracked" | null;
   isWatchlistEnabled: boolean;
+  trackedShipCount: number;
   isLayerPanelOpen: boolean;
   isPlaybackOpen: boolean;
   baseLayerType: BaseLayerType;
@@ -15,6 +16,7 @@ type ToolBarProps = {
   className?: string;
   onToggleSearch: () => void;
   onToggleWatchlist: () => void;
+  onToggleTrackedShips: () => void;
   onToggleLayerPanel: () => void;
   onTogglePlayback: () => void;
   onBaseLayerChange: (type: BaseLayerType) => void;
@@ -24,6 +26,7 @@ type ToolBarProps = {
 export function ToolBar({
   activePanel,
   isWatchlistEnabled,
+  trackedShipCount,
   isLayerPanelOpen,
   isPlaybackOpen,
   baseLayerType,
@@ -33,12 +36,14 @@ export function ToolBar({
   className,
   onToggleSearch,
   onToggleWatchlist,
+  onToggleTrackedShips,
   onToggleLayerPanel,
   onTogglePlayback,
   onBaseLayerChange,
   onTrackingModeChange,
 }: ToolBarProps): JSX.Element {
   const { t } = useI18n();
+  const showLayerControls = showAircraftControls || trackingMode === "ship";
 
   return (
     <div className={`pointer-events-none absolute bottom-4 left-1/2 z-40 -translate-x-1/2 ${className ?? ""}`}>
@@ -66,15 +71,29 @@ export function ToolBar({
             >
               <PlaybackIcon />
             </IconButton>
-            <IconButton
-              ariaLabel={t("toolbar.toggleLayers")}
-              active={isLayerPanelOpen}
-              onClick={onToggleLayerPanel}
-              tooltip={t("toolbar.layers")}
-            >
-              <LayerIcon />
-            </IconButton>
           </>
+        ) : null}
+
+        {!showAircraftControls ? (
+          <IconButton
+            ariaLabel={t("toolbar.toggleTrackedShips")}
+            active={activePanel === "tracked"}
+            onClick={onToggleTrackedShips}
+            tooltip={t("toolbar.trackedShips", { count: trackedShipCount })}
+          >
+            <TrackShipIcon />
+          </IconButton>
+        ) : null}
+
+        {showLayerControls ? (
+          <IconButton
+            ariaLabel={t("toolbar.toggleLayers")}
+            active={isLayerPanelOpen}
+            onClick={onToggleLayerPanel}
+            tooltip={t("toolbar.layers")}
+          >
+            <LayerIcon />
+          </IconButton>
         ) : null}
 
         <div className="mx-1 h-8 w-px bg-slate-700/80" />
@@ -175,6 +194,16 @@ function LayerIcon(): JSX.Element {
       <path d="M12 4 4 8l8 4 8-4-8-4Z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="m4 12 8 4 8-4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="m4 16 8 4 8-4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrackShipIcon(): JSX.Element {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M3 12h11" strokeLinecap="round" />
+      <path d="m11 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="18" cy="12" r="3" />
     </svg>
   );
 }

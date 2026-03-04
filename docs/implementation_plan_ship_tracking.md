@@ -122,6 +122,8 @@ Plan moi tuan theo 6 nguyen tac:
 5. Moi phase phai co acceptance gate, rollback path, va metric theo doi.
 6. Feature phai co `disabled-by-default` cho den khi E2E pass.
 
+7. Moi thay doi tinh nang (ke ca UX/frontend panel) phai cap nhat lai execution checklist de tranh lech giua code va plan.
+
 ---
 
 ## Revised Target Scope

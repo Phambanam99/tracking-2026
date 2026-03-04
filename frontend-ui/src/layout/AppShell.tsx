@@ -10,7 +10,10 @@ import { PlaybackBar } from "../features/playback/components/PlaybackBar";
 import { PlaybackDialog } from "../features/playback/components/PlaybackDialog";
 import { usePlaybackStore } from "../features/playback/store/usePlaybackStore";
 import { ShipFeatureLayer } from "../features/ship/components/ShipFeatureLayer";
+import { ShipLayerPanel } from "../features/ship/components/ShipLayerPanel";
 import { ShipSearchPanel } from "../features/ship/components/ShipSearchPanel";
+import { ShipTrackedPanel } from "../features/ship/components/ShipTrackedPanel";
+import { useTrackedShipStore } from "../features/ship/store/useTrackedShipStore";
 import { SearchPanel } from "../features/search/components/SearchPanel";
 import { WatchlistPanel } from "../features/watchlist/components/WatchlistPanel";
 import { useWatchlistSync } from "../features/watchlist/hooks/useWatchlistSync";
@@ -44,6 +47,7 @@ export function AppShell({
   const [baseLayerType, setBaseLayerType] = useState<BaseLayerType>("osm");
   const trackingMode = useTrackingModeStore((state) => state.mode);
   const setTrackingMode = useTrackingModeStore((state) => state.setMode);
+  const trackedShipCount = useTrackedShipStore((state) => Object.keys(state.trackedMmsis).length);
   const isPlaybackOpen = usePlaybackStore((state) => state.isOpen);
   const openPlaybackDialog = usePlaybackStore((state) => state.openDialog);
   const closePlayback = usePlaybackStore((state) => state.close);
@@ -51,6 +55,7 @@ export function AppShell({
   const isShipTrackingEnabled = import.meta.env.VITE_SHIP_TRACKING_ENABLED === "true";
   const activeTrackingMode: TrackingMode = isShipTrackingEnabled ? trackingMode : "aircraft";
   const showAircraftControls = activeTrackingMode === "aircraft";
+  const showShipControls = activeTrackingMode === "ship";
 
   useWatchlistSync();
 
@@ -115,6 +120,14 @@ export function AppShell({
     }
   }
 
+  function toggleTrackedPanel(): void {
+    setActivePanel((value) => (value === "tracked" ? null : "tracked"));
+    if (isMobile) {
+      setIsLayerPanelOpen(false);
+      closePlayback();
+    }
+  }
+
   function toggleLayerPanel(): void {
     setIsLayerPanelOpen((value) => !value);
     if (isMobile) {
@@ -159,6 +172,15 @@ export function AppShell({
             onOpenChange={setIsLayerPanelOpen}
             open={isLayerPanelOpen}
             showTrigger={false}
+            widthClassName={isMobile ? "w-[calc(100vw-1.5rem)]" : "w-80"}
+          />
+        ) : null}
+        {showShipControls && isLayerPanelOpen ? (
+          <ShipLayerPanel
+            animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
+            dockClassName={isMobile ? mobileLayerDockClassName : desktopLayerDockClassName}
+            enableSwipeClose={isMobile}
+            onOpenChange={setIsLayerPanelOpen}
             widthClassName={isMobile ? "w-[calc(100vw-1.5rem)]" : "w-80"}
           />
         ) : null}
@@ -208,6 +230,14 @@ export function AppShell({
             onClose={() => setActivePanel(null)}
           />
         ) : null}
+        {activePanel === "tracked" && activeTrackingMode === "ship" ? (
+          <ShipTrackedPanel
+            animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
+            dockClassName={isMobile ? mobileSearchDockClassName : desktopSearchDockClassName}
+            enableSwipeClose={isMobile}
+            onClose={() => setActivePanel(null)}
+          />
+        ) : null}
         {showAircraftControls && activePanel === "watchlist" && isAuthenticated ? (
           <WatchlistPanel
             animationClassName={isMobile ? "animate-slide-in-up" : "animate-slide-in-left"}
@@ -225,11 +255,13 @@ export function AppShell({
           isPlaybackOpen={isPlaybackOpen}
           isShipTrackingEnabled={isShipTrackingEnabled}
           isWatchlistEnabled={isAuthenticated}
+          trackedShipCount={trackedShipCount}
           onBaseLayerChange={setBaseLayerType}
           onTrackingModeChange={handleTrackingModeChange}
           onToggleLayerPanel={toggleLayerPanel}
           onTogglePlayback={togglePlaybackPanel}
           onToggleSearch={toggleSearchPanel}
+          onToggleTrackedShips={toggleTrackedPanel}
           onToggleWatchlist={() => {
             if (!isAuthenticated) {
               onOpenLogin();
@@ -246,10 +278,12 @@ export function AppShell({
           isPlaybackOpen={isPlaybackOpen}
           isShipTrackingEnabled={isShipTrackingEnabled}
           isWatchlistEnabled={isAuthenticated}
+          trackedShipCount={trackedShipCount}
           onTrackingModeChange={handleTrackingModeChange}
           onToggleLayerPanel={toggleLayerPanel}
           onTogglePlayback={togglePlaybackPanel}
           onToggleSearch={toggleSearchPanel}
+          onToggleTrackedShips={toggleTrackedPanel}
           onToggleWatchlist={() => {
             if (!isAuthenticated) {
               onOpenLogin();

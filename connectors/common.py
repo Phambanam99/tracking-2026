@@ -7,6 +7,7 @@ import os
 import random
 import re
 import time
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -14,6 +15,7 @@ import requests
 
 RecordDict = Dict[str, Any]
 ICAO_HEX_PATTERN = re.compile(r"^[0-9A-F]{6}$")
+MMSI_PATTERN = re.compile(r"^\d{9}$")
 JSON_DUMPS_KWARGS = {"separators": (",", ":"), "ensure_ascii": True}
 
 
@@ -40,12 +42,14 @@ class GatewayIngestConfig:
         gateway_url = os.getenv("GATEWAY_URL", "http://localhost:8080").rstrip("/")
         api_key = os.getenv("API_KEY", "").strip()
         source_id = os.getenv("SOURCE_ID", default_source_id).strip() or default_source_id
+        endpoint_path = os.getenv("INGEST_ENDPOINT_PATH", "/api/v1/ingest/adsb/batch").strip() or "/api/v1/ingest/adsb/batch"
         if not api_key:
             raise ConnectorConfigurationError("API_KEY is required.")
         return cls(
             gateway_url=gateway_url,
             api_key=api_key,
             source_id=source_id,
+            endpoint_path=endpoint_path,
             max_records_per_batch=int(os.getenv("MAX_RECORDS_PER_BATCH", "1000")),
             target_payload_bytes=int(os.getenv("TARGET_PAYLOAD_BYTES", str(220 * 1024))),
             request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "10")),
@@ -250,6 +254,22 @@ def normalize_hex_icao(value: Any) -> Optional[str]:
     return None
 
 
+def normalize_mmsi(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    if MMSI_PATTERN.fullmatch(normalized):
+        return normalized
+    return None
+
+
+def normalize_text(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    return normalized or None
+
+
 def normalize_heading(value: Any) -> Optional[float]:
     if value is None:
         return None
@@ -321,6 +341,64 @@ def epoch_ms_from_maybe_seconds_or_ms(value: Any) -> Optional[int]:
     return numeric if numeric >= 1_000_000_000_000 else numeric * 1000
 
 
+def parse_event_time_ms(value: Any) -> Optional[int]:
+    numeric = epoch_ms_from_maybe_seconds_or_ms(value)
+    if numeric is not None:
+        return numeric
+
+    text = normalize_text(value)
+    if text is None:
+        return None
+
+    normalized = text.replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return int(parsed.timestamp() * 1000)
+
+
+def convert_gmt7_to_utc(raw_timestamp: Any) -> Optional[datetime]:
+    text = normalize_text(raw_timestamp)
+    if text is None:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1]
+
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
+    gmt7 = timezone(timedelta(hours=7))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=gmt7)
+    return parsed.astimezone(timezone.utc)
+
+
 def completeness_score(record: RecordDict) -> int:
     fields = ("altitude", "speed", "heading")
     return sum(1 for field in fields if record.get(field) is not None)
+
+
+def completeness_score_ais(record: RecordDict) -> int:
+    fields = ("vessel_name", "speed", "course", "heading", "nav_status")
+    return sum(1 for field in fields if record.get(field) is not None)
+
+
+def dedupe_records(
+    records: List[RecordDict],
+    key_fields: tuple[str, ...] = ("mmsi", "event_time", "lat", "lon", "source_id"),
+) -> List[RecordDict]:
+    seen: set[tuple[Any, ...]] = set()
+    deduped: List[RecordDict] = []
+    for record in records:
+        dedupe_key = tuple(record.get(field) for field in key_fields)
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        deduped.append(record)
+    return deduped

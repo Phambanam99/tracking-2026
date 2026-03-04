@@ -77,7 +77,42 @@ export function buildSvgDataUri(
 const ICON_BASE_SCALE = 0.6; // world-units scale fed to OL Icon
 
 /**
+ * Resolve the altitude band index for a given altitude value.
+ * Matches the thresholds in {@link ALTITUDE_COLORS}.
+ */
+export function altitudeBandIndex(altFt: number | null | undefined): number {
+  if (altFt == null) return -1;
+  if (altFt <= 0) return 0;
+  for (let i = ALTITUDE_COLORS.length - 1; i >= 0; i--) {
+    if (altFt >= ALTITUDE_COLORS[i][0]) return i;
+  }
+  return -1;
+}
+
+// LRU-style cache for Style objects — avoids re-creating Icon+SVG for
+// identical visual parameters, which eliminates icon flicker during playback.
+const STYLE_CACHE_MAX = 512;
+const styleCache = new Map<string, Style>();
+
+function buildStyleCacheKey(
+  viewBox: string,
+  fill: string,
+  stroke: string,
+  iconScale: number,
+  roundedHeading: number,
+  noRotate: boolean,
+  opacity: number,
+): string {
+  return `${viewBox}|${fill}|${stroke}|${iconScale}|${roundedHeading}|${noRotate}|${opacity}`;
+}
+
+/**
  * Create an OpenLayers {@link Style} for the given aircraft.
+ *
+ * Styles are cached by quantised visual parameters (heading rounded to the
+ * nearest integer degree, altitude mapped to its colour band).  Returning
+ * the **same object reference** for identical visuals prevents OpenLayers
+ * from scheduling unnecessary re-renders (which cause icon flicker).
  */
 export function createAircraftStyle(options: AircraftStyleOptions): Style {
   const {
@@ -94,10 +129,27 @@ export function createAircraftStyle(options: AircraftStyleOptions): Style {
   const fill = isSelected ? "#ffdd00" : (fillColor ?? altitudeColor(altitude));
   const stroke = strokeColor ?? "#000000";
 
+  // Quantise heading to integer degrees — sub-degree changes are invisible.
+  const roundedHeading = heading != null ? Math.round(heading) % 360 : 0;
+  const noRotate = !!shape.noRotate;
+
+  const cacheKey = buildStyleCacheKey(
+    shape.viewBox,
+    fill,
+    stroke,
+    scale,
+    roundedHeading,
+    noRotate,
+    opacity,
+  );
+
+  const cached = styleCache.get(cacheKey);
+  if (cached) return cached;
+
   const src = buildSvgDataUri(shape, fill, stroke, scale);
 
   // Heading in degrees → radians.  OL Icon rotation is clockwise from north.
-  const rotation = heading != null ? (heading * Math.PI) / 180 : 0;
+  const rotation = (roundedHeading * Math.PI) / 180;
 
   const icon = new Icon({
     src,
@@ -106,9 +158,23 @@ export function createAircraftStyle(options: AircraftStyleOptions): Style {
     anchorYUnits: "fraction",
     scale: ICON_BASE_SCALE,
     opacity,
-    rotation: shape.noRotate ? 0 : rotation,
-    rotateWithView: !shape.noRotate,
+    rotation: noRotate ? 0 : rotation,
+    rotateWithView: !noRotate,
   });
 
-  return new Style({ image: icon });
+  const style = new Style({ image: icon });
+
+  // Evict oldest entries when the cache is full.
+  if (styleCache.size >= STYLE_CACHE_MAX) {
+    const firstKey = styleCache.keys().next().value;
+    if (firstKey !== undefined) styleCache.delete(firstKey);
+  }
+  styleCache.set(cacheKey, style);
+
+  return style;
+}
+
+/** @internal — Visible only for unit tests. */
+export function _resetStyleCacheForTesting(): void {
+  styleCache.clear();
 }

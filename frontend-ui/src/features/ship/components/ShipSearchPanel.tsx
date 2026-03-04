@@ -3,6 +3,7 @@ import { fromLonLat } from "ol/proj";
 import { OverlayPanel } from "../../../shared/components/OverlayPanel";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useMapContext } from "../../map/context/MapContext";
+import { useTrackedShipStore } from "../store/useTrackedShipStore";
 import { useShipStore } from "../store/useShipStore";
 import {
   searchShipGlobal,
@@ -12,6 +13,7 @@ import {
   type ShipSearchMode,
   type ShipSearchResult,
 } from "../api/shipSearchApi";
+import { ShipTrackGroupPicker } from "./ShipTrackGroupPicker";
 
 type ShipSearchPanelProps = {
   onClose: () => void;
@@ -43,6 +45,7 @@ export function ShipSearchPanel({
   const selectShip = useShipStore((state) => state.selectShip);
   const showDetails = useShipStore((state) => state.showDetails);
   const upsertShip = useShipStore((state) => state.upsertShip);
+  const trackedMmsis = useTrackedShipStore((state) => state.trackedMmsis);
   const abortRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mode = filters.mode;
   const query = filters.query;
@@ -410,6 +413,7 @@ export function ShipSearchPanel({
                           {ship.sourceId ? <span>{ship.sourceId}</span> : null}
                           {ship.speed != null ? <span>{Math.round(ship.speed)} kts</span> : null}
                           <span>{new Date(ship.eventTime).toLocaleTimeString()}</span>
+                          {trackedMmsis[ship.mmsi] ? <span>{t("ship.tracked")}</span> : null}
                         </div>
                       </button>
                       <div className="mt-2 flex gap-2">
@@ -427,6 +431,7 @@ export function ShipSearchPanel({
                         >
                           {t("ship.popup.viewDetails")}
                         </button>
+                        <ShipTrackGroupPicker compact mmsi={ship.mmsi} />
                       </div>
                     </div>
                   </li>

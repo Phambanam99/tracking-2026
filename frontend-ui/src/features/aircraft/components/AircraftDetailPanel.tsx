@@ -63,6 +63,15 @@ export function AircraftDetailPanel(): JSX.Element | null {
     })),
   );
   const playbackAircraft = usePlaybackStore((state) => getPlaybackAircraftByIcao(state, detailIcao));
+  const { trailIcao, trailRoutes, trailRouteOrder, setActiveTrail, clearTrail } = useAircraftStore(
+    useShallow((state) => ({
+      trailIcao: state.trailIcao,
+      trailRoutes: state.trailRoutes,
+      trailRouteOrder: state.trailRouteOrder,
+      setActiveTrail: state.setActiveTrail,
+      clearTrail: state.clearTrail,
+    })),
+  );
   const aircraft =
     playbackIsOpen && playbackStatus === "ready"
       ? playbackAircraft
@@ -71,6 +80,7 @@ export function AircraftDetailPanel(): JSX.Element | null {
   const photo = useAircraftPhoto(detailIcao);
   const photoMetadata = useAircraftPhotoMetadata(detailIcao);
   const countryName = getCountryName(aircraft?.countryCode);
+  const relatedTrailIcaos = trailRouteOrder.filter((icao) => icao === detailIcao);
 
   if (!detailIcao || !aircraft) {
     return null;
@@ -212,6 +222,59 @@ export function AircraftDetailPanel(): JSX.Element | null {
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 overflow-y-auto px-5 py-5 text-sm">
+          {relatedTrailIcaos.length > 0 ? (
+            <div className="col-span-2 mb-2 rounded-2xl border border-cyan-400/20 bg-cyan-500/8 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/80">{t("aircraft.detail.routeCompare")}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {relatedTrailIcaos.map((icao, index) => {
+                  const route = trailRoutes[icao];
+                  if (!route) {
+                    return null;
+                  }
+
+                  const from = route.positions[0]?.eventTime ?? null;
+                  const to = route.positions[route.positions.length - 1]?.eventTime ?? null;
+                  const rangeLabel =
+                    from != null && to != null
+                      ? `${formatEventTime(from, locale)} - ${formatEventTime(to, locale)}`
+                      : "-";
+
+                  return (
+                    <div className="rounded-2xl border border-slate-700/80 bg-slate-950/55 px-3 py-2" key={icao}>
+                      <div className="flex items-center gap-2">
+                        <button
+                          aria-pressed={trailIcao === icao}
+                          className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+                            trailIcao === icao
+                              ? "border-cyan-300 bg-cyan-300/15 text-cyan-100"
+                              : "border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white"
+                          }`}
+                          onClick={() => setActiveTrail(icao)}
+                          type="button"
+                        >
+                          {t("aircraft.detail.route")} {index + 1}
+                        </button>
+                        {trailIcao === icao ? (
+                          <span className="rounded-full border border-cyan-400/40 px-2 py-0.5 text-[10px] text-cyan-100">
+                            {t("aircraft.detail.routeActive")}
+                          </span>
+                        ) : null}
+                        <button
+                          className="rounded-full border border-slate-700 px-2 py-1 text-[10px] text-slate-300 transition hover:border-slate-500 hover:text-white"
+                          onClick={clearTrail}
+                          type="button"
+                        >
+                          {t("aircraft.detail.removeRoute")}
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-400">{route.positions.length} pts</p>
+                      <p className="mt-1 text-xs text-slate-500">{rangeLabel}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
           <Field label={t("aircraft.field.registration")} value={aircraft.registration} />
           <Field label={t("aircraft.field.type")} value={aircraft.aircraftType} />
           <Field label={t("aircraft.field.class")} value={aircraft.isMilitary ? t("aircraft.military") : null} />

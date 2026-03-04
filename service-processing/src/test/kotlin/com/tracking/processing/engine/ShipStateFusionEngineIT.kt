@@ -83,6 +83,37 @@ public class ShipStateFusionEngineIT {
         dlqProducer.records.first().reason shouldBe "KINEMATIC_INVALID"
     }
 
+    @Test
+    public fun `should keep vessel name from higher priority source signalr over chinaport and aisstream`() {
+        val producer = RecordingShipProcessingProducer()
+        val dlqProducer = RecordingShipDlqProducer()
+        val engine = buildEngine(producer, dlqProducer)
+
+        val signalr = ship(
+            eventTime = 10_000L,
+            vesselName = "SIGNALR NAME",
+            sourceId = "AIS-SIGNALR",
+        )
+        val chinaport = ship(
+            eventTime = 11_000L,
+            vesselName = "CHINAPORT NAME",
+            sourceId = "CHINAPORT-AIS",
+        )
+        val aisstream = ship(
+            eventTime = 12_000L,
+            vesselName = "AISSTREAM NAME",
+            sourceId = "AISSTREAM-IO",
+        )
+
+        engine.process(signalr)
+        val chinaportResult = engine.process(chinaport)
+        val aisstreamResult = engine.process(aisstream)
+
+        chinaportResult.enrichedShip?.vesselName shouldBe "SIGNALR NAME"
+        aisstreamResult.enrichedShip?.vesselName shouldBe "SIGNALR NAME"
+        dlqProducer.records shouldHaveSize 0
+    }
+
     private fun buildEngine(
         producer: RecordingShipProcessingProducer,
         dlqProducer: RecordingShipDlqProducer,
@@ -105,14 +136,17 @@ public class ShipStateFusionEngineIT {
         eventTime: Long,
         lat: Double = 10.7769,
         lon: Double = 106.7009,
+        vesselName: String? = null,
+        sourceId: String = "ais-1",
     ): CanonicalShip =
         CanonicalShip(
             mmsi = "574001230",
             lat = lat,
             lon = lon,
+            vesselName = vesselName,
             vesselType = "cargo",
             eventTime = eventTime,
-            sourceId = "ais-1",
+            sourceId = sourceId,
         )
 
     private class RecordingShipProcessingProducer : ShipProcessingProducer {

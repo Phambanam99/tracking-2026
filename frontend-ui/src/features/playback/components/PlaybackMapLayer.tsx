@@ -8,7 +8,7 @@ import { fromLonLat } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import { useMapContext } from "../../map/context/MapContext";
 import { resolveShape } from "../../aircraft/db/iconResolver";
-import { createAircraftStyle } from "../../aircraft/render/aircraftStyle";
+import { altitudeBandIndex, createAircraftStyle } from "../../aircraft/render/aircraftStyle";
 import {
   createRouteActiveStyle,
   createRouteCurrentPointStyle,
@@ -53,9 +53,19 @@ function buildPlaybackAircraftFeature(
 
 const FEATURE_PROP_LAT = "_lat";
 const FEATURE_PROP_LON = "_lon";
-const FEATURE_PROP_HEADING = "_heading";
-const FEATURE_PROP_ALTITUDE = "_altitude";
+const FEATURE_PROP_Q_HEADING = "_qHeading";
+const FEATURE_PROP_ALT_BAND = "_altBand";
 const FEATURE_PROP_SELECTED = "_isSelected";
+const FEATURE_PROP_TYPE = "_acType";
+
+/**
+ * Quantise heading to the nearest integer degree.
+ * Sub-degree changes are visually imperceptible and would otherwise
+ * trigger a full style rebuild + OpenLayers re-render every frame.
+ */
+function quantizeHeading(heading: number | null | undefined): number {
+  return heading != null ? Math.round(heading) % 360 : 0;
+}
 
 function syncPlaybackAircraftFeatures(
   source: VectorSource,
@@ -80,6 +90,7 @@ function syncPlaybackAircraftFeatures(
   for (const aircraft of aircraftList) {
     const existing = source.getFeatureById(aircraft.icao) as Feature<Point> | null;
     if (existing) {
+      // --- Position diff (geometry only, no style rebuild) ---
       const prevLat = existing.get(FEATURE_PROP_LAT) as number | undefined;
       const prevLon = existing.get(FEATURE_PROP_LON) as number | undefined;
       if (prevLat !== aircraft.lat || prevLon !== aircraft.lon) {
@@ -88,16 +99,25 @@ function syncPlaybackAircraftFeatures(
         existing.set(FEATURE_PROP_LON, aircraft.lon, true);
       }
 
+      // --- Style diff using quantised values ---
+      // Only rebuild the Style + Icon when the visual output actually changes.
       const isSelected = aircraft.icao === selectedIcao;
-      const prevHeading = existing.get(FEATURE_PROP_HEADING) as number | undefined;
-      const prevAltitude = existing.get(FEATURE_PROP_ALTITUDE) as number | undefined;
+      const qHeading = quantizeHeading(aircraft.heading);
+      const altBand = altitudeBandIndex(aircraft.altitude);
+      const acType = aircraft.aircraftType ?? "";
+
+      const prevQHeading = existing.get(FEATURE_PROP_Q_HEADING) as number | undefined;
+      const prevAltBand = existing.get(FEATURE_PROP_ALT_BAND) as number | undefined;
       const prevSelected = existing.get(FEATURE_PROP_SELECTED) as boolean | undefined;
+      const prevType = existing.get(FEATURE_PROP_TYPE) as string | undefined;
+
       if (
-        prevHeading !== aircraft.heading
-        || prevAltitude !== aircraft.altitude
+        prevQHeading !== qHeading
+        || prevAltBand !== altBand
         || prevSelected !== isSelected
+        || prevType !== acType
       ) {
-        const { shape, scale } = resolveShape(aircraft.aircraftType);
+        const { shape, scale } = resolveShape(acType);
         existing.setStyle(
           createAircraftStyle({
             shape,
@@ -108,17 +128,20 @@ function syncPlaybackAircraftFeatures(
             isSelected,
           }),
         );
-        existing.set(FEATURE_PROP_HEADING, aircraft.heading, true);
-        existing.set(FEATURE_PROP_ALTITUDE, aircraft.altitude, true);
+        existing.set(FEATURE_PROP_Q_HEADING, qHeading, true);
+        existing.set(FEATURE_PROP_ALT_BAND, altBand, true);
         existing.set(FEATURE_PROP_SELECTED, isSelected, true);
+        existing.set(FEATURE_PROP_TYPE, acType, true);
       }
     } else {
-      const feature = buildPlaybackAircraftFeature(aircraft, aircraft.icao === selectedIcao);
+      const isSelected = aircraft.icao === selectedIcao;
+      const feature = buildPlaybackAircraftFeature(aircraft, isSelected);
       feature.set(FEATURE_PROP_LAT, aircraft.lat, true);
       feature.set(FEATURE_PROP_LON, aircraft.lon, true);
-      feature.set(FEATURE_PROP_HEADING, aircraft.heading, true);
-      feature.set(FEATURE_PROP_ALTITUDE, aircraft.altitude, true);
-      feature.set(FEATURE_PROP_SELECTED, aircraft.icao === selectedIcao, true);
+      feature.set(FEATURE_PROP_Q_HEADING, quantizeHeading(aircraft.heading), true);
+      feature.set(FEATURE_PROP_ALT_BAND, altitudeBandIndex(aircraft.altitude), true);
+      feature.set(FEATURE_PROP_SELECTED, isSelected, true);
+      feature.set(FEATURE_PROP_TYPE, aircraft.aircraftType ?? "", true);
       source.addFeature(feature);
     }
   }

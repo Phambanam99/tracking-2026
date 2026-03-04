@@ -1,9 +1,11 @@
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { fromLonLat } from "ol/proj";
 import { useShallow } from "zustand/react/shallow";
 import { useMapContext } from "../../map/context/MapContext";
 import { useI18n } from "../../../shared/i18n/I18nProvider";
 import { useShipStore } from "../store/useShipStore";
+import { useTrackedShipStore } from "../store/useTrackedShipStore";
+import { ShipTrackGroupPicker } from "./ShipTrackGroupPicker";
 
 function formatCoordinate(value: number, positiveSuffix: string, negativeSuffix: string): string {
   return `${Math.abs(value).toFixed(4)} ${value >= 0 ? positiveSuffix : negativeSuffix}`;
@@ -15,6 +17,29 @@ function formatSpeed(knots: number | null): string {
 
 function formatHeading(degrees: number | null): string {
   return degrees == null ? "-" : `${Math.round(degrees)} deg`;
+}
+
+function formatEventTime(timestamp: number | null | undefined, locale: string): string {
+  if (timestamp == null) {
+    return "-";
+  }
+
+  return new Date(timestamp).toLocaleString(locale);
+}
+
+function TelemetryItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}): JSX.Element {
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-slate-800/70 py-1.5 text-xs">
+      <p className="text-slate-400">{label}</p>
+      <p className="text-right font-medium text-slate-100">{value}</p>
+    </div>
+  );
 }
 
 export function ShipPopup(): JSX.Element {
@@ -30,7 +55,13 @@ export function ShipPopup(): JSX.Element {
       showDetails: state.showDetails,
     })),
   );
-  const { t } = useI18n();
+  const trackedMmsis = useTrackedShipStore((state) => state.trackedMmsis);
+  const { locale, t } = useI18n();
+  const [showTrackGroupPicker, setShowTrackGroupPicker] = useState(false);
+
+  useEffect(() => {
+    setShowTrackGroupPicker(false);
+  }, [selectedMmsi]);
 
   useLayoutEffect(() => {
     const connectorEl = connectorRef.current;
@@ -127,34 +158,35 @@ export function ShipPopup(): JSX.Element {
                 </p>
               </div>
 
-              <table className="w-full text-xs">
-                <tbody>
-                  <tr>
-                    <td className="pr-2 text-slate-400">{t("ship.field.mmsi")}</td>
-                    <td className="font-mono">{ship.mmsi}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-2 text-slate-400">{t("ship.field.speed")}</td>
-                    <td>{formatSpeed(ship.speed)}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-2 text-slate-400">{t("ship.field.heading")}</td>
-                    <td>{formatHeading(ship.heading ?? ship.course)}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-2 text-slate-400">{t("ship.field.position")}</td>
-                    <td>{formatCoordinate(ship.lat, "N", "S")} {formatCoordinate(ship.lon, "E", "W")}</td>
-                  </tr>
-                  <tr>
-                    <td className="pr-2 text-slate-400">{t("ship.field.destination")}</td>
-                    <td>{ship.destination ?? "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="space-y-0.5">
+                <TelemetryItem label={t("ship.field.mmsi")} value={ship.mmsi} />
+                <TelemetryItem label={t("ship.field.type")} value={ship.metadata?.shipTypeName ?? ship.vesselType ?? "-"} />
+                <TelemetryItem label={t("ship.field.speed")} value={formatSpeed(ship.speed)} />
+                <TelemetryItem label={t("ship.field.heading")} value={formatHeading(ship.heading ?? ship.course)} />
+                <TelemetryItem
+                  label={t("ship.field.position")}
+                  value={`${formatCoordinate(ship.lat, "N", "S")} ${formatCoordinate(ship.lon, "E", "W")}`}
+                />
+                <TelemetryItem label={t("ship.field.destination")} value={ship.destination ?? "-"} />
+                <TelemetryItem label={t("ship.field.eventTime")} value={formatEventTime(ship.eventTime, locale)} />
+                <TelemetryItem label={t("ship.field.source")} value={ship.sourceId ?? "-"} />
+                <TelemetryItem label={t("ship.field.upstreamSource")} value={ship.upstreamSource ?? "-"} />
+              </div>
 
-              <div className="mt-3">
+              <div className="mt-3 flex gap-2">
+                {showTrackGroupPicker ? (
+                  <ShipTrackGroupPicker compact mmsi={ship.mmsi} />
+                ) : (
+                  <button
+                    className="rounded border border-yellow-400/50 px-3 py-1.5 text-xs font-medium text-yellow-100 transition hover:bg-yellow-400/10"
+                    onClick={() => setShowTrackGroupPicker(true)}
+                    type="button"
+                  >
+                    {trackedMmsis[ship.mmsi] ? t("ship.tracked") : t("ship.track")}
+                  </button>
+                )}
                 <button
-                  className="w-full rounded border border-cyan-500 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/10"
+                  className="flex-1 rounded border border-cyan-500 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-500/10"
                   onClick={() => showDetails(ship.mmsi, selectedMode)}
                   type="button"
                 >

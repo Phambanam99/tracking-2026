@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FeatureLike } from "ol/Feature";
 import type { MapBrowserEvent } from "ol";
 import { Feature } from "ol";
@@ -6,9 +6,14 @@ import { LineString, Point } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
 import { fromLonLat } from "ol/proj";
 import VectorSource from "ol/source/Vector";
-import { Circle as CircleStyle, Fill, Stroke, Style, Text } from "ol/style";
+import Icon from "ol/style/Icon";
+import { Fill, Stroke, Style, Text } from "ol/style";
 import { useMapContext } from "../../map/context/MapContext";
+import { splitRouteSegments } from "../../map/render/splitRouteSegments";
+import { resolveShipVisualStyle } from "../render/shipVisuals";
+import { useShipLayerStore } from "../store/useShipLayerStore";
 import { useShipStore } from "../store/useShipStore";
+import { useTrackedShipStore } from "../store/useTrackedShipStore";
 import type { Ship } from "../types/shipTypes";
 
 type HoverState = {
@@ -18,51 +23,79 @@ type HoverState = {
 
 const SHIP_LAYER_Z_INDEX = 10;
 const SHIP_TRAIL_LAYER_Z_INDEX = 9;
+const VESSEL_ICON_SRC = "/vessel-icon.svg";
+const SHIP_ROUTE_MAX_GAP_MS = 45 * 60 * 1000;
+const SHIP_ROUTE_MAX_SPEED_KTS = 80;
 
-function createShipStyle(ship: Ship): Style {
-  const fillColor = ship.metadata?.isMilitary ? "#f97316" : "#14b8a6";
-  const strokeColor = ship.metadata?.isMilitary ? "#fed7aa" : "#ccfbf1";
+function resolveShipHeading(ship: Ship): number {
+  return ship.heading ?? ship.course ?? 90;
+}
+
+function createShipStyle(ship: Ship, showLabels: boolean, isTracked: boolean): Style {
+  const visual = resolveShipVisualStyle(ship, isTracked);
 
   return new Style({
-    image: new CircleStyle({
-      radius: ship.metadata?.isMilitary ? 7 : 6,
-      fill: new Fill({ color: fillColor }),
-      stroke: new Stroke({ color: strokeColor, width: 2 }),
+    image: new Icon({
+      src: VESSEL_ICON_SRC,
+      color: visual.color,
+      scale: ship.metadata?.isMilitary ? 1.18 : 1.08,
+      rotateWithView: true,
+      rotation: ((resolveShipHeading(ship) - 90) * Math.PI) / 180,
     }),
-    text: new Text({
+    text: showLabels ? new Text({
       text: ship.vesselName ?? ship.mmsi,
       offsetY: 18,
       font: "600 11px ui-sans-serif",
       fill: new Fill({ color: "#e2e8f0" }),
       backgroundFill: new Fill({ color: "rgba(2, 6, 23, 0.72)" }),
       padding: [2, 4, 2, 4],
-    }),
+    }) : undefined,
   });
 }
 
-function createSelectedShipStyle(ship: Ship): Style {
-  const style = createShipStyle(ship);
-  style.setImage(
-    new CircleStyle({
-      radius: ship.metadata?.isMilitary ? 8 : 7,
-      fill: new Fill({ color: ship.metadata?.isMilitary ? "#ea580c" : "#0f766e" }),
-      stroke: new Stroke({ color: "#f8fafc", width: 2.5 }),
+function createSelectedShipStyle(ship: Ship, showLabels: boolean, isTracked: boolean): Style {
+  const visual = resolveShipVisualStyle(ship, isTracked);
+  return new Style({
+    image: new Icon({
+      src: VESSEL_ICON_SRC,
+      color: visual.selectedColor,
+      scale: ship.metadata?.isMilitary ? 1.34 : 1.22,
+      rotateWithView: true,
+      rotation: ((resolveShipHeading(ship) - 90) * Math.PI) / 180,
     }),
-  );
-  return style;
+    text: showLabels ? new Text({
+      text: ship.vesselName ?? ship.mmsi,
+      offsetY: 18,
+      font: "700 11px ui-sans-serif",
+      fill: new Fill({ color: "#f8fafc" }),
+      backgroundFill: new Fill({ color: "rgba(15, 23, 42, 0.88)" }),
+      stroke: new Stroke({ color: "rgba(45, 212, 191, 0.55)", width: 2 }),
+      padding: [2, 4, 2, 4],
+    }) : undefined,
+  });
 }
 
-function buildFeature(ship: Ship, isSelected: boolean): Feature<Point> {
+function buildFeature(ship: Ship, isSelected: boolean, showLabels: boolean, isTracked: boolean): Feature<Point> {
   const feature = new Feature<Point>({
     geometry: new Point(fromLonLat([ship.lon, ship.lat])),
     mmsi: ship.mmsi,
   });
   feature.setId(ship.mmsi);
-  feature.setStyle(isSelected ? createSelectedShipStyle(ship) : createShipStyle(ship));
+  feature.setStyle(
+    isSelected
+      ? createSelectedShipStyle(ship, showLabels, isTracked)
+      : createShipStyle(ship, showLabels, isTracked),
+  );
   return feature;
 }
 
-function syncFeatures(source: VectorSource, shipMap: Record<string, Ship>, selectedMmsi: string | null): void {
+function syncFeatures(
+  source: VectorSource,
+  shipMap: Record<string, Ship>,
+  selectedMmsi: string | null,
+  showLabels: boolean,
+  trackedMmsis: Record<string, true>,
+): void {
   const nextMmsiSet = new Set(Object.keys(shipMap));
 
   source.getFeatures().forEach((feature) => {
@@ -75,59 +108,132 @@ function syncFeatures(source: VectorSource, shipMap: Record<string, Ship>, selec
   for (const ship of Object.values(shipMap)) {
     const existing = source.getFeatureById(ship.mmsi) as Feature<Point> | null;
     const isSelected = ship.mmsi === selectedMmsi;
+    const isTracked = Boolean(trackedMmsis[ship.mmsi]);
     if (existing) {
       existing.getGeometry()?.setCoordinates(fromLonLat([ship.lon, ship.lat]));
-      existing.setStyle(isSelected ? createSelectedShipStyle(ship) : createShipStyle(ship));
+      existing.setStyle(
+        isSelected
+          ? createSelectedShipStyle(ship, showLabels, isTracked)
+          : createShipStyle(ship, showLabels, isTracked),
+      );
     } else {
-      source.addFeature(buildFeature(ship, isSelected));
+      source.addFeature(buildFeature(ship, isSelected, showLabels, isTracked));
     }
   }
 }
 
-function createTrailStyle(): Style {
+function pickShipsByMmsi(shipMap: Record<string, Ship>, allowedMmsis: Set<string>): Record<string, Ship> {
+  return Object.fromEntries(Object.entries(shipMap).filter(([mmsi]) => allowedMmsis.has(mmsi)));
+}
+
+function createTrailStyle(color = "rgba(129, 140, 248, 0.85)", dashed = false): Style {
   return new Style({
     stroke: new Stroke({
-      color: "rgba(129, 140, 248, 0.85)",
-      width: 2.5,
+      color,
+      width: dashed ? 2 : 2.5,
+      lineDash: dashed ? [5, 4] : undefined,
     }),
   });
 }
 
-function syncTrailFeature(source: VectorSource, trailPoints: Array<{ lat: number; lon: number }>): void {
-  const featureId = "__ship-history-trail__";
-  const existing = source.getFeatureById(featureId) as Feature<LineString> | null;
-
-  if (trailPoints.length < 2) {
-    if (existing) {
-      source.removeFeature(existing);
-    }
-    return;
-  }
-
-  const coordinates = trailPoints.map((point) => fromLonLat([point.lon, point.lat]));
-  if (existing) {
-    existing.getGeometry()?.setCoordinates(coordinates);
-    return;
-  }
-
-  const feature = new Feature<LineString>({
-    geometry: new LineString(coordinates),
+function createTrailCurrentPointStyle(color: string): Style {
+  return new Style({
+    image: new Icon({
+      src: VESSEL_ICON_SRC,
+      color,
+      scale: 0.95,
+      rotateWithView: true,
+    }),
   });
-  feature.setId(featureId);
-  feature.setStyle(createTrailStyle());
-  source.addFeature(feature);
+}
+
+function syncTrailFeatures(
+  source: VectorSource,
+  trailRoutes: ReturnType<typeof useShipStore.getState>["trailRoutes"],
+  trailRouteOrder: string[],
+  activeTrailRouteKey: string | null,
+): void {
+  source.clear();
+
+  for (const routeKey of trailRouteOrder) {
+    const route = trailRoutes[routeKey];
+    if (!route || route.points.length === 0) {
+      continue;
+    }
+
+    const isActive = route.key === activeTrailRouteKey;
+    const segments = splitRouteSegments(route.points, {
+      maxGapMs: SHIP_ROUTE_MAX_GAP_MS,
+      maxSpeedKts: SHIP_ROUTE_MAX_SPEED_KTS,
+    });
+
+    segments.forEach((segment, segmentIndex) => {
+      if (segment.length < 2) {
+        return;
+      }
+
+      const feature = new Feature<LineString>({
+        geometry: new LineString(segment.map((point) => fromLonLat([point.lon, point.lat]))),
+      });
+      feature.setId(`ship-trail-${routeKey}-${segmentIndex}`);
+      feature.set("routeKey", routeKey);
+      feature.set("mmsi", route.mmsi);
+      feature.setStyle(createTrailStyle(route.color, !isActive));
+      source.addFeature(feature);
+    });
+
+    if (isActive) {
+      const currentPoint = route.points[route.points.length - 1];
+      if (currentPoint) {
+        const currentPointFeature = new Feature<Point>({
+          geometry: new Point(fromLonLat([currentPoint.lon, currentPoint.lat])),
+        });
+        currentPointFeature.setId(`ship-trail-${routeKey}-current`);
+        currentPointFeature.set("routeKey", routeKey);
+        currentPointFeature.set("mmsi", route.mmsi);
+        currentPointFeature.setStyle(createTrailCurrentPointStyle(route.color));
+        source.addFeature(currentPointFeature);
+      }
+    }
+  }
 }
 
 export function ShipMapLayer(): JSX.Element | null {
   const { map } = useMapContext();
   const layerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const trailLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const sourceRef = useRef<VectorSource | null>(null);
   const trailSourceRef = useRef<VectorSource | null>(null);
   const [hovered, setHovered] = useState<HoverState | null>(null);
   const ships = useShipStore((state) => state.ships);
   const selectedMmsi = useShipStore((state) => state.selectedMmsi);
   const selectShip = useShipStore((state) => state.selectShip);
-  const trailPoints = useShipStore((state) => state.trailPoints);
+  const showDetails = useShipStore((state) => state.showDetails);
+  const trailRoutes = useShipStore((state) => state.trailRoutes);
+  const trailRouteOrder = useShipStore((state) => state.trailRouteOrder);
+  const activeTrailRouteKey = useShipStore((state) => state.activeTrailRouteKey);
+  const setActiveTrailRoute = useShipStore((state) => state.setActiveTrailRoute);
+  const shipLayers = useShipLayerStore((state) => state.visible);
+  const trackedOnly = useShipLayerStore((state) => state.trackedOnly);
+  const trackedGroupFilterIds = useShipLayerStore((state) => state.trackedGroupFilterIds);
+  const trackedMmsis = useTrackedShipStore((state) => state.trackedMmsis);
+  const groups = useTrackedShipStore((state) => state.groups);
+  const visibleTrackedMmsis = useMemo(() => {
+    const next = new Set<string>();
+    const activeGroups = trackedGroupFilterIds.length === 0
+      ? groups
+      : groups.filter((group) => trackedGroupFilterIds.includes(group.id));
+
+    for (const group of activeGroups) {
+      if (!trackedOnly && !group.visibleOnMap) {
+        continue;
+      }
+      for (const mmsi of group.mmsis) {
+        next.add(mmsi);
+      }
+    }
+    return next;
+  }, [groups, trackedGroupFilterIds]);
 
   useEffect(() => {
     if (!map) {
@@ -152,6 +258,38 @@ export function ShipMapLayer(): JSX.Element | null {
     sourceRef.current = source;
     trailSourceRef.current = trailSource;
     layerRef.current = layer;
+    trailLayerRef.current = trailLayer;
+    const snapshot = useShipStore.getState();
+    const layerSnapshot = useShipLayerStore.getState();
+    const trackedSnapshot = useTrackedShipStore.getState();
+    const filteredTrackedSnapshot = trackedGroupFilterIds.length === 0
+      ? new Set(
+        trackedSnapshot.groups
+          .filter((group) => trackedOnly || group.visibleOnMap)
+          .flatMap((group) => group.mmsis),
+      )
+      : new Set(
+        trackedSnapshot.groups
+          .filter((group) => trackedGroupFilterIds.includes(group.id) && (trackedOnly || group.visibleOnMap))
+          .flatMap((group) => group.mmsis),
+      );
+    layer.setVisible(layerSnapshot.visible.ships);
+    trailLayer.setVisible(layerSnapshot.visible.trail);
+    syncFeatures(
+      source,
+      layerSnapshot.trackedOnly
+        ? pickShipsByMmsi(snapshot.ships, filteredTrackedSnapshot)
+        : snapshot.ships,
+      snapshot.selectedMmsi,
+      layerSnapshot.visible.labels,
+      trackedSnapshot.trackedMmsis,
+    );
+    syncTrailFeatures(
+      trailSource,
+      layerSnapshot.visible.trail ? snapshot.trailRoutes : {},
+      layerSnapshot.visible.trail ? snapshot.trailRouteOrder : [],
+      layerSnapshot.visible.trail ? snapshot.activeTrailRouteKey : null,
+    );
 
     return () => {
       map.removeLayer(layer);
@@ -161,6 +299,7 @@ export function ShipMapLayer(): JSX.Element | null {
       sourceRef.current = null;
       trailSourceRef.current = null;
       layerRef.current = null;
+      trailLayerRef.current = null;
     };
   }, [map]);
 
@@ -169,16 +308,33 @@ export function ShipMapLayer(): JSX.Element | null {
     if (!source) {
       return;
     }
-    syncFeatures(source, ships, selectedMmsi);
-  }, [ships, selectedMmsi]);
+    layerRef.current?.setVisible(shipLayers.ships);
+    syncFeatures(
+      source,
+      shipLayers.ships
+        ? trackedOnly
+          ? pickShipsByMmsi(ships, visibleTrackedMmsis)
+          : ships
+        : {},
+      selectedMmsi,
+      shipLayers.labels,
+      trackedMmsis,
+    );
+  }, [shipLayers.labels, shipLayers.ships, selectedMmsi, ships, trackedGroupFilterIds, trackedMmsis, trackedOnly, visibleTrackedMmsis]);
 
   useEffect(() => {
     const source = trailSourceRef.current;
     if (!source) {
       return;
     }
-    syncTrailFeature(source, trailPoints);
-  }, [trailPoints]);
+    trailLayerRef.current?.setVisible(shipLayers.trail);
+    syncTrailFeatures(
+      source,
+      shipLayers.trail ? trailRoutes : {},
+      shipLayers.trail ? trailRouteOrder : [],
+      shipLayers.trail ? activeTrailRouteKey : null,
+    );
+  }, [activeTrailRouteKey, shipLayers.trail, trailRouteOrder, trailRoutes]);
 
   useEffect(() => {
     if (!map) {
@@ -186,13 +342,28 @@ export function ShipMapLayer(): JSX.Element | null {
     }
 
     const handleClick = (event: MapBrowserEvent<PointerEvent>): void => {
-      const hit = map.forEachFeatureAtPixel(
+      const trailHit = map.forEachFeatureAtPixel(
+        event.pixel,
+        (feature: FeatureLike) => feature,
+        { layerFilter: (layer) => layer === trailLayerRef.current },
+      );
+
+      const routeKey = trailHit?.get("routeKey") as string | undefined;
+      const trailMmsi = trailHit?.get("mmsi") as string | undefined;
+      if (routeKey && trailMmsi) {
+        setActiveTrailRoute(routeKey);
+        selectShip(trailMmsi, "history");
+        showDetails(trailMmsi, "history");
+        return;
+      }
+
+      const shipHit = map.forEachFeatureAtPixel(
         event.pixel,
         (feature: FeatureLike) => feature,
         { layerFilter: (layer) => layer === layerRef.current },
       );
 
-      const mmsi = hit?.get("mmsi") as string | undefined;
+      const mmsi = shipHit?.get("mmsi") as string | undefined;
       selectShip(mmsi ?? null);
     };
 
@@ -200,7 +371,7 @@ export function ShipMapLayer(): JSX.Element | null {
     map.on("click", handleClick);
     // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
     return () => map.un("click", handleClick);
-  }, [map, selectShip]);
+  }, [map, selectShip, setActiveTrailRoute, showDetails]);
 
   useEffect(() => {
     if (!map) {

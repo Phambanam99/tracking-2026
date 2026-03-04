@@ -1,10 +1,11 @@
 package com.tracking.query.history
 
 import com.tracking.query.dto.FlightPositionDto
+import java.sql.ResultSet
+import java.sql.Timestamp
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Service
-import java.sql.ResultSet
 
 /**
  * Provides flight position trail history for a single ICAO within a time range.
@@ -21,8 +22,8 @@ public class HistoryService(
             SELECT icao, lat, lon, altitude, speed, heading, event_time, source_id
             FROM storage.flight_positions
             WHERE icao = ?
-              AND event_time >= to_timestamp(? / 1000.0)
-              AND event_time <= to_timestamp(? / 1000.0)
+              AND event_time >= ?
+              AND event_time <= ?
             ORDER BY event_time DESC
             LIMIT ?
         """.trimIndent()
@@ -39,6 +40,6 @@ public class HistoryService(
                 sourceId = rs.getString("source_id"),
             )
         }
-        return jdbcTemplate.query(sql, mapper, icao, from, to, limit)
+        return jdbcTemplate.query(sql, mapper, icao, Timestamp(from), Timestamp(to), limit)
     }
 }

@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
 import { Feature } from "ol";
+import type { FeatureLike } from "ol/Feature";
+import type { MapBrowserEvent } from "ol";
 import type Geometry from "ol/geom/Geometry";
 import { LineString, Point } from "ol/geom";
 import VectorLayer from "ol/layer/Vector";
 import { fromLonLat } from "ol/proj";
 import VectorSource from "ol/source/Vector";
 import { useMapContext } from "../../map/context/MapContext";
+import { splitRouteSegments } from "../../map/render/splitRouteSegments";
 import {
   createRouteActiveStyle,
   createRouteBaseStyle,
@@ -14,6 +17,8 @@ import {
 import { useAircraftStore } from "../store/useAircraftStore";
 
 const TRAIL_LAYER_Z_INDEX = 9;
+const AIRCRAFT_ROUTE_MAX_GAP_MS = 20 * 60 * 1000;
+const AIRCRAFT_ROUTE_MAX_SPEED_KTS = 1200;
 
 type HistoryTrailLayerProps = {
   visible?: boolean;
@@ -27,6 +32,7 @@ export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): n
   const trailPlaybackIndex = useAircraftStore((state) => state.trailPlaybackIndex);
   const trailRouteOrder = useAircraftStore((state) => state.trailRouteOrder);
   const trailRoutes = useAircraftStore((state) => state.trailRoutes);
+  const setActiveTrail = useAircraftStore((state) => state.setActiveTrail);
 
   useEffect(() => {
     if (!map) {
@@ -70,30 +76,75 @@ export function HistoryTrailLayer({ visible = true }: HistoryTrailLayerProps): n
         continue;
       }
 
-      const coordinates = route.positions.map((position) => fromLonLat([position.lon, position.lat]));
+      const segments = splitRouteSegments(route.positions, {
+        maxGapMs: AIRCRAFT_ROUTE_MAX_GAP_MS,
+        maxSpeedKts: AIRCRAFT_ROUTE_MAX_SPEED_KTS,
+      });
       if (icao !== trailIcao) {
-        const baseLineFeature = new Feature(new LineString(coordinates));
-        baseLineFeature.setId(`history-trail-${icao}-base`);
-        baseLineFeature.setStyle(createRouteBaseStyle(route.color));
-        source.addFeature(baseLineFeature as Feature<Geometry>);
+        segments.forEach((segment, segmentIndex) => {
+          if (segment.length < 2) {
+            return;
+          }
+          const baseLineFeature = new Feature(new LineString(segment.map((position) => fromLonLat([position.lon, position.lat]))));
+          baseLineFeature.setId(`history-trail-${icao}-base-${segmentIndex}`);
+          baseLineFeature.set("routeIcao", icao);
+          baseLineFeature.setStyle(createRouteBaseStyle(route.color));
+          source.addFeature(baseLineFeature as Feature<Geometry>);
+        });
         continue;
       }
 
+      const coordinates = route.positions.map((position) => fromLonLat([position.lon, position.lat]));
       const playbackIndex = Math.max(0, Math.min(trailPlaybackIndex, coordinates.length - 1));
-      const activeCoordinates = coordinates.slice(0, playbackIndex + 1);
+      const activePositions = route.positions.slice(0, playbackIndex + 1);
+      const activeSegments = splitRouteSegments(activePositions, {
+        maxGapMs: AIRCRAFT_ROUTE_MAX_GAP_MS,
+        maxSpeedKts: AIRCRAFT_ROUTE_MAX_SPEED_KTS,
+      });
       const currentCoordinate = coordinates[playbackIndex];
 
-      const activeLineFeature = new Feature(new LineString(activeCoordinates));
-      activeLineFeature.setId(`history-trail-${icao}-active`);
-      activeLineFeature.setStyle(createRouteActiveStyle(route.color));
-      source.addFeature(activeLineFeature as Feature<Geometry>);
+      activeSegments.forEach((segment, segmentIndex) => {
+        if (segment.length < 2) {
+          return;
+        }
+        const activeLineFeature = new Feature(new LineString(segment.map((position) => fromLonLat([position.lon, position.lat]))));
+        activeLineFeature.setId(`history-trail-${icao}-active-${segmentIndex}`);
+        activeLineFeature.set("routeIcao", icao);
+        activeLineFeature.setStyle(createRouteActiveStyle(route.color));
+        source.addFeature(activeLineFeature as Feature<Geometry>);
+      });
 
       const currentPointFeature = new Feature(new Point(currentCoordinate));
       currentPointFeature.setId(`history-trail-${icao}-current`);
+      currentPointFeature.set("routeIcao", icao);
       currentPointFeature.setStyle(createRouteCurrentPointStyle(route.color));
       source.addFeature(currentPointFeature as Feature<Geometry>);
     }
   }, [trailIcao, trailPlaybackIndex, trailRouteOrder, trailRoutes]);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    const handleClick = (event: MapBrowserEvent<PointerEvent>): void => {
+      const hit = map.forEachFeatureAtPixel(
+        event.pixel,
+        (feature: FeatureLike) => feature,
+        { layerFilter: (layer) => layer === layerRef.current },
+      );
+
+      const routeIcao = hit?.get("routeIcao") as string | undefined;
+      if (routeIcao) {
+        setActiveTrail(routeIcao);
+      }
+    };
+
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
+    map.on("click", handleClick);
+    // @ts-expect-error OpenLayers overload typing is narrower than runtime usage.
+    return () => map.un("click", handleClick);
+  }, [map, setActiveTrail]);
 
   return null;
 }

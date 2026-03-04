@@ -9,6 +9,7 @@ describe("BottomTabBar", () => {
     const onToggleWatchlist = vi.fn();
     const onTogglePlayback = vi.fn();
     const onToggleLayerPanel = vi.fn();
+    const onToggleTrackedShips = vi.fn();
     const onTrackingModeChange = vi.fn();
 
     render(
@@ -19,9 +20,11 @@ describe("BottomTabBar", () => {
           isPlaybackOpen={false}
           isShipTrackingEnabled={true}
           isWatchlistEnabled={false}
+          trackedShipCount={2}
           onToggleLayerPanel={onToggleLayerPanel}
           onTogglePlayback={onTogglePlayback}
           onToggleSearch={onToggleSearch}
+          onToggleTrackedShips={onToggleTrackedShips}
           onTrackingModeChange={onTrackingModeChange}
           onToggleWatchlist={onToggleWatchlist}
           showAircraftControls={true}
@@ -51,9 +54,11 @@ describe("BottomTabBar", () => {
           isPlaybackOpen={false}
           isShipTrackingEnabled={true}
           isWatchlistEnabled={false}
+          trackedShipCount={3}
           onToggleLayerPanel={vi.fn()}
           onTogglePlayback={vi.fn()}
           onToggleSearch={vi.fn()}
+          onToggleTrackedShips={vi.fn()}
           onTrackingModeChange={vi.fn()}
           onToggleWatchlist={vi.fn()}
           showAircraftControls={false}
@@ -64,8 +69,9 @@ describe("BottomTabBar", () => {
 
     expect(screen.getByRole("button", { name: "Ships" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Toggle search panel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle tracked ships panel" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Toggle watchlist panel" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Toggle playback panel" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Toggle layer settings" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle layer settings" })).toBeInTheDocument();
   });
 });

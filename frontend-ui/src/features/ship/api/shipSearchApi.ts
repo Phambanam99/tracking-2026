@@ -1,4 +1,9 @@
-import { httpRequest } from "../../../shared/api/httpClient";
+import { HttpError, httpRequest } from "../../../shared/api/httpClient";
+import type { BoundingBox } from "../../map/render/flightLayer";
+import { toLiveShip, type Ship } from "../types/shipTypes";
+
+const DEFAULT_HISTORY_LIMIT = 15_000;
+const DEFAULT_VIEWPORT_HISTORY_LIMIT = 5_000;
 
 export type ShipSearchMode = "viewport" | "global" | "history";
 
@@ -35,6 +40,7 @@ export type ShipSearchResult = {
   heading?: number | null;
   eventTime: number;
   sourceId?: string;
+  upstreamSource?: string | null;
   vesselName?: string | null;
   vesselType?: string | null;
   imo?: string | null;
@@ -60,6 +66,7 @@ export type ShipHistoryPoint = {
   navStatus?: string | null;
   eventTime: number;
   sourceId: string;
+  upstreamSource?: string | null;
 };
 
 type ShipAdvancedSearchBackendRequest = {
@@ -132,7 +139,7 @@ export async function searchShipHistory(filters: Omit<ShipSearchFilters, "mode">
     method: "POST",
     body: toShipAdvancedSearchBackendRequest(filters),
   });
-  return { results, total: results.length, truncated: results.length >= 5000 };
+  return { results, total: results.length, truncated: results.length >= DEFAULT_HISTORY_LIMIT };
 }
 
 export async function getShipHistory(
@@ -142,11 +149,106 @@ export async function getShipHistory(
   const params = new URLSearchParams({
     from: String(options.from),
     to: String(options.to),
-    limit: String(options.limit ?? 200),
+    limit: String(options.limit ?? DEFAULT_HISTORY_LIMIT),
   });
 
   return httpRequest<ShipHistoryPoint[]>({
     path: `/api/v1/ships/${encodeURIComponent(mmsi)}/history?${params.toString()}`,
     method: "GET",
   });
+}
+
+export async function getAllShipHistory(
+  mmsi: string,
+  options: { from: number; to: number; batchLimit?: number; maxBatches?: number },
+): Promise<ShipHistoryPoint[]> {
+  const batchLimit = Math.min(Math.max(options.batchLimit ?? DEFAULT_HISTORY_LIMIT, 1), DEFAULT_HISTORY_LIMIT);
+  const maxBatches = Math.max(options.maxBatches ?? 100, 1);
+  const batches: ShipHistoryPoint[] = [];
+  let cursorTo = options.to;
+  let batchCount = 0;
+
+  while (cursorTo >= options.from && batchCount < maxBatches) {
+    const batch = await getShipHistory(mmsi, {
+      from: options.from,
+      to: cursorTo,
+      limit: batchLimit,
+    });
+    batchCount += 1;
+
+    if (batch.length === 0) {
+      break;
+    }
+
+    batches.push(...batch);
+    const oldestPoint = batch[batch.length - 1];
+    if (!oldestPoint || batch.length < batchLimit || oldestPoint.eventTime <= options.from) {
+      break;
+    }
+
+    cursorTo = oldestPoint.eventTime - 1;
+  }
+
+  const uniquePoints = new Map<string, ShipHistoryPoint>();
+  for (const point of batches) {
+    uniquePoints.set(
+      `${point.mmsi}:${point.eventTime}:${point.lat}:${point.lon}:${point.sourceId}`,
+      point,
+    );
+  }
+
+  return Array.from(uniquePoints.values()).sort((left, right) => left.eventTime - right.eventTime);
+}
+
+export async function fetchLiveShipsInViewport(
+  viewport: BoundingBox,
+  options: { lookbackMs?: number; limit?: number } = {},
+): Promise<Ship[]> {
+  const now = Date.now();
+  const fallbackLimits: Array<number | null> = [
+    options.limit ?? DEFAULT_VIEWPORT_HISTORY_LIMIT,
+    2_000,
+    1_000,
+    500,
+    null,
+  ];
+  const dedupedLimits = Array.from(new Set(fallbackLimits));
+
+  let results: ShipSearchResult[] | null = null;
+  let lastError: unknown = null;
+  for (const fallbackLimit of dedupedLimits) {
+    try {
+      const body: Record<string, unknown> = {
+        boundingBox: {
+          north: viewport.north,
+          south: viewport.south,
+          east: viewport.east,
+          west: viewport.west,
+        },
+        timeFrom: now - (options.lookbackMs ?? 2 * 60 * 60 * 1000),
+        timeTo: now,
+      };
+      if (fallbackLimit != null) {
+        body.limit = fallbackLimit;
+      }
+
+      results = await httpRequest<ShipSearchResult[]>({
+        path: "/api/v1/ships/search/history",
+        method: "POST",
+        body,
+      });
+      break;
+    } catch (error: unknown) {
+      lastError = error;
+      if (!(error instanceof HttpError) || error.status !== 400) {
+        throw error;
+      }
+    }
+  }
+
+  if (!results) {
+    throw lastError instanceof Error ? lastError : new Error("ship-viewport-history-fallback-failed");
+  }
+
+  return results.map((result) => toLiveShip(result, now));
 }

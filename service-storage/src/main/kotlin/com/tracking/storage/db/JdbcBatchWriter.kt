@@ -117,16 +117,17 @@ public class JdbcBatchWriter(
                     } else {
                         statement.setTimestamp(14, Timestamp.from(Instant.ofEpochMilli(eta)))
                     }
-                    statement.setString(15, ship.sourceId)
-                    statement.setBoolean(16, ship.isHistorical)
+                    statement.setString(15, ship.upstreamSource)
+                    statement.setString(16, ship.sourceId)
+                    statement.setBoolean(17, ship.isHistorical)
                     if (score == null) {
-                        statement.setNull(17, Types.DOUBLE)
+                        statement.setNull(18, Types.DOUBLE)
                     } else {
-                        statement.setDouble(17, score)
+                        statement.setDouble(18, score)
                     }
-                    statement.setObject(18, toJsonbOrNull(ship.metadata), Types.OTHER)
-                    statement.setString(19, record.traceContext.requestId)
-                    statement.setString(20, record.traceContext.traceparent)
+                    statement.setObject(19, toJsonbOrNull(ship.metadata), Types.OTHER)
+                    statement.setString(20, record.traceContext.requestId)
+                    statement.setString(21, record.traceContext.traceparent)
                 }
 
                 override fun getBatchSize(): Int = records.size
@@ -188,8 +189,8 @@ public class JdbcBatchWriter(
             """
             INSERT INTO ship_positions (
                 mmsi, event_time, lat, lon, speed, course, heading, nav_status, vessel_name, vessel_type, imo, call_sign,
-                destination, eta, source_id, is_historical, score, metadata, request_id, traceparent
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)
+                destination, eta, upstream_source, source_id, is_historical, score, metadata, request_id, traceparent
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?)
             ON CONFLICT (mmsi, event_time, lat, lon) DO NOTHING
             """
 

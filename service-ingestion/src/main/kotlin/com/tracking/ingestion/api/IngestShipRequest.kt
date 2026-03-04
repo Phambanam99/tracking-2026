@@ -42,6 +42,9 @@ public data class IngestShipRequest(
     @JsonProperty("source_id")
     @JsonAlias("sourceId")
     val sourceId: String? = null,
+    @JsonProperty("upstream_source")
+    @JsonAlias("upstreamSource")
+    val upstreamSource: String? = null,
     @JsonProperty("score")
     val score: Double? = null,
 )

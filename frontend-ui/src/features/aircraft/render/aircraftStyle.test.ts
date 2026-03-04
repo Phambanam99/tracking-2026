@@ -1,5 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
-import { buildSvgDataUri, createAircraftStyle } from "./aircraftStyle";
+import { describe, expect, test, vi, beforeEach } from "vitest";
+import { buildSvgDataUri, createAircraftStyle, _resetStyleCacheForTesting } from "./aircraftStyle";
 import type { ShapeDefinition } from "../db/markers";
 
 // ── OL mocks ──────────────────────────────────────────────────────────────────
@@ -112,6 +112,10 @@ describe("buildSvgDataUri", () => {
 // ── createAircraftStyle ───────────────────────────────────────────────────────
 
 describe("createAircraftStyle", () => {
+  beforeEach(() => {
+    _resetStyleCacheForTesting();
+  });
+
   test("returns an OL Style instance", () => {
     mockIconOptions.length = 0;
     mockStyleOptions.length = 0;
@@ -181,5 +185,18 @@ describe("createAircraftStyle", () => {
     mockIconOptions.length = 0;
     createAircraftStyle({ shape: SIMPLE_SHAPE, opacity: 0.25 });
     expect(mockIconOptions[0]?.opacity).toBe(0.25);
+  });
+
+  test("returns cached style for identical quantised parameters (anti-flicker)", () => {
+    const style1 = createAircraftStyle({ shape: SIMPLE_SHAPE, heading: 90.1, altitude: 12000 });
+    const style2 = createAircraftStyle({ shape: SIMPLE_SHAPE, heading: 90.4, altitude: 12500 });
+    // Sub-degree heading change and same altitude band → same cached object
+    expect(style1).toBe(style2);
+  });
+
+  test("returns different style when heading crosses integer degree boundary", () => {
+    const style1 = createAircraftStyle({ shape: SIMPLE_SHAPE, heading: 89.4 });
+    const style2 = createAircraftStyle({ shape: SIMPLE_SHAPE, heading: 90.6 });
+    expect(style1).not.toBe(style2);
   });
 });

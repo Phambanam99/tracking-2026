@@ -2,8 +2,9 @@ import type { TrackingMode } from "../features/map/store/useTrackingModeStore";
 import { useI18n } from "../shared/i18n/I18nProvider";
 
 type BottomTabBarProps = {
-  activePanel: "search" | "watchlist" | null;
+  activePanel: "search" | "watchlist" | "tracked" | null;
   isWatchlistEnabled: boolean;
+  trackedShipCount: number;
   isPlaybackOpen: boolean;
   isLayerPanelOpen: boolean;
   trackingMode: TrackingMode;
@@ -11,6 +12,7 @@ type BottomTabBarProps = {
   showAircraftControls: boolean;
   onToggleSearch: () => void;
   onToggleWatchlist: () => void;
+  onToggleTrackedShips: () => void;
   onTogglePlayback: () => void;
   onToggleLayerPanel: () => void;
   onTrackingModeChange: (mode: TrackingMode) => void;
@@ -19,6 +21,7 @@ type BottomTabBarProps = {
 export function BottomTabBar({
   activePanel,
   isWatchlistEnabled,
+  trackedShipCount,
   isPlaybackOpen,
   isLayerPanelOpen,
   trackingMode,
@@ -26,11 +29,13 @@ export function BottomTabBar({
   showAircraftControls,
   onToggleSearch,
   onToggleWatchlist,
+  onToggleTrackedShips,
   onTogglePlayback,
   onToggleLayerPanel,
   onTrackingModeChange,
 }: BottomTabBarProps): JSX.Element {
   const { t } = useI18n();
+  const showLayerControls = showAircraftControls || trackingMode === "ship";
 
   return (
     <div className="pointer-events-none absolute bottom-4 left-1/2 z-40 w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2 md:hidden">
@@ -88,7 +93,7 @@ export function BottomTabBar({
             </TabButton>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2">
+          <div className={`grid gap-2 ${showLayerControls ? "grid-cols-3" : "grid-cols-2"}`}>
             <TabButton
               active={activePanel === "search"}
               ariaLabel={t("toolbar.toggleSearch")}
@@ -97,6 +102,24 @@ export function BottomTabBar({
             >
               <SearchIcon />
             </TabButton>
+            <TabButton
+              active={activePanel === "tracked"}
+              ariaLabel={t("toolbar.toggleTrackedShips")}
+              label={t("toolbar.trackedShipsShort", { count: trackedShipCount })}
+              onClick={onToggleTrackedShips}
+            >
+              <TrackShipIcon />
+            </TabButton>
+            {showLayerControls ? (
+              <TabButton
+                active={isLayerPanelOpen}
+                ariaLabel={t("toolbar.toggleLayers")}
+                label={t("toolbar.layers")}
+                onClick={onToggleLayerPanel}
+              >
+                <LayerIcon />
+              </TabButton>
+            ) : null}
           </div>
         )}
       </div>
@@ -191,6 +214,16 @@ function LayerIcon(): JSX.Element {
       <path d="M12 4 4 8l8 4 8-4-8-4Z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="m4 12 8 4 8-4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="m4 16 8 4 8-4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrackShipIcon(): JSX.Element {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path d="M3 12h11" strokeLinecap="round" />
+      <path d="m11 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="18" cy="12" r="3" />
     </svg>
   );
 }

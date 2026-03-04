@@ -9,6 +9,7 @@ describe("ToolBar", () => {
     const onToggleWatchlist = vi.fn();
     const onTogglePlayback = vi.fn();
     const onToggleLayerPanel = vi.fn();
+    const onToggleTrackedShips = vi.fn();
     const onBaseLayerChange = vi.fn();
     const onTrackingModeChange = vi.fn();
 
@@ -21,10 +22,12 @@ describe("ToolBar", () => {
           isPlaybackOpen={false}
           isShipTrackingEnabled={true}
           isWatchlistEnabled={true}
+          trackedShipCount={2}
           onBaseLayerChange={onBaseLayerChange}
           onToggleLayerPanel={onToggleLayerPanel}
           onTogglePlayback={onTogglePlayback}
           onToggleSearch={onToggleSearch}
+          onToggleTrackedShips={onToggleTrackedShips}
           onToggleWatchlist={onToggleWatchlist}
           onTrackingModeChange={onTrackingModeChange}
           showAircraftControls={true}
@@ -58,10 +61,12 @@ describe("ToolBar", () => {
           isPlaybackOpen={false}
           isShipTrackingEnabled={false}
           isWatchlistEnabled={false}
+          trackedShipCount={0}
           onBaseLayerChange={vi.fn()}
           onToggleLayerPanel={vi.fn()}
           onTogglePlayback={vi.fn()}
           onToggleSearch={vi.fn()}
+          onToggleTrackedShips={vi.fn()}
           onToggleWatchlist={vi.fn()}
           onTrackingModeChange={vi.fn()}
           showAircraftControls={true}
@@ -83,10 +88,12 @@ describe("ToolBar", () => {
           isPlaybackOpen={false}
           isShipTrackingEnabled={true}
           isWatchlistEnabled={false}
+          trackedShipCount={3}
           onBaseLayerChange={vi.fn()}
           onToggleLayerPanel={vi.fn()}
           onTogglePlayback={vi.fn()}
           onToggleSearch={vi.fn()}
+          onToggleTrackedShips={vi.fn()}
           onToggleWatchlist={vi.fn()}
           onTrackingModeChange={vi.fn()}
           showAircraftControls={false}
@@ -96,9 +103,10 @@ describe("ToolBar", () => {
     );
 
     expect(screen.getByLabelText("Toggle search panel")).toBeInTheDocument();
+    expect(screen.getByLabelText("Toggle tracked ships panel")).toBeInTheDocument();
     expect(screen.queryByLabelText("Toggle watchlist panel")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Toggle playback panel")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Toggle layer settings")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Toggle layer settings")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ships" })).toHaveAttribute("aria-pressed", "true");
   });
 });

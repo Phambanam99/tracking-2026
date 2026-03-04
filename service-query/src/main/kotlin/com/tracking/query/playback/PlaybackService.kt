@@ -3,12 +3,13 @@ package com.tracking.query.playback
 import com.tracking.query.dto.PlaybackFrameMetadataDto
 import com.tracking.query.dto.PlaybackFrameRequest
 import com.tracking.query.dto.PlaybackFrameResponse
+import java.nio.charset.StandardCharsets
+import java.sql.ResultSet
+import java.sql.Timestamp
+import java.util.Base64
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Service
-import java.nio.charset.StandardCharsets
-import java.sql.ResultSet
-import java.util.Base64
 
 @Service
 public class PlaybackService(
@@ -30,8 +31,8 @@ public class PlaybackService(
             PLAYBACK_SQL,
             rowMapper,
             bucketSizeMs,                     // 1  time_bucket interval
-            effectiveTimeFrom,                // 2  WHERE event_time >= ?
-            effectiveTimeTo,                  // 3  WHERE event_time <= ?
+            Timestamp(effectiveTimeFrom),     // 2  WHERE event_time >= ?
+            Timestamp(effectiveTimeTo),       // 3  WHERE event_time <= ?
             request.boundingBox.south,        // 4  lat BETWEEN south
             request.boundingBox.north,        // 5             AND north
             request.boundingBox.west,         // 6  lon BETWEEN west
@@ -155,7 +156,7 @@ public class PlaybackService(
                     fp.source_id,
                     fp.metadata
                 FROM storage.flight_positions fp
-                WHERE fp.event_time BETWEEN to_timestamp(? / 1000.0) AND to_timestamp(? / 1000.0)
+                WHERE fp.event_time BETWEEN ? AND ?
                   AND fp.lat BETWEEN ? AND ?
                   AND fp.lon BETWEEN ? AND ?
             ),

@@ -43,15 +43,16 @@ public class ShipStateFusionEngine(
 
             val previous = lastKnownStateStore.get(ship.mmsi)
             val decision = eventTimeResolver.resolve(previous?.eventTime, ship.eventTime)
+            val fusedShip = mergeShipNameBySourcePriority(previous, ship)
 
             if (decision == EventTimeDecision.LIVE && previous != null) {
-                val validation = kinematicValidator.validate(previous, ship)
+                val validation = kinematicValidator.validate(previous, fusedShip)
                 if (!validation.isValid) {
                     processingMetrics.incrementRejectedKinematic()
                     invalidRecordDlqProducer.publish(
                         InvalidShipRecord(
                             reason = KINEMATIC_INVALID_REASON,
-                            ship = ship,
+                            ship = fusedShip,
                             previousShip = previous,
                             computedSpeedKmh = validation.computedSpeedKmh,
                         ),
@@ -64,14 +65,14 @@ public class ShipStateFusionEngine(
             }
 
             val enrichStartedAtNanos = System.nanoTime()
-            val enriched = shipEnricher.enrich(ship, isHistorical = decision == EventTimeDecision.HISTORICAL)
+            val enriched = shipEnricher.enrich(fusedShip, isHistorical = decision == EventTimeDecision.HISTORICAL)
             processingMetrics.recordEnrichmentLatencyNanos(System.nanoTime() - enrichStartedAtNanos)
 
             val outputTopic = topicRouter.route(decision)
             processingProducer.publish(outputTopic, enriched)
             processingMetrics.incrementPublished(decision)
             if (decision == EventTimeDecision.LIVE) {
-                lastKnownStateStore.put(ship)
+                lastKnownStateStore.put(fusedShip)
             }
 
             ShipProcessingResult(
@@ -87,7 +88,53 @@ public class ShipStateFusionEngine(
 
     private companion object {
         private const val KINEMATIC_INVALID_REASON: String = "KINEMATIC_INVALID"
+        private const val SIGNALR_PRIORITY: Int = 3
+        private const val CHINAPORT_PRIORITY: Int = 2
+        private const val AISTREAM_PRIORITY: Int = 1
     }
+
+    private fun mergeShipNameBySourcePriority(
+        previous: CanonicalShip?,
+        incoming: CanonicalShip,
+    ): CanonicalShip {
+        if (previous == null) {
+            return incoming
+        }
+
+        val previousName = previous.vesselName.normalizeNameOrNull()
+        val incomingName = incoming.vesselName.normalizeNameOrNull()
+
+        if (incomingName == null) {
+            return incoming.copy(vesselName = previousName)
+        }
+        if (previousName == null) {
+            return incoming.copy(vesselName = incomingName)
+        }
+        if (incomingName == previousName) {
+            return incoming.copy(vesselName = incomingName)
+        }
+
+        val previousPriority = sourcePriority(previous.sourceId)
+        val incomingPriority = sourcePriority(incoming.sourceId)
+        return if (previousPriority > incomingPriority) {
+            incoming.copy(vesselName = previousName)
+        } else {
+            incoming.copy(vesselName = incomingName)
+        }
+    }
+
+    private fun sourcePriority(sourceId: String): Int {
+        val normalized = sourceId.trim().uppercase()
+        return when {
+            normalized.contains("AIS-SIGNALR") || normalized.contains("SIGNALR") -> SIGNALR_PRIORITY
+            normalized.contains("CHINAPORT") -> CHINAPORT_PRIORITY
+            normalized.contains("AISSTREAM") -> AISTREAM_PRIORITY
+            else -> 0
+        }
+    }
+
+    private fun String?.normalizeNameOrNull(): String? =
+        this?.trim()?.takeIf { it.isNotEmpty() }
 }
 
 public data class ShipProcessingResult(

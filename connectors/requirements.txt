@@ -4,3 +4,5 @@ brotli>=1.1.0
 selenium>=4.21.0
 undetected-chromedriver>=3.5.5
 setuptools>=75.0.0
+websocket-client>=1.7.0
+signalrcore>=0.9.5

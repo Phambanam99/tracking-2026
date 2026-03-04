@@ -10,4 +10,5 @@ public data class ShipHistoryPositionDto(
     val navStatus: String? = null,
     val eventTime: Long,
     val sourceId: String? = null,
+    val upstreamSource: String? = null,
 )

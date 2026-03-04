@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service
 
 @Service
 public class ShipQueryService(
-    private val jdbcTemplate: JdbcTemplate,
+        private val jdbcTemplate: JdbcTemplate,
 ) {
     public fun search(query: String, limit: Int): List<ShipSearchResult> {
         val normalized = "%${query.trim().uppercase()}%"
-        val sql = """
+        val sql =
+                """
             SELECT DISTINCT ON (mmsi)
-                mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id,
+                mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id, upstream_source,
                 vessel_name, vessel_type, imo, call_sign, destination, metadata
             FROM storage.ship_positions
             WHERE UPPER(mmsi) LIKE ?
@@ -30,14 +31,24 @@ public class ShipQueryService(
             LIMIT ?
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, shipSearchResultMapper(), normalized, normalized, normalized, normalized, normalized, normalized, limit)
+        return jdbcTemplate.query(
+                sql,
+                shipSearchResultMapper(),
+                normalized,
+                normalized,
+                normalized,
+                normalized,
+                normalized,
+                normalized,
+                limit
+        )
     }
 
     public fun searchHistory(request: ShipSearchRequest): List<ShipSearchResult> {
         val sql = buildString {
             append(
-                """
-                SELECT mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id,
+                    """
+                SELECT mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id, upstream_source,
                        vessel_name, vessel_type, imo, call_sign, destination, metadata
                 FROM storage.ship_positions
                 WHERE 1=1
@@ -102,9 +113,15 @@ public class ShipQueryService(
         return jdbcTemplate.query(finalSql, shipSearchResultMapper(), *params.toTypedArray())
     }
 
-    public fun getHistory(mmsi: String, from: Long, to: Long, limit: Int): List<ShipHistoryPositionDto> {
-        val sql = """
-            SELECT mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id
+    public fun getHistory(
+            mmsi: String,
+            from: Long,
+            to: Long,
+            limit: Int
+    ): List<ShipHistoryPositionDto> {
+        val sql =
+                """
+            SELECT mmsi, lat, lon, speed, course, heading, nav_status, event_time, source_id, upstream_source
             FROM storage.ship_positions
             WHERE mmsi = ?
               AND event_time >= ?
@@ -113,42 +130,61 @@ public class ShipQueryService(
             LIMIT ?
         """.trimIndent()
 
-        val mapper = RowMapper<ShipHistoryPositionDto> { rs: ResultSet, _ ->
-            ShipHistoryPositionDto(
-                mmsi = rs.getString("mmsi"),
-                lat = rs.getDouble("lat"),
-                lon = rs.getDouble("lon"),
-                speed = rs.getObject("speed") as? Double,
-                course = rs.getObject("course") as? Double,
-                heading = rs.getObject("heading") as? Double,
-                navStatus = rs.getString("nav_status"),
-                eventTime = rs.getTimestamp("event_time").time,
-                sourceId = rs.getString("source_id"),
-            )
-        }
+        val mapper =
+                RowMapper<ShipHistoryPositionDto> { rs: ResultSet, _ ->
+                    ShipHistoryPositionDto(
+                            mmsi = rs.getString("mmsi"),
+                            lat = rs.getDouble("lat"),
+                            lon = rs.getDouble("lon"),
+                            speed = rs.getObject("speed") as? Double,
+                            course = rs.getObject("course") as? Double,
+                            heading = rs.getObject("heading") as? Double,
+                            navStatus = rs.getString("nav_status"),
+                            eventTime = rs.getTimestamp("event_time").time,
+                            sourceId = rs.getString("source_id"),
+                            upstreamSource = rs.getString("upstream_source"),
+                    )
+                }
 
         return jdbcTemplate.query(sql, mapper, mmsi, Timestamp(from), Timestamp(to), limit)
     }
 
     private fun shipSearchResultMapper(): RowMapper<ShipSearchResult> =
-        RowMapper<ShipSearchResult> { rs: ResultSet, _ ->
-            val metadata = rs.getString("metadata").orEmpty()
-            ShipSearchResult(
-                mmsi = rs.getString("mmsi"),
-                lat = rs.getDouble("lat"),
-                lon = rs.getDouble("lon"),
-                speed = rs.getObject("speed") as? Double,
-                course = rs.getObject("course") as? Double,
-                heading = rs.getObject("heading") as? Double,
-                eventTime = rs.getTimestamp("event_time").time,
-                sourceId = rs.getString("source_id"),
-                vesselName = rs.getString("vessel_name"),
-                vesselType = rs.getString("vessel_type"),
-                imo = rs.getString("imo"),
-                callSign = rs.getString("call_sign"),
-                destination = rs.getString("destination"),
-                navStatus = rs.getString("nav_status"),
-                isMilitary = metadata.contains("\"is_military\":true"),
-            )
-        }
+            RowMapper<ShipSearchResult> { rs: ResultSet, _ ->
+                val metadataJson = rs.getString("metadata").orEmpty()
+                val metadataNode = runCatching { objectMapper.readTree(metadataJson) }.getOrNull()
+
+                ShipSearchResult(
+                        mmsi = rs.getString("mmsi"),
+                        lat = rs.getDouble("lat"),
+                        lon = rs.getDouble("lon"),
+                        speed = rs.getObject("speed") as? Double,
+                        course = rs.getObject("course") as? Double,
+                        heading = rs.getObject("heading") as? Double,
+                        eventTime = rs.getTimestamp("event_time").time,
+                        sourceId = rs.getString("source_id"),
+                        upstreamSource = rs.getString("upstream_source"),
+                        vesselName = rs.getString("vessel_name"),
+                        vesselType = rs.getString("vessel_type"),
+                        imo = rs.getString("imo"),
+                        callSign = rs.getString("call_sign"),
+                        destination = rs.getString("destination"),
+                        navStatus = rs.getString("nav_status"),
+                        isMilitary = metadataNode?.path("is_military")?.asBoolean(false) ?: false,
+                        flagCountry =
+                                metadataNode
+                                        ?.path("flag_country")
+                                        ?.takeIf { !it.isNull && !it.isMissingNode }
+                                        ?.asText(),
+                        flagUrl =
+                                metadataNode
+                                        ?.path("flag_url")
+                                        ?.takeIf { !it.isNull && !it.isMissingNode }
+                                        ?.asText(),
+                )
+            }
+
+    private companion object {
+        private val objectMapper = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+    }
 }

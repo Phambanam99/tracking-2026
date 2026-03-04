@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { I18nProvider } from "../../../shared/i18n/I18nProvider";
 import { useShipStore } from "../store/useShipStore";
+import { useTrackedShipStore } from "../store/useTrackedShipStore";
 
 const {
   mockMapOn,
@@ -47,6 +48,11 @@ describe("ShipPopup", () => {
   beforeEach(() => {
     act(() => {
       useShipStore.setState({ ships: {}, selectedMmsi: null, detailMmsi: null });
+      useTrackedShipStore.setState({
+        groups: [{ id: "default", name: "Default", color: "#f59e0b", mmsis: [], visibleOnMap: true }],
+        activeGroupId: "default",
+        trackedMmsis: {},
+      });
     });
     vi.clearAllMocks();
   });
@@ -54,6 +60,11 @@ describe("ShipPopup", () => {
   afterEach(() => {
     act(() => {
       useShipStore.setState({ ships: {}, selectedMmsi: null, detailMmsi: null });
+      useTrackedShipStore.setState({
+        groups: [{ id: "default", name: "Default", color: "#f59e0b", mmsis: [], visibleOnMap: true }],
+        activeGroupId: "default",
+        trackedMmsis: {},
+      });
     });
   });
 
@@ -77,6 +88,7 @@ describe("ShipPopup", () => {
             eta: null,
             eventTime: 100,
             sourceId: "AIS",
+            upstreamSource: "hifleet",
             isHistorical: false,
             metadata: { flagCountry: "Vietnam", shipTypeName: "Cargo Vessel", isMilitary: false },
             lastSeen: Date.now(),
@@ -95,6 +107,17 @@ describe("ShipPopup", () => {
 
     expect(screen.getByText("PACIFIC TRADER")).toBeDefined();
     expect(screen.getByText("SG SIN")).toBeDefined();
+    expect(screen.getByText("MMSI")).toBeDefined();
+    expect(screen.getByText("Type")).toBeDefined();
+    expect(screen.getByText("Event time")).toBeDefined();
+    expect(screen.getByText("Source")).toBeDefined();
+    expect(screen.getByText("Upstream source")).toBeDefined();
+    expect(screen.getByText("AIS")).toBeDefined();
+    expect(screen.getByText("hifleet")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Track ship" })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: "Track ship" }));
+    expect(screen.getByLabelText("Select tracked ship group")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "View Details" }));
     expect(useShipStore.getState().detailMmsi).toBe("574001230");

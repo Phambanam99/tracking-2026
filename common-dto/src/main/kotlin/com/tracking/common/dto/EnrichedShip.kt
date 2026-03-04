@@ -46,6 +46,11 @@ public data class EnrichedShip(
     @param:JsonAlias("sourceId")
     @SerialName("source_id")
     val sourceId: String,
+    @param:JsonProperty("upstream_source")
+    @get:JsonProperty("upstream_source")
+    @param:JsonAlias("upstreamSource")
+    @SerialName("upstream_source")
+    val upstreamSource: String? = null,
     @param:JsonProperty("is_historical")
     @get:JsonProperty("is_historical")
     @param:JsonAlias("isHistorical")

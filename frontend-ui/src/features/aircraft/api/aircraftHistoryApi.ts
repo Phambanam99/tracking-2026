@@ -29,11 +29,13 @@ export async function fetchFlightHistory(
     method: "GET",
   });
 
-  return data.map((position) => ({
-    lat: position.lat,
-    lon: position.lon,
-    altitude: position.altitude,
-    heading: position.heading,
-    eventTime: position.eventTime,
-  }));
+  return [...data]
+    .sort((left, right) => left.eventTime - right.eventTime)
+    .map((position) => ({
+      lat: position.lat,
+      lon: position.lon,
+      altitude: position.altitude,
+      heading: position.heading,
+      eventTime: position.eventTime,
+    }));
 }

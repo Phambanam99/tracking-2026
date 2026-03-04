@@ -264,4 +264,41 @@ describe("AircraftDetailPanel", () => {
 
     expect(useAircraftStore.getState().detailIcao).toBeNull();
   });
+
+  test("renders route compare block for loaded aircraft trails", () => {
+    const aircraft = makeAircraft();
+    act(() => {
+      useAircraftStore.setState({
+        aircraft: { VN1234: aircraft },
+        selectedIcao: "VN1234",
+        detailIcao: "VN1234",
+        trailIcao: "VN1234",
+        trailPositions: [
+          { lat: 10, lon: 106, altitude: 35000, heading: 270, eventTime: 1700000000000 },
+          { lat: 10.5, lon: 106.5, altitude: 36000, heading: 271, eventTime: 1700000600000 },
+        ],
+        trailRouteOrder: ["VN1234"],
+        trailRoutes: {
+          VN1234: {
+            icao: "VN1234",
+            color: "#22d3ee",
+            positions: [
+              { lat: 10, lon: 106, altitude: 35000, heading: 270, eventTime: 1700000000000 },
+              { lat: 10.5, lon: 106.5, altitude: 36000, heading: 271, eventTime: 1700000600000 },
+            ],
+          },
+        },
+      });
+    });
+
+    render(
+      <I18nProvider defaultLanguage="en">
+        <AircraftDetailPanel />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByText("Route compare")).toBeDefined();
+    expect(screen.getByText("Active")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Remove route" })).toBeDefined();
+  });
 });

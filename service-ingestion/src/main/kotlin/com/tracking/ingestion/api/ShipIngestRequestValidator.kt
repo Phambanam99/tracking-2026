@@ -45,6 +45,7 @@ public class ShipIngestRequestValidator(
             eta = request.eta?.takeIf { it > 0 },
             eventTime = eventTime,
             sourceId = sourceId,
+            upstreamSource = request.upstreamSource.normalizeOrNull(),
             score = request.score.finiteOrNull("score"),
         )
     }

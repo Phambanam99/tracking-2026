@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { I18nProvider } from "../../../shared/i18n/I18nProvider";
 import { useShipStore } from "../store/useShipStore";
+import { useTrackedShipStore } from "../store/useTrackedShipStore";
 
 const mockAnimate = vi.fn();
 const mockGetZoom = vi.fn().mockReturnValue(5);
@@ -60,6 +61,11 @@ describe("ShipSearchPanel", () => {
         selectedMmsi: null,
         detailMmsi: null,
       });
+      useTrackedShipStore.setState({
+        groups: [{ id: "default", name: "Default", color: "#f59e0b", mmsis: [], visibleOnMap: true }],
+        activeGroupId: "default",
+        trackedMmsis: {},
+      });
     });
 
     render(
@@ -78,5 +84,53 @@ describe("ShipSearchPanel", () => {
 
     expect(useShipStore.getState().selectedMmsi).toBe("574001230");
     expect(mockAnimate).toHaveBeenCalledTimes(1);
+  });
+
+  test("tracks ship from search result action", () => {
+    act(() => {
+      useShipStore.setState({
+        ships: {
+          "574001230": {
+            mmsi: "574001230",
+            lat: 10,
+            lon: 106,
+            speed: null,
+            course: null,
+            heading: null,
+            navStatus: null,
+            vesselName: "PACIFIC TRADER",
+            vesselType: "cargo",
+            imo: "9876543",
+            callSign: "3WAB2",
+            destination: "SG SIN",
+            eta: null,
+            eventTime: 100,
+            sourceId: "AIS",
+            isHistorical: false,
+            metadata: null,
+            lastSeen: Date.now(),
+          },
+        },
+      });
+      useTrackedShipStore.setState({
+        groups: [{ id: "default", name: "Default", color: "#f59e0b", mmsis: [], visibleOnMap: true }],
+        activeGroupId: "default",
+        trackedMmsis: {},
+      });
+    });
+
+    render(
+      <I18nProvider defaultLanguage="en">
+        <ShipSearchPanel onClose={vi.fn()} />
+      </I18nProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Search ships"), { target: { value: "pac" } });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Track ship" }));
+
+    expect(useTrackedShipStore.getState().isTracked("574001230")).toBe(true);
   });
 });

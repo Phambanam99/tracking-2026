@@ -120,12 +120,6 @@ export function LayerPanel({
                         <span className="mt-1 block text-[11px] text-slate-500">{t(layer.descriptionKey)}</span>
                       </span>
                     </label>
-
-                    {layer.id === "military" ? (
-                      <div className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2 py-2 text-[11px] text-slate-300">
-                        {t("layers.militaryHint")}
-                      </div>
-                    ) : null}
                   </div>
                 ))}
               </div>

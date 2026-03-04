@@ -7,6 +7,7 @@ This directory contains a templated systemd unit for the standalone source conne
 - `adsbx.env.example`
 - `fr24.env.example`
 - `radarbox.env.example`
+- `chinaport.env.example`
 
 ## Install
 
@@ -19,6 +20,7 @@ sudo cp infra/systemd/tracking-connector@.service /etc/systemd/system/
 sudo cp infra/systemd/adsbx.env.example /etc/tracking/connectors/adsbx.env
 sudo cp infra/systemd/fr24.env.example /etc/tracking/connectors/fr24.env
 sudo cp infra/systemd/radarbox.env.example /etc/tracking/connectors/radarbox.env
+sudo cp infra/systemd/chinaport.env.example /etc/tracking/connectors/chinaport.env
 sudo systemctl daemon-reload
 ```
 
@@ -28,6 +30,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now tracking-connector@adsbx
 sudo systemctl enable --now tracking-connector@fr24
 sudo systemctl enable --now tracking-connector@radarbox
+sudo systemctl enable --now tracking-connector@chinaport
 ```
 
 ## Logs
@@ -36,4 +39,5 @@ sudo systemctl enable --now tracking-connector@radarbox
 journalctl -u tracking-connector@adsbx -f
 journalctl -u tracking-connector@fr24 -f
 journalctl -u tracking-connector@radarbox -f
+journalctl -u tracking-connector@chinaport -f
 ```

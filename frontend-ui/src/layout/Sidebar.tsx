@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { IconButton } from "../shared/components/IconButton";
 import { useI18n } from "../shared/i18n/I18nProvider";
 
-export type SidebarPanelId = "search" | "watchlist" | null;
+export type SidebarPanelId = "search" | "watchlist" | "tracked" | null;
 
 type SidebarProps = {
   activePanel: SidebarPanelId;

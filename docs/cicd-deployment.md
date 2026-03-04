@@ -18,6 +18,7 @@ tracking-2026/
 ```
 
 **Tech stack:**
+
 - Backend: Kotlin + Spring Boot 3, JDK 17/21
 - Frontend: React 18, Vite 6, TypeScript 5.7
 - DB: PostgreSQL 15 + TimescaleDB 2.17
@@ -31,13 +32,13 @@ tracking-2026/
 
 ### Workflow hiện có
 
-| File | Trigger | Mô tả |
-|------|---------|-------|
-| `build.yml` | push `main/master`, PR | Build tất cả Gradle modules |
-| `test.yml` | PR | Chạy unit tests |
-| `security.yml` | PR, push `main`, weekly | Dependency review, secret scan, Trivy, npm audit |
-| `infra-validate.yml` | – | Validate infrastructure configs |
-| `perf-smoke.yml` | – | Smoke performance tests |
+| File                 | Trigger                 | Mô tả                                            |
+| -------------------- | ----------------------- | ------------------------------------------------ |
+| `build.yml`          | push `main/master`, PR  | Build tất cả Gradle modules                      |
+| `test.yml`           | PR                      | Chạy unit tests                                  |
+| `security.yml`       | PR, push `main`, weekly | Dependency review, secret scan, Trivy, npm audit |
+| `infra-validate.yml` | –                       | Validate infrastructure configs                  |
+| `perf-smoke.yml`     | –                       | Smoke performance tests                          |
 
 ### Vấn đề hiện tại với workflows
 
@@ -48,7 +49,7 @@ Các workflow hiện tại đang dùng JDK 17 nhưng một số module (service-
 - uses: actions/setup-java@v4
   with:
     distribution: temurin
-    java-version: '21'
+    java-version: "21"
 ```
 
 ---
@@ -63,9 +64,9 @@ developer push → PR created
                   ├─► test.yml         (unit tests)
                   ├─► security.yml     (dependency review + secret scan)
                   └─► build.yml        (compile all modules)
-                  
+
                   ↓ (all checks pass)
-                  
+
               PR review → merge to main
 ```
 
@@ -85,13 +86,13 @@ merge to main
 
 ### Yêu cầu hệ thống
 
-| Tool | Version |
-|------|---------|
-| JDK | 21 (Eclipse Temurin khuyến nghị) |
-| Node.js | 20+ |
-| Docker Desktop | 24+ |
-| Docker Compose | v2 |
-| Python | 3.11+ (cho connectors) |
+| Tool           | Version                          |
+| -------------- | -------------------------------- |
+| JDK            | 21 (Eclipse Temurin khuyến nghị) |
+| Node.js        | 20+                              |
+| Docker Desktop | 24+                              |
+| Docker Compose | v2                               |
+| Python         | 3.11+ (cho connectors)           |
 
 ### Bước 1: Khởi động infrastructure
 
@@ -215,16 +216,16 @@ curl http://localhost:8086/actuator/health
 
 ### Environment variables quan trọng
 
-| Variable | Mô tả | Default |
-|----------|-------|---------|
-| `POSTGRES_USER` | DB username | `tracking` |
-| `POSTGRES_PASSWORD` | DB password | `tracking` |
-| `POSTGRES_DB` | DB name | `tracking` |
-| `KAFKA_BOOTSTRAP_SERVERS` | Kafka connection | `localhost:9092` |
-| `REDIS_HOST` | Redis host | `localhost` |
-| `REDIS_PORT` | Redis port | `6379` |
-| `AUTH_JWKS_URI` | JWKS endpoint của auth service | `http://service-auth:8081/api/v1/auth/.well-known/jwks.json` |
-| `SPRING_PROFILES_ACTIVE` | Spring profile | `local` |
+| Variable                  | Mô tả                          | Default                                                      |
+| ------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| `POSTGRES_USER`           | DB username                    | `tracking`                                                   |
+| `POSTGRES_PASSWORD`       | DB password                    | `tracking`                                                   |
+| `POSTGRES_DB`             | DB name                        | `tracking`                                                   |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka connection               | `localhost:9092`                                             |
+| `REDIS_HOST`              | Redis host                     | `localhost`                                                  |
+| `REDIS_PORT`              | Redis port                     | `6379`                                                       |
+| `AUTH_JWKS_URI`           | JWKS endpoint của auth service | `http://service-auth:8081/api/v1/auth/.well-known/jwks.json` |
+| `SPRING_PROFILES_ACTIVE`  | Spring profile                 | `local`                                                      |
 
 ---
 
@@ -270,12 +271,12 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: "21"
           cache: gradle
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
           cache-dependency-path: frontend-ui/package-lock.json
 
@@ -308,11 +309,11 @@ jobs:
 
 Vào **Settings → Secrets and variables → Actions** và thêm:
 
-| Secret | Mô tả |
-|--------|-------|
-| `DEPLOY_HOST` | IP hoặc hostname của server |
-| `DEPLOY_USER` | SSH username |
-| `DEPLOY_SSH_KEY` | Private SSH key |
+| Secret           | Mô tả                       |
+| ---------------- | --------------------------- |
+| `DEPLOY_HOST`    | IP hoặc hostname của server |
+| `DEPLOY_USER`    | SSH username                |
+| `DEPLOY_SSH_KEY` | Private SSH key             |
 
 ---
 
