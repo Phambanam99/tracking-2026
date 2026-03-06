@@ -1,4 +1,5 @@
 import { registerBuiltinProviders } from "./builtinProviders";
+import { registerCustomProviders } from "./customProviderStorage";
 import { applyExternalProviderConfig } from "./providerConfig";
 
 let bootstrapped = false;
@@ -10,5 +11,6 @@ export function initializeMapProviders(): void {
 
   registerBuiltinProviders();
   applyExternalProviderConfig();
+  registerCustomProviders();
   bootstrapped = true;
 }

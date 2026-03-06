@@ -1,0 +1,57 @@
+name: tracking-geoserver
+
+services:
+  geoserver:
+    image: kartoza/geoserver:2.26.1
+    container_name: tracking-geoserver
+    restart: unless-stopped
+    environment:
+      # ─── GeoServer Admin ──────────────────────────
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER:-admin}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD:-geoserver}
+
+      # ─── Java / JVM ───────────────────────────────
+      INITIAL_MEMORY: ${GEOSERVER_INITIAL_MEMORY:-512m}
+      MAXIMUM_MEMORY: ${GEOSERVER_MAXIMUM_MEMORY:-2g}
+
+      # ─── GeoServer Config ─────────────────────────
+      GEOSERVER_DATA_DIR: /opt/geoserver/data_dir
+      GEOWEBCACHE_CACHE_DIR: /opt/geoserver/gwc_cache
+
+      # ─── CORS (cho frontend gọi WMS/WMTS) ────────
+      CORS_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: "*"
+      CORS_ALLOWED_METHODS: "GET,POST,OPTIONS"
+      CORS_ALLOWED_HEADERS: "*"
+
+      # ─── Extensions ───────────────────────────────
+      STABLE_EXTENSIONS: "wps-plugin,css-plugin"
+    ports:
+      - "${GEOSERVER_PORT:-8600}:8080"
+    volumes:
+      - geoserver-data:/opt/geoserver/data_dir
+      - geoserver-cache:/opt/geoserver/gwc_cache
+      - ./db_geo/10m_cultural/10m_cultural:/opt/geoserver/geodata:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localhost:8080/geoserver/web/ || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+    networks:
+      - tracking-net
+
+networks:
+  tracking-net:
+    name: tracking-net
+
+volumes:
+  geoserver-data:
+  geoserver-cache:
